@@ -9,3 +9,4 @@ public class PassengerResponseDTO {
     private String name;
     private String seatNumber;
 }
+
