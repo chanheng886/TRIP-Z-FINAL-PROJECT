@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:frontend/features/home/repository/bus_location_repository.dart';
+import 'package:frontend/features/home/viewmodel/bus_location_viewmodel.dart';
+import 'package:frontend/shared/services/bus_location_service.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class SearchScreenMobile extends StatelessWidget {
-  const SearchScreenMobile({super.key});
+  final controller = Get.put(
+    BusLocationViewmodel(BusLocationRepository(BusLocationService())),
+  );
+  SearchScreenMobile({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -62,14 +68,22 @@ class SearchScreenMobile extends StatelessWidget {
           ),
         ),
       ),
-      body: Expanded(
-        child: ListView.builder(
-          itemCount: 25,
+      body: Obx(() {
+        if (controller.isLoading.value) {
+          return Center(child: CircularProgressIndicator());
+        }
+        if (controller.errorMessage.value != "") {
+          return Center(child: Text('Failed to load data❌🥰'));
+        }
+        return ListView.builder(
+          itemCount: controller.locations.length,
           itemBuilder: (context, index) {
-            return ListTile(title: Text('Banteay Meanchey'));
+            return ListTile(
+              title: Text(controller.locations[index].locationName),
+            );
           },
-        ),
-      ),
+        );
+      }),
     );
   }
 }

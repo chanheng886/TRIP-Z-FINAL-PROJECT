@@ -182,6 +182,26 @@ class HomeScreenMobile extends StatelessWidget {
                 ),
               ),
             ),
+            Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  FaIcon(
+                    FontAwesomeIcons.bed,
+                    size: 40,
+                    color: Color(0xff4FD18B),
+                  ),
+                  SizedBox(height: 20),
+                  Text(
+                    "Bed Booking Coming Soon",
+                    style: GoogleFonts.dmSans(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
