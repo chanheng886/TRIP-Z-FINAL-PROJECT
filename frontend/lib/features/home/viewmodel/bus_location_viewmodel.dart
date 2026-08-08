@@ -9,6 +9,8 @@ class BusLocationViewmodel extends GetxController {
   var isLoading = false.obs;
   var errorMessage = "".obs;
 
+  var searchQuery = "".obs;
+
   @override
   void onInit() {
     super.onInit();
@@ -25,5 +27,18 @@ class BusLocationViewmodel extends GetxController {
     } finally {
       isLoading.value = false;
     }
+  }
+
+  List<BusLocation> get filteredLocations {
+    if (searchQuery.value.isEmpty) {
+      return locations;
+    }
+    return locations
+        .where(
+          (loc) => loc.locationName.toLowerCase().contains(
+            searchQuery.value.toLowerCase(),
+          ),
+        )
+        .toList();
   }
 }

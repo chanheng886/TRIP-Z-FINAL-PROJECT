@@ -49,6 +49,7 @@ class SearchScreenMobile extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.all(15),
               child: TextField(
+                onChanged: (value) => controller.searchQuery.value = value,
                 cursorColor: Color(0xff4FD18B),
                 decoration: InputDecoration(
                   prefixIcon: FaIcon(
@@ -75,14 +76,23 @@ class SearchScreenMobile extends StatelessWidget {
         if (controller.errorMessage.value != "") {
           return Center(child: Text('Failed to load data❌🥰'));
         }
-        return ListView.builder(
-          itemCount: controller.locations.length,
-          itemBuilder: (context, index) {
-            return ListTile(
-              title: Text(controller.locations[index].locationName),
-            );
-          },
-        );
+        return controller.filteredLocations.isEmpty
+            ? Center(
+                child: Text(
+                  "No Location Found😟",
+                  style: GoogleFonts.dmSans(fontSize: 16),
+                ),
+              )
+            : ListView.builder(
+                itemCount: controller.filteredLocations.length,
+                itemBuilder: (context, index) {
+                  return ListTile(
+                    title: Text(
+                      controller.filteredLocations[index].locationName,
+                    ),
+                  );
+                },
+              );
       }),
     );
   }
