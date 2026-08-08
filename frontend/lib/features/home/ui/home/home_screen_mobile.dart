@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_remix/flutter_remix.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:frontend/features/home/ui/search/search_screen_mobile.dart';
 import 'package:frontend/features/home/widgets/tab_bar_widget.dart';
 import 'package:frontend/features/home/widgets/text_fileds_widget.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -125,6 +126,7 @@ class HomeScreenMobile extends StatelessWidget {
                               ),
                             ),
                           ),
+                          page: SearchScreenMobile(),
                         ),
                         //✅ To Location Text Field
                         TextFiledsWidget(
