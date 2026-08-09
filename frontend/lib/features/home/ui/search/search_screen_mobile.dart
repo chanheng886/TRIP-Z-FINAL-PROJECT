@@ -86,9 +86,16 @@ class SearchScreenMobile extends StatelessWidget {
             : ListView.builder(
                 itemCount: controller.filteredLocations.length,
                 itemBuilder: (context, index) {
-                  return ListTile(
-                    title: Text(
-                      controller.filteredLocations[index].locationName,
+                  return InkWell(
+                    onTap: () {
+                      final selectLocation =
+                          controller.filteredLocations[index].locationName;
+                      Get.back(result: selectLocation);
+                    },
+                    child: ListTile(
+                      title: Text(
+                        controller.filteredLocations[index].locationName,
+                      ),
                     ),
                   );
                 },

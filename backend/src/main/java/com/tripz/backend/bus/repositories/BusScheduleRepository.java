@@ -8,7 +8,7 @@ import com.tripz.backend.bus.models.BusSchedule;
 
 public interface BusScheduleRepository extends JpaRepository<BusSchedule, Long> {
     @EntityGraph(attributePaths = {"bus", "bus.company", "route", "route.fromLocation", "route.toLocation"})
-    List<BusSchedule> findByRoute_FromLocation_IdAndRoute_ToLocation_IdAndTravelDate(
+    List<BusSchedule> findByRoute_FromLocation_IdAndRoute_ToLocation_IdAndTravelDateAndAvailableSeatGreaterThan(
         Long fromLocationId, 
         Long toLocationId, 
         LocalDate travelDate,

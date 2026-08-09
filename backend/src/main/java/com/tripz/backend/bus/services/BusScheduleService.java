@@ -36,7 +36,7 @@ public class BusScheduleService {
     //✅ (For customer)
     public List<BusScheduleResponseDTO> searchBusSchedules(BusScheduleSearchRequestDTO dto){
         List<BusSchedule> schedules = busScheduleRepository
-            .findByRoute_FromLocation_IdAndRoute_ToLocation_IdAndTravelDate(
+            .findByRoute_FromLocation_IdAndRoute_ToLocation_IdAndTravelDateAndAvailableSeatGreaterThan(
                 dto.getFromLocation(), 
                 dto.getToLocation(), 
                 dto.getTravelDate(), 

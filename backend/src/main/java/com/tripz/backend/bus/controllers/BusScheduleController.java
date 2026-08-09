@@ -39,7 +39,7 @@ public class BusScheduleController {
         return busScheduleService.getBusScheduleById(id);
     }
 
-    @GetMapping("/route/{from}/{to}/{date}")
+    @GetMapping("/search")
     public ResponseEntity<List<BusScheduleResponseDTO>> getAllBusScheduleByFromLocationToLocationAndTravelDate
     (
         @RequestParam Long fromLocationId,
@@ -53,7 +53,7 @@ public class BusScheduleController {
         .travelDate(travelDate)
         .build();
         return ResponseEntity.ok(busScheduleService.searchBusSchedules(dto));
-    };
+    }
 
     
     @PostMapping

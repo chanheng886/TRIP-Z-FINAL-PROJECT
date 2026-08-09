@@ -2,14 +2,26 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_remix/flutter_remix.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:frontend/features/home/ui/bus_schedule/bus_schedule_mobile.dart';
 import 'package:frontend/features/home/ui/search/search_screen_mobile.dart';
+import 'package:frontend/features/home/widgets/date_picker_widget.dart';
 import 'package:frontend/features/home/widgets/tab_bar_widget.dart';
 import 'package:frontend/features/home/widgets/text_fileds_widget.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-class HomeScreenMobile extends StatelessWidget {
+class HomeScreenMobile extends StatefulWidget {
   const HomeScreenMobile({super.key});
 
+  @override
+  State<HomeScreenMobile> createState() => _HomeScreenMobileState();
+}
+
+class _HomeScreenMobileState extends State<HomeScreenMobile> {
+  final TextEditingController fromLocation = TextEditingController();
+  final TextEditingController toLocation = TextEditingController();
+  final TextEditingController leavingDate = TextEditingController();
+  final TextEditingController returnDate = TextEditingController();
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
@@ -112,39 +124,102 @@ class HomeScreenMobile extends StatelessWidget {
                     child: Column(
                       children: [
                         //✅ From Location Text Field
-                        TextFiledsWidget(
-                          leadingIcon: FlutterRemix.treasure_map_fill,
-                          title: 'From',
-                          subTitle: 'Phnom Penh',
-                          btn: IconButton(
-                            onPressed: () {},
-                            icon: CircleAvatar(
-                              backgroundColor: Colors.white,
-                              child: Icon(
-                                FlutterRemix.arrow_up_down_line,
-                                color: Color(0xff4FD18B),
+                        InkWell(
+                          onTap: () async {
+                            final result = await Get.to(
+                              () => SearchScreenMobile(),
+                            );
+                            if (result != null) {
+                              setState(() {
+                                fromLocation.text = result;
+                              });
+                            }
+                          },
+                          child: TextFiledsWidget(
+                            leadingIcon: FlutterRemix.treasure_map_fill,
+                            title: 'From',
+                            subTitle: fromLocation.text.isEmpty
+                                ? "Where?"
+                                : fromLocation.text,
+                            btn: IconButton(
+                              onPressed: () async {},
+                              icon: CircleAvatar(
+                                backgroundColor: Colors.white,
+                                child: Icon(
+                                  FlutterRemix.arrow_up_down_line,
+                                  color: Color(0xff4FD18B),
+                                ),
                               ),
                             ),
                           ),
-                          page: SearchScreenMobile(),
                         ),
                         //✅ To Location Text Field
-                        TextFiledsWidget(
-                          leadingIcon: FlutterRemix.map_pin_fill,
-                          title: 'To',
-                          subTitle: 'Banteay Meanchey',
+                        InkWell(
+                          onTap: () async {
+                            final result = await Get.to(
+                              () => SearchScreenMobile(),
+                            );
+                            if (result != null) {
+                              setState(() {
+                                toLocation.text = result;
+                              });
+                            }
+                          },
+                          child: TextFiledsWidget(
+                            leadingIcon: FlutterRemix.map_pin_fill,
+                            title: 'To',
+                            subTitle: toLocation.text.isEmpty
+                                ? "Where?"
+                                : toLocation.text,
+                          ),
                         ),
                         //✅ Leaving Date Text Field
-                        TextFiledsWidget(
-                          leadingIcon: FlutterRemix.calendar_event_fill,
-                          title: 'Leaving',
-                          subTitle: '2026-08-15',
+                        InkWell(
+                          onTap: () async {
+                            final picked = await datePopUpPicker(
+                              context,
+                              initaialDate: leavingDate.text.isNotEmpty
+                                  ? DateTime.tryParse(leavingDate.text)
+                                  : null,
+                            );
+                            if (picked != null) {
+                              setState(() {
+                                leavingDate.text =
+                                    "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
+                              });
+                            }
+                          },
+                          child: TextFiledsWidget(
+                            leadingIcon: FlutterRemix.calendar_event_fill,
+                            title: 'Leaving',
+                            subTitle: leavingDate.text.isEmpty
+                                ? 'Select Date'
+                                : leavingDate.text,
+                          ),
                         ),
                         //✅ Return Date (Optional)
-                        TextFiledsWidget(
-                          leadingIcon: FlutterRemix.calendar_2_fill,
-                          title: 'Return',
-                          subTitle: 'optional',
+                        InkWell(
+                          onTap: () async {
+                            final picked = await datePopUpPicker(
+                              context,
+                              initaialDate: returnDate.text.isNotEmpty
+                                  ? DateTime.tryParse(returnDate.text)
+                                  : null,
+                            );
+                            if (picked != null) {
+                              setState(() {
+                                returnDate.text =
+                                    "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
+                              });
+                            }
+                          },
+                          child: TextFiledsWidget(
+                            leadingIcon: FlutterRemix.calendar_2_fill,
+                            title: 'Return',
+                            subTitle: returnDate.text.isEmpty
+                                ? "Optional"
+                                : returnDate.text,
+                          ),
                         ),
                         SizedBox(height: 5),
                         SizedBox(
@@ -154,7 +229,9 @@ class HomeScreenMobile extends StatelessWidget {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Color(0xff4FD18B),
                             ),
-                            onPressed: () {},
+                            onPressed: () {
+                              Get.to(() => BusScheduleMobile());
+                            },
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
