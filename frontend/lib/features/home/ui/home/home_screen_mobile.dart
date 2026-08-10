@@ -2,11 +2,13 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_remix/flutter_remix.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:frontend/features/home/models/bus_location.dart';
 import 'package:frontend/features/home/ui/bus_schedule/bus_schedule_mobile.dart';
 import 'package:frontend/features/home/ui/search/search_screen_mobile.dart';
 import 'package:frontend/features/home/widgets/date_picker_widget.dart';
 import 'package:frontend/features/home/widgets/tab_bar_widget.dart';
 import 'package:frontend/features/home/widgets/text_fileds_widget.dart';
+
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -22,6 +24,8 @@ class _HomeScreenMobileState extends State<HomeScreenMobile> {
   final TextEditingController toLocation = TextEditingController();
   final TextEditingController leavingDate = TextEditingController();
   final TextEditingController returnDate = TextEditingController();
+  int? fromLocationId;
+  int? toLocationId;
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
@@ -126,12 +130,13 @@ class _HomeScreenMobileState extends State<HomeScreenMobile> {
                         //✅ From Location Text Field
                         InkWell(
                           onTap: () async {
-                            final result = await Get.to(
+                            final result = await Get.to<BusLocation>(
                               () => SearchScreenMobile(),
                             );
                             if (result != null) {
                               setState(() {
-                                fromLocation.text = result;
+                                fromLocation.text = result.locationName;
+                                fromLocationId = result.id;
                               });
                             }
                           },
@@ -156,12 +161,13 @@ class _HomeScreenMobileState extends State<HomeScreenMobile> {
                         //✅ To Location Text Field
                         InkWell(
                           onTap: () async {
-                            final result = await Get.to(
+                            final result = await Get.to<BusLocation>(
                               () => SearchScreenMobile(),
                             );
                             if (result != null) {
                               setState(() {
-                                toLocation.text = result;
+                                toLocation.text = result.locationName;
+                                toLocationId = result.id;
                               });
                             }
                           },
@@ -222,6 +228,7 @@ class _HomeScreenMobileState extends State<HomeScreenMobile> {
                           ),
                         ),
                         SizedBox(height: 5),
+                        //✅ Find Bus Schedule Button
                         SizedBox(
                           width: 310,
                           height: 50,
@@ -230,7 +237,31 @@ class _HomeScreenMobileState extends State<HomeScreenMobile> {
                               backgroundColor: Color(0xff4FD18B),
                             ),
                             onPressed: () {
-                              Get.to(() => BusScheduleMobile());
+                              if (fromLocationId == null ||
+                                  toLocationId == null ||
+                                  leavingDate.text.isEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      "Please from, To, and Leaving Date",
+                                      style: GoogleFonts.dmSans(
+                                        fontSize: 18,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                                return;
+                              }
+                              Get.to(
+                                () => BusScheduleMobile(
+                                  fromLocationId: fromLocationId!,
+                                  toLocationId: toLocationId!,
+                                  fromLocationName: fromLocation.text,
+                                  toLocationName: toLocation.text,
+                                  travelDate: DateTime.parse(leavingDate.text),
+                                ),
+                              );
                             },
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,

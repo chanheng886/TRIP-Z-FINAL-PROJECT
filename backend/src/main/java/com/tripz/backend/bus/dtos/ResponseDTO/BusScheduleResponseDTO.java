@@ -17,6 +17,8 @@ public class BusScheduleResponseDTO {
     private Long busId;
     private String plateNumber;
     private String companyName;
+    private Long busTypeId;
+    private String busType;
     private Long routeId;
     private String fromLocation;
     private String toLocation;

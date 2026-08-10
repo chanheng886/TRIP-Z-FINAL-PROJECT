@@ -89,7 +89,7 @@ class SearchScreenMobile extends StatelessWidget {
                   return InkWell(
                     onTap: () {
                       final selectLocation =
-                          controller.filteredLocations[index].locationName;
+                          controller.filteredLocations[index];
                       Get.back(result: selectLocation);
                     },
                     child: ListTile(

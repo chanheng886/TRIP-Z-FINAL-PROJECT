@@ -55,6 +55,10 @@ public class BusSchedule {
     @Column(name = "base_price", nullable = false)
     private BigDecimal basePrice;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "bus_type_id", nullable = false)
+    private BusType busType;
+
     @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)

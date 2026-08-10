@@ -1,3 +1,5 @@
+import 'package:intl/intl.dart';
+
 enum BusScheduleStatus {
   Available,
   Booked;
@@ -15,7 +17,8 @@ class BusSchedule {
   final int busId;
   final String plateNumber;
   final String companyName;
-  final String routeId;
+  final String busType;
+  final int routeId;
   final String fromLocation;
   final String toLocation;
   final DateTime travelDate;
@@ -25,11 +28,14 @@ class BusSchedule {
   final int availableSeat;
   final BusScheduleStatus status;
 
+  String get formattedDate => DateFormat('MM dd, yyyy').format(travelDate);
+
   BusSchedule({
     required this.id,
     required this.busId,
     required this.plateNumber,
     required this.companyName,
+    required this.busType,
     required this.routeId,
     required this.fromLocation,
     required this.toLocation,
@@ -47,15 +53,18 @@ class BusSchedule {
       busId: json['busId'],
       plateNumber: json['plateNumber'],
       companyName: json['companyName'],
+      busType: json['busType'],
       routeId: json['routeId'],
       fromLocation: json['fromLocation'],
       toLocation: json['toLocation'],
-      travelDate: json['travelDate'],
+      travelDate: json['travelDate'] != null
+          ? DateTime.parse(json['travelDate'])
+          : DateTime.now(),
       departureTime: json['departureTime'],
       arrivalTime: json['arrivalTime'],
       basePrice: json['basePrice'],
       availableSeat: json['availableSeat'],
-      status: json['status'],
+      status: BusScheduleStatus.fromString(json['status']),
     );
   }
 }
