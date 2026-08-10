@@ -30,16 +30,21 @@ class _MainAppState extends State<MainApp> {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       body: _screens[_selectIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectIndex,
         onTap: _onItemTapped,
         selectedItemColor: Color(0xff4FD18B),
-        unselectedItemColor: Color(0xff64748B),
+        unselectedItemColor: isDarkMode
+            ? const Color(0xFF94A3B8)
+            : Color(0xff64748B),
         selectedLabelStyle: GoogleFonts.dmSans(fontSize: 12),
         unselectedLabelStyle: GoogleFonts.dmSans(fontSize: 10),
-        backgroundColor: Colors.white,
+        backgroundColor: isDarkMode ? const Color(0xFF1E222B) : Colors.white,
+        elevation: isDarkMode ? 8 : 8,
         iconSize: 23,
         type: BottomNavigationBarType.fixed,
         items: [

@@ -7,15 +7,20 @@ class TabBarWidget extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = Theme.of(context).primaryColor;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDarkMode ? const Color(0xFF1E222B) : Colors.white,
           borderRadius: BorderRadius.circular(30),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.shade300,
+              color: isDarkMode
+                  ? Colors.black.withOpacity(0.3)
+                  : Colors.grey.shade300,
               blurRadius: 2,
               offset: Offset(0, 2),
             ),
@@ -23,12 +28,16 @@ class TabBarWidget extends StatelessWidget implements PreferredSizeWidget {
         ),
         child: TabBar(
           splashBorderRadius: BorderRadius.circular(30),
-          overlayColor: WidgetStateProperty.all(Color(0xffD4F3E2)),
+          overlayColor: WidgetStateProperty.all(
+            isDarkMode ? const Color(0xFF2C3E35) : Color(0xffD4F3E2),
+          ),
           isScrollable: false,
-          unselectedLabelColor: Color(0xff64748B),
+          unselectedLabelColor: isDarkMode
+              ? const Color(0xFF94A3B8)
+              : Color(0xff64748B),
           labelColor: Colors.white,
           indicator: BoxDecoration(
-            color: Color(0xff4FD18B),
+            color: bgColor,
             borderRadius: BorderRadius.circular(30),
           ),
           indicatorSize: TabBarIndicatorSize.tab,
@@ -44,7 +53,6 @@ class TabBarWidget extends StatelessWidget implements PreferredSizeWidget {
                 ],
               ),
             ),
-
             Tab(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,

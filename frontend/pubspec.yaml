@@ -41,6 +41,7 @@ dependencies:
   flutter_remix: ^0.0.3
   http: ^1.2.1
   intl: ^0.20.3
+  shared_preferences: ^2.5.5
 
 dev_dependencies:
   flutter_test:

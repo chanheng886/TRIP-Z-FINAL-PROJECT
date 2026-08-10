@@ -26,14 +26,19 @@ class _HomeScreenMobileState extends State<HomeScreenMobile> {
   final TextEditingController returnDate = TextEditingController();
   int? fromLocationId;
   int? toLocationId;
+
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final scafoldBackground = Theme.of(context).scaffoldBackgroundColor;
+    final textStyle = Theme.of(context).textTheme;
+
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        backgroundColor: Color(0xffF7F8FC),
+        backgroundColor: scafoldBackground,
         appBar: AppBar(
-          backgroundColor: Color(0xffF7F8FC),
+          backgroundColor: scafoldBackground,
           leading: Padding(
             padding: const EdgeInsets.only(left: 10),
             child: Container(
@@ -56,7 +61,10 @@ class _HomeScreenMobileState extends State<HomeScreenMobile> {
                 style: GoogleFonts.dmSans(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xff1E293B),
+                  color: isDarkMode
+                      ? Colors.white
+                      : textStyle.headlineMedium?.color ??
+                            const Color(0xff1E293B),
                 ),
               ),
               Row(
@@ -67,11 +75,14 @@ class _HomeScreenMobileState extends State<HomeScreenMobile> {
                     size: 16,
                     color: Color(0xff4FD18B),
                   ),
+                  SizedBox(width: 4),
                   Text(
                     'Where do you want to go?',
                     style: GoogleFonts.dmSans(
                       fontSize: 13,
-                      color: Color(0xff1E293B),
+                      color: isDarkMode
+                          ? const Color(0xff94A3B8)
+                          : Color(0xff1E293B),
                     ),
                   ),
                 ],
@@ -83,7 +94,10 @@ class _HomeScreenMobileState extends State<HomeScreenMobile> {
               children: [
                 IconButton(
                   onPressed: () {},
-                  icon: FaIcon(FontAwesomeIcons.bell),
+                  icon: FaIcon(
+                    FontAwesomeIcons.bell,
+                    color: isDarkMode ? Colors.white70 : Colors.black87,
+                  ),
                 ),
                 Positioned(
                   top: 10,
@@ -112,11 +126,17 @@ class _HomeScreenMobileState extends State<HomeScreenMobile> {
                   width: double.infinity,
                   height: 400,
                   decoration: BoxDecoration(
-                    color: Colors.white,
-                    border: Border.all(color: Colors.grey.shade200),
+                    color: isDarkMode ? const Color(0xFF1E222B) : Colors.white,
+                    border: Border.all(
+                      color: isDarkMode
+                          ? const Color(0xFF2C313C)
+                          : Colors.grey.shade200,
+                    ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.grey.shade200,
+                        color: isDarkMode
+                            ? Colors.black.withOpacity(0.3)
+                            : Colors.grey.shade200,
                         blurRadius: 2,
                         offset: Offset(1, 2),
                       ),
@@ -149,7 +169,9 @@ class _HomeScreenMobileState extends State<HomeScreenMobile> {
                             btn: IconButton(
                               onPressed: () async {},
                               icon: CircleAvatar(
-                                backgroundColor: Colors.white,
+                                backgroundColor: isDarkMode
+                                    ? const Color(0xFF2C313C)
+                                    : Colors.white,
                                 child: Icon(
                                   FlutterRemix.arrow_up_down_line,
                                   color: Color(0xff4FD18B),
@@ -243,9 +265,9 @@ class _HomeScreenMobileState extends State<HomeScreenMobile> {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                     content: Text(
-                                      "Please from, To, and Leaving Date",
+                                      "Please select From, To, and Leaving Date",
                                       style: GoogleFonts.dmSans(
-                                        fontSize: 18,
+                                        fontSize: 16,
                                         color: Colors.white,
                                       ),
                                     ),
@@ -305,6 +327,7 @@ class _HomeScreenMobileState extends State<HomeScreenMobile> {
                     style: GoogleFonts.dmSans(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
+                      color: isDarkMode ? Colors.white : Colors.black87,
                     ),
                   ),
                 ],

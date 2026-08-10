@@ -43,29 +43,43 @@ class _BusScheduleMobileState extends State<BusScheduleMobile> {
 
   @override
   Widget build(BuildContext context) {
-    // final List<BusSchedule> schedules = BusScheduleDataFake.schedules;
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final scaffoldBg = isDarkMode
+        ? const Color(0xFF12161E)
+        : const Color(0xffF7F8FC);
+
     return Scaffold(
-      backgroundColor: Color(0xffF7F8FC),
+      backgroundColor: scaffoldBg,
       appBar: AppBar(
-        backgroundColor: Color(0xffF7F8FC),
+        backgroundColor: scaffoldBg,
+        elevation: 0,
         leading: IconButton(
           onPressed: () {
             Get.back();
           },
-          icon: FaIcon(FontAwesomeIcons.angleLeft, size: 24),
+          icon: FaIcon(
+            FontAwesomeIcons.angleLeft,
+            size: 24,
+            color: isDarkMode ? Colors.white : Colors.black87,
+          ),
         ),
         title: Column(
           children: [
             Text(
               widget.fromLocationName,
-              style: GoogleFonts.dmSans(fontSize: 14, color: Color(0xff64748B)),
+              style: GoogleFonts.dmSans(
+                fontSize: 14,
+                color: isDarkMode
+                    ? const Color(0xFF94A3B8)
+                    : const Color(0xff64748B),
+              ),
             ),
             Text(
               widget.toLocationName,
               style: GoogleFonts.dmSans(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: Color(0xff1E293B),
+                color: isDarkMode ? Colors.white : const Color(0xff1E293B),
               ),
             ),
           ],
@@ -74,13 +88,29 @@ class _BusScheduleMobileState extends State<BusScheduleMobile> {
       ),
       body: Obx(() {
         if (controller.isLoading.value) {
-          return Center(child: CircularProgressIndicator());
+          return const Center(
+            child: CircularProgressIndicator(color: Color(0xff4FD18B)),
+          );
         }
         if (controller.errorMessage.value != "") {
-          return Center(child: Text("Faild to load bus schedules😟❌"));
+          return Center(
+            child: Text(
+              "Faild to load bus schedules😟❌",
+              style: GoogleFonts.dmSans(
+                color: isDarkMode ? Colors.white : Colors.black87,
+              ),
+            ),
+          );
         }
         if (controller.schedules.isEmpty) {
-          return Center(child: Text("No Bus Found!😟🚌"));
+          return Center(
+            child: Text(
+              "No Bus Found!😟🚌",
+              style: GoogleFonts.dmSans(
+                color: isDarkMode ? const Color(0xFF94A3B8) : Colors.black87,
+              ),
+            ),
+          );
         }
         return ListView.builder(
           itemCount: controller.schedules.length,

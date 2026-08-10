@@ -13,15 +13,19 @@ class BusTicketCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDarkMode ? const Color(0xFF1E222B) : Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: isDarkMode
+                ? Colors.black.withOpacity(0.3)
+                : Colors.black.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -42,7 +46,9 @@ class BusTicketCard extends StatelessWidget {
                     style: GoogleFonts.dmSans(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: const Color(0xff1E293B),
+                      color: isDarkMode
+                          ? Colors.white
+                          : const Color(0xff1E293B),
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -77,13 +83,20 @@ class BusTicketCard extends StatelessWidget {
               "Route ID: ${schedule.routeId} • Bus ID: ${schedule.busId}",
               style: GoogleFonts.dmSans(
                 fontSize: 12,
-                color: const Color(0xff64748B),
+                color: isDarkMode
+                    ? const Color(0xFF94A3B8)
+                    : const Color(0xff64748B),
               ),
             ),
 
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 14),
-              child: Divider(color: Color(0xffE2E8F0), height: 1),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              child: Divider(
+                color: isDarkMode
+                    ? const Color(0xFF2C313C)
+                    : const Color(0xffE2E8F0),
+                height: 1,
+              ),
             ),
 
             // Middle Section: Details Grid (Bus Type, Date, Plate, Time)
@@ -94,11 +107,23 @@ class BusTicketCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildDetailItem("Bus Type", schedule.busType),
+                      _buildDetailItem(
+                        "Bus Type",
+                        schedule.busType,
+                        isDarkMode,
+                      ),
                       const SizedBox(height: 12),
-                      _buildDetailItem("Plate Number", schedule.plateNumber),
+                      _buildDetailItem(
+                        "Plate Number",
+                        schedule.plateNumber,
+                        isDarkMode,
+                      ),
                       const SizedBox(height: 12),
-                      _buildDetailItem("Operator", schedule.companyName),
+                      _buildDetailItem(
+                        "Operator",
+                        schedule.companyName,
+                        isDarkMode,
+                      ),
                     ],
                   ),
                 ),
@@ -107,20 +132,37 @@ class BusTicketCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildDetailItem("Date", schedule.formattedDate),
+                      _buildDetailItem(
+                        "Date",
+                        schedule.formattedDate,
+                        isDarkMode,
+                      ),
                       const SizedBox(height: 12),
-                      _buildDetailItem("Departure", schedule.departureTime),
+                      _buildDetailItem(
+                        "Departure",
+                        schedule.departureTime,
+                        isDarkMode,
+                      ),
                       const SizedBox(height: 12),
-                      _buildDetailItem("Arrival", schedule.arrivalTime),
+                      _buildDetailItem(
+                        "Arrival",
+                        schedule.arrivalTime,
+                        isDarkMode,
+                      ),
                     ],
                   ),
                 ),
               ],
             ),
 
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 14),
-              child: Divider(color: Color(0xffE2E8F0), height: 1),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              child: Divider(
+                color: isDarkMode
+                    ? const Color(0xFF2C313C)
+                    : const Color(0xffE2E8F0),
+                height: 1,
+              ),
             ),
 
             // Bottom Section: Price & Action Button
@@ -146,7 +188,9 @@ class BusTicketCard extends StatelessWidget {
                           "/person",
                           style: GoogleFonts.dmSans(
                             fontSize: 12,
-                            color: const Color(0xff64748B),
+                            color: isDarkMode
+                                ? const Color(0xFF94A3B8)
+                                : const Color(0xff64748B),
                           ),
                         ),
                       ],
@@ -169,6 +213,12 @@ class BusTicketCard extends StatelessWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xff4FD18B),
                     foregroundColor: Colors.white,
+                    disabledBackgroundColor: isDarkMode
+                        ? const Color(0xFF2C313C)
+                        : Colors.grey.shade300,
+                    disabledForegroundColor: isDarkMode
+                        ? const Color(0xFF94A3B8)
+                        : Colors.grey,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 24,
                       vertical: 12,
@@ -195,7 +245,7 @@ class BusTicketCard extends StatelessWidget {
   }
 }
 
-Widget _buildDetailItem(String label, String value) {
+Widget _buildDetailItem(String label, String value, bool isDarkMode) {
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
@@ -213,7 +263,7 @@ Widget _buildDetailItem(String label, String value) {
         style: GoogleFonts.dmSans(
           fontSize: 14,
           fontWeight: FontWeight.bold,
-          color: const Color(0xff1E293B),
+          color: isDarkMode ? Colors.white : const Color(0xff1E293B),
         ),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,

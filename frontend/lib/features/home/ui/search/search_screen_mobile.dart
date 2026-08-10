@@ -14,20 +14,29 @@ class SearchScreenMobile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final scaffoldBg = isDarkMode
+        ? const Color(0xFF12161E)
+        : const Color(0xffF7F8FC);
+
     return Scaffold(
       extendBodyBehindAppBar: true,
-      backgroundColor: Color(0xffF7F8FC),
+      backgroundColor: scaffoldBg,
       appBar: AppBar(
-        backgroundColor: Color(0xffF7F8FC),
+        backgroundColor: scaffoldBg,
+        elevation: 0,
         leading: Padding(
           padding: const EdgeInsets.only(left: 10),
           child: CircleAvatar(
-            backgroundColor: Color(0xff4FD18B),
+            backgroundColor: const Color(0xff4FD18B),
             child: IconButton(
               onPressed: () {
                 Get.back();
               },
-              icon: FaIcon(FontAwesomeIcons.angleLeft, color: Colors.white),
+              icon: const FaIcon(
+                FontAwesomeIcons.angleLeft,
+                color: Colors.white,
+              ),
             ),
           ),
         ),
@@ -35,33 +44,45 @@ class SearchScreenMobile extends StatelessWidget {
           width: double.infinity,
           height: 50,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: isDarkMode ? const Color(0xFF1E222B) : Colors.white,
             borderRadius: BorderRadius.circular(30),
             boxShadow: [
               BoxShadow(
-                color: Colors.grey.shade300,
+                color: isDarkMode
+                    ? Colors.black.withOpacity(0.3)
+                    : Colors.grey.shade300,
                 blurRadius: 2,
-                offset: Offset(1, 2),
+                offset: const Offset(1, 2),
               ),
             ],
           ),
           child: Center(
             child: Padding(
-              padding: const EdgeInsets.all(15),
+              padding: const EdgeInsets.only(left: 10, top: 10),
               child: TextField(
                 onChanged: (value) => controller.searchQuery.value = value,
-                cursorColor: Color(0xff4FD18B),
+                cursorColor: const Color(0xff4FD18B),
+                style: GoogleFonts.dmSans(
+                  fontSize: 16,
+                  color: isDarkMode ? Colors.white : Colors.black87,
+                ),
                 decoration: InputDecoration(
-                  prefixIcon: FaIcon(
-                    FontAwesomeIcons.magnifyingGlass,
-                    color: Color(0xff64748B),
+                  prefixIcon: Padding(
+                    padding: const EdgeInsets.only(left: 5, top: 7),
+                    child: const FaIcon(
+                      FontAwesomeIcons.magnifyingGlass,
+                      color: Color(0xff64748B),
+                      size: 16,
+                    ),
                   ),
                   border: InputBorder.none,
                   isDense: true,
                   hintText: 'Search location',
                   hintStyle: GoogleFonts.dmSans(
                     fontSize: 16,
-                    color: Color(0xff64748B),
+                    color: isDarkMode
+                        ? const Color(0xFF94A3B8)
+                        : const Color(0xff64748B),
                   ),
                 ),
               ),
@@ -71,19 +92,34 @@ class SearchScreenMobile extends StatelessWidget {
       ),
       body: Obx(() {
         if (controller.isLoading.value) {
-          return Center(child: CircularProgressIndicator());
+          return const Center(
+            child: CircularProgressIndicator(color: Color(0xff4FD18B)),
+          );
         }
         if (controller.errorMessage.value != "") {
-          return Center(child: Text('Failed to load data❌🥰'));
+          return Center(
+            child: Text(
+              'Failed to load data❌🥰',
+              style: GoogleFonts.dmSans(
+                color: isDarkMode ? Colors.white : Colors.black,
+              ),
+            ),
+          );
         }
         return controller.filteredLocations.isEmpty
             ? Center(
                 child: Text(
                   "No Location Found😟",
-                  style: GoogleFonts.dmSans(fontSize: 16),
+                  style: GoogleFonts.dmSans(
+                    fontSize: 16,
+                    color: isDarkMode
+                        ? const Color(0xFF94A3B8)
+                        : Colors.black87,
+                  ),
                 ),
               )
             : ListView.builder(
+                padding: const EdgeInsets.only(top: kToolbarHeight + 24),
                 itemCount: controller.filteredLocations.length,
                 itemBuilder: (context, index) {
                   return InkWell(
@@ -95,6 +131,9 @@ class SearchScreenMobile extends StatelessWidget {
                     child: ListTile(
                       title: Text(
                         controller.filteredLocations[index].locationName,
+                        style: GoogleFonts.dmSans(
+                          color: isDarkMode ? Colors.white : Colors.black87,
+                        ),
                       ),
                     ),
                   );

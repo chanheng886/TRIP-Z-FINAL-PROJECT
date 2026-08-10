@@ -16,26 +16,40 @@ class TextFiledsWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Card(
-      color: Color(0xffF4F4F7),
+      elevation: 0,
+      color: isDarkMode ? const Color(0xFF2C313C) : const Color(0xffF4F4F7),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: Color(0xffD4F3E2),
-          child: Icon(leadingIcon, size: 20, color: Color(0xff4FD18B)),
+          backgroundColor: isDarkMode
+              ? const Color(0xFF1E3A2F)
+              : const Color(0xffD4F3E2),
+          child: Icon(leadingIcon, size: 20, color: const Color(0xff4FD18B)),
         ),
-        title: Text(title, style: GoogleFonts.dmSans(fontSize: 14)),
+        title: Text(
+          title,
+          style: GoogleFonts.dmSans(
+            fontSize: 14,
+            color: isDarkMode ? const Color(0xFF94A3B8) : Colors.black87,
+          ),
+        ),
         subtitle: TextField(
           cursorHeight: 15,
           readOnly: true,
           enabled: false,
-          cursorColor: Color(0xff4FD18B),
-          style: GoogleFonts.dmSans(fontSize: 14),
+          cursorColor: const Color(0xff4FD18B),
+          style: GoogleFonts.dmSans(
+            fontSize: 14,
+            color: isDarkMode ? Colors.white : Colors.black,
+          ),
           decoration: InputDecoration(
             border: InputBorder.none,
             hintText: subTitle,
             hintStyle: GoogleFonts.dmSans(
               fontSize: 14,
-              color: Color(0xff64748B),
+              color: isDarkMode ? Colors.white70 : const Color(0xff64748B),
             ),
             isDense: true,
           ),
