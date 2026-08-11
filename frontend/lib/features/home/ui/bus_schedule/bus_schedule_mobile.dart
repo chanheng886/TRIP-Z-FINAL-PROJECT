@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:frontend/features/home/repository/bus_schedule_repository.dart';
+import 'package:frontend/features/home/ui/seats/seat_selection_mobile.dart';
 import 'package:frontend/features/home/viewmodel/bus_schedule_viewmodel.dart';
 import 'package:frontend/features/home/widgets/bus_ticket_card.dart';
 import 'package:frontend/shared/services/bus_schedule_serivice.dart';
@@ -116,7 +117,19 @@ class _BusScheduleMobileState extends State<BusScheduleMobile> {
           itemCount: controller.schedules.length,
           itemBuilder: (context, index) {
             final schedule = controller.schedules[index];
-            return BusTicketCard(schedule: schedule, onBookNow: () {});
+            return BusTicketCard(
+              schedule: schedule,
+              onBookNow: () {
+                Get.to(
+                  SeatSelectionMobile(
+                    busScheduleId: schedule.id,
+                    basePrice: schedule.basePrice,
+                    fromLocation: schedule.fromLocation,
+                    toLocation: schedule.toLocation,
+                  ),
+                );
+              },
+            );
           },
         );
       }),

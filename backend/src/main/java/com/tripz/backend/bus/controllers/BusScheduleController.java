@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.tripz.backend.bus.dtos.RequestDTO.BusScheduleRequestDTO;
 import com.tripz.backend.bus.dtos.RequestDTO.BusScheduleSearchRequestDTO;
 import com.tripz.backend.bus.dtos.ResponseDTO.BusScheduleResponseDTO;
+import com.tripz.backend.bus.dtos.ResponseDTO.SeatMapResponseDTO;
 import com.tripz.backend.bus.services.BusScheduleService;
 
 import jakarta.validation.Valid;
@@ -72,4 +73,9 @@ public class BusScheduleController {
     public BusScheduleResponseDTO deleteBusSchedule(@PathVariable Long id){
         return busScheduleService.deleteBusSchedule(id);
     }
+
+    @GetMapping("/{id}/seats")
+    public ResponseEntity<SeatMapResponseDTO> getSeatMap(@PathVariable Long id) {
+    return ResponseEntity.ok(busScheduleService.getSeatMap(id));
+}
 }

@@ -5,9 +5,14 @@ import org.springframework.stereotype.Service;
 import com.tripz.backend.bus.dtos.RequestDTO.BusScheduleRequestDTO;
 import com.tripz.backend.bus.dtos.RequestDTO.BusScheduleSearchRequestDTO;
 import com.tripz.backend.bus.dtos.ResponseDTO.BusScheduleResponseDTO;
+import com.tripz.backend.bus.dtos.ResponseDTO.SeatMapResponseDTO;
 import com.tripz.backend.bus.mappers.BusScheduleMapper;
+import com.tripz.backend.bus.models.BusBooking;
 import com.tripz.backend.bus.models.BusSchedule;
+import com.tripz.backend.bus.repositories.BusBookingRepository;
 import com.tripz.backend.bus.repositories.BusScheduleRepository;
+import com.tripz.backend.bus.utils.SeatLabelGenerator;
+
 import lombok.RequiredArgsConstructor;
 
 
@@ -16,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 public class BusScheduleService {
     private final BusScheduleRepository busScheduleRepository;
     private final BusScheduleMapper busScheduleMapper;
+    private final BusBookingRepository busBookingRepository;
 
     //✅✅ Get All Bus Schedule
     public List<BusScheduleResponseDTO> getAllBusSchedule(){
@@ -69,4 +75,22 @@ public class BusScheduleService {
         busScheduleRepository.delete(busSchedule);
         return busScheduleMapper.toResponse(busSchedule);
     }
+
+    public SeatMapResponseDTO getSeatMap(Long busScheduleId) {
+    BusSchedule schedule = busScheduleRepository.findById(busScheduleId)
+        .orElseThrow(() -> new RuntimeException("Bus schedule not found"));
+
+    List<String> allSeats = SeatLabelGenerator.generateSeats(schedule.getBus().getSeatCapacity());
+
+    List<String> bookedSeats = busBookingRepository.findByBusSchedule_Id(busScheduleId)
+        .stream()
+        .map(BusBooking::getSeatNumber)
+        .collect(Collectors.toList());
+
+    return SeatMapResponseDTO.builder()
+        .busScheduleId(busScheduleId)
+        .allSeats(allSeats)
+        .bookedSeats(bookedSeats)
+        .build();
+}
 }

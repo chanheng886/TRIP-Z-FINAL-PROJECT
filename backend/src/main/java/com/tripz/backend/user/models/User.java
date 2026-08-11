@@ -1,7 +1,5 @@
 package com.tripz.backend.user.models;
-
 import com.tripz.backend.user.enums.UserRole;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

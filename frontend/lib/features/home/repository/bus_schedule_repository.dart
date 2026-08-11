@@ -1,4 +1,5 @@
 import 'package:frontend/features/home/models/bus_schedule.dart';
+import 'package:frontend/features/home/models/seat_map.dart';
 import 'package:frontend/shared/services/bus_schedule_serivice.dart';
 
 class BusScheduleRepository {
@@ -20,5 +21,10 @@ class BusScheduleRepository {
     return rawList
         .map((json) => BusSchedule.fromJson(json as Map<String, dynamic>))
         .toList();
+  }
+
+  Future<SeatMap> getSeatMap(int busScheduleId) async {
+    final json = await busScheduleService.getSeatMap(busScheduleId);
+    return SeatMap.fromJson(json);
   }
 }
