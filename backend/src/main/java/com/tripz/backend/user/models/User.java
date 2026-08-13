@@ -14,6 +14,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
+
 @Table(name = "tb_users")
 @Entity
 @NoArgsConstructor
@@ -41,4 +42,8 @@ public class User {
 
     @Column(name = "phone", unique = true)
     private String phone;
+
+    @Column(name = "password", nullable = false)
+    private String password;
 }
+

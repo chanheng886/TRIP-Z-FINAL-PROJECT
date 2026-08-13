@@ -39,10 +39,11 @@ public class BookingController {
         return bookingService.getBookingByBookingID(id);
     }
 
-    @GetMapping("date/{bookingDate}")
-    public List<BookingResponseDTO> getAllBookingByBookingDate(@PathVariable LocalDate bookingDate){
-        return bookingService.getAllBookingByBookinDate(bookingDate);
-    }
+    @GetMapping("/date/{date}")
+public ResponseEntity<List<BookingResponseDTO>> getBookingsByDate(@PathVariable LocalDate date) {
+    return ResponseEntity.ok(bookingService.getAllBookingByBookingDate(date));
+}
+
 
     @PostMapping
     public ResponseEntity<BookingResponseDTO> createBooking(@Valid @RequestBody CreateBusBookingRequestDTO dto){
