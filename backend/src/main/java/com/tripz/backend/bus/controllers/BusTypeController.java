@@ -17,6 +17,7 @@ import com.tripz.backend.bus.services.BusTypeService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
 @RequestMapping("/api/v1/bus-type")
@@ -45,12 +46,14 @@ public class BusTypeController {
 
     //✅✅ Create Bus Type
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public BusTypeResponseDTO createBusType(@Valid @RequestBody BusTypeRequestDTO dto){
         return busTypeService.createBusType(dto);
     }
 
     //✅✅ Update Bus Type
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public BusTypeResponseDTO updateBusType(@PathVariable Long id, @Valid @RequestBody BusTypeRequestDTO dto){
         return busTypeService.updateBusType(id, dto);
     }

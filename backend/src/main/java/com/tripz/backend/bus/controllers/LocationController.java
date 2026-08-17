@@ -18,6 +18,7 @@ import com.tripz.backend.bus.services.LocationService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
 @RequestMapping("/api/v1/bus-locations")
@@ -46,18 +47,21 @@ public class LocationController {
 
     //✅ Create Location
     @PostMapping("/create")
+    @PreAuthorize("hasRole('ADMIN')")
     public LocationResponseDTO createLocation(@Valid @RequestBody LocationRequestDTO dto){
         return locationService.createLocation(dto);
     }
 
     //✅ Update Location
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public LocationResponseDTO updateLocation(@PathVariable Long id, @Valid @RequestBody LocationRequestDTO dto){
         return locationService.updateLocation(id, dto);
     }
 
     //✅ Delete Location By Id
     @DeleteMapping("delete/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public LocationResponseDTO deleteLocationById(@PathVariable Long id){
         return locationService.deleteLocationById(id);
     }

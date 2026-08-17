@@ -14,6 +14,7 @@ import com.tripz.backend.bus.services.CompanyService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
 @RequestMapping("/api/v1/bus-company")
@@ -41,18 +42,21 @@ public class CompanyController {
 
     //✅✅ Create Bus Company
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public CompanyResponseDTO createBusCompany(@Valid @RequestBody CompanyRequestDTO request){
         return companyService.createBusCompany(request);
     }
 
     //✅✅ Update Bus Company
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public CompanyResponseDTO updateBusCompany(@PathVariable Long id, @RequestBody CompanyRequestDTO request){
         return companyService.updateCompany(id, request);
     }
 
     //✅✅ Delete Bus Company By Id
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public CompanyResponseDTO deleteBusCompany(@PathVariable Long id){
         return companyService.deleteCompanyById(id);
     }

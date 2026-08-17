@@ -17,6 +17,7 @@ import com.tripz.backend.bus.services.RouteService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
 @RequestMapping("/api/v1/bus-route")
@@ -41,16 +42,19 @@ public class RouteController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public RouteResponseDTO createBusRoute(@RequestBody RouteRequestDTO request){
         return routeService.createRoute(request);
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public RouteResponseDTO updateRoute(@PathVariable Long id, @RequestBody RouteRequestDTO request){
         return routeService.updateRoute(id, request);
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public RouteResponseDTO deleteRouteById(@PathVariable Long id){
         return routeService.deleteRoute(id);
     }

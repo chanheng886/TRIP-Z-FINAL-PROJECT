@@ -7,7 +7,11 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import com.tripz.backend.bus.models.BusSchedule;
 
 public interface BusScheduleRepository extends JpaRepository<BusSchedule, Long> {
-    @EntityGraph(attributePaths = {"bus", "bus.company", "route", "route.fromLocation", "route.toLocation"})
+    @Override
+    @EntityGraph(attributePaths = {"bus", "bus.company", "bus.busType", "route", "route.fromLocation", "route.toLocation", "busType"})
+    List<BusSchedule> findAll();
+
+    @EntityGraph(attributePaths = {"bus", "bus.company", "bus.busType", "route", "route.fromLocation", "route.toLocation", "busType"})
     List<BusSchedule> findByRoute_FromLocation_IdAndRoute_ToLocation_IdAndTravelDateAndAvailableSeatGreaterThan(
         Long fromLocationId, 
         Long toLocationId, 

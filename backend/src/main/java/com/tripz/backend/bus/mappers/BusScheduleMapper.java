@@ -76,11 +76,10 @@ public class BusScheduleMapper {
         .travelDate(busSchedule.getTravelDate())
         .departureTime(busSchedule.getDepartureTime())
         .arrivalTime(busSchedule.getArrivalTime())
+        .busTypeId(busSchedule.getBusType().getId())
         .busType(busSchedule.getBusType().getBusType())
         .availableSeat(busSchedule.getAvailableSeat())
         .basePrice(busSchedule.getBasePrice())
-        .busTypeId(busSchedule.getBusType().getId())
-        .busType(busSchedule.getBusType().getBusType())
         .status(busSchedule.getBusScheduleStatus())
         .build();
     }

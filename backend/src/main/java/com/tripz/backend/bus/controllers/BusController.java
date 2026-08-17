@@ -17,6 +17,7 @@ import com.tripz.backend.bus.services.BusService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @RequestMapping("/api/v1/buses")
 @RestController
@@ -47,12 +48,14 @@ public class BusController {
 
     //✅ Create Bus
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public BusResponseDTO createBus(@Valid @RequestBody BusRequestDTO request){
         return busService.createBus(request);
     }
 
     //✅Update Bus
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public BusResponseDTO updateBus(@PathVariable Long id, @Valid @RequestBody BusRequestDTO request){
         return busService.updateBus(id, request);
     }

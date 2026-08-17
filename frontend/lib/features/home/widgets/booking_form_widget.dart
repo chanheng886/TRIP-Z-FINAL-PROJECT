@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/features/auth/viewmodel/auth_viewmodel.dart';
 import 'package:frontend/features/home/models/booking_request.dart';
 import 'package:frontend/features/home/models/passenger.dart';
 import 'package:frontend/features/home/presentation/booking_confirmation_screen.dart';
-import 'package:frontend/features/home/ui/booking_confirmation/booking_confirmation_mobile.dart';
 import 'package:frontend/features/home/viewmodel/booking_view_model.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -115,6 +115,17 @@ void showBookingFormSheet(
                                   return;
                                 }
 
+                                final authVM = Get.find<AuthViewmodel>();
+                                final userId = authVM.currentUser?.id;
+                                if (userId == null) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Please login first'),
+                                    ),
+                                  );
+                                  return;
+                                }
+
                                 final passengers = controller.selectedSeats
                                     .map(
                                       (seat) => Passenger(
@@ -125,13 +136,8 @@ void showBookingFormSheet(
                                     .toList();
 
                                 final request = BookingRequest(
+                                  customerId: userId,
                                   busScheduleId: busScheduleId,
-                                  bookerName: nameController.text,
-                                  phone: phoneController.text,
-                                  email: emailController.text.isEmpty
-                                      ? null
-                                      : emailController.text,
-                                  gender: selectedGender,
                                   paymentMethod: selectedPayment,
                                   passengers: passengers,
                                 );

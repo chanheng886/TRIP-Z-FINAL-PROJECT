@@ -50,13 +50,17 @@ class BookingResponse {
       bookingDate: DateTime.parse(json['bookingDate'] as String),
       totalAmount: (json['totalAmount'] as num).toDouble(),
       paymentMethod: json['paymentMethod'] as String,
-      bookingStatus: BookingStatus.fromString(json['bookingStatus'] as String),
-      seatNumbers: List<String>.from(json['seatNumbers'] as List),
-      fromLocation: json['fromLocation'] as String,
-      toLocation: json['toLocation'] as String,
-      travelDate: DateTime.parse(json['travelDate'] as String),
-      departureTime: json['departureTime'] as String,
-      arrivalTime: json['arrivalTime'] as String,
+      bookingStatus: BookingStatus.fromString(json['bookingStatus'] as String? ?? 'Pending'),
+      seatNumbers: json['seatNumbers'] != null
+          ? List<String>.from(json['seatNumbers'] as List)
+          : [],
+      fromLocation: json['fromLocation'] as String? ?? 'N/A',
+      toLocation: json['toLocation'] as String? ?? 'N/A',
+      travelDate: json['travelDate'] != null
+          ? DateTime.parse(json['travelDate'] as String)
+          : DateTime.now(),
+      departureTime: json['departureTime'] as String? ?? '00:00',
+      arrivalTime: json['arrivalTime'] as String? ?? '00:00',
     );
   }
 }

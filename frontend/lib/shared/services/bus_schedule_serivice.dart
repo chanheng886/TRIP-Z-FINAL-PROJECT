@@ -1,8 +1,17 @@
 import 'dart:convert';
+import 'package:frontend/shared/services/auth_service.dart';
 import 'package:http/http.dart' as http;
 
 class BusScheduleService {
-  final String baseUrl = "http://172.16.104.22:8080/api/v1/bus-schedules";
+  final String baseUrl = "http://172.16.104.16:8080/api/v1/bus-schedules";
+
+  Future<Map<String, String>> _headers() async {
+    final token = await AuthService().getToken();
+    return {
+      'Content-Type': 'application/json',
+      if (token != null) 'Authorization': 'Bearer $token',
+    };
+  }
 
   Future<List<dynamic>> searchBusSchedules({
     required int fromLocationId,
@@ -21,7 +30,7 @@ class BusScheduleService {
         },
       );
 
-      final response = await http.get(uri);
+      final response = await http.get(uri, headers: await _headers());
       print('Status: ${response.statusCode}');
       print('Body: ${response.body}');
 
@@ -39,7 +48,7 @@ class BusScheduleService {
   Future<Map<String, dynamic>> getSeatMap(int busScheduleId) async {
     try {
       final uri = Uri.parse('$baseUrl/$busScheduleId/seats');
-      final response = await http.get(uri);
+      final response = await http.get(uri, headers: await _headers());
       print('Status: ${response.statusCode}');
       print('Body: ${response.body}');
 
@@ -54,3 +63,4 @@ class BusScheduleService {
     }
   }
 }
+

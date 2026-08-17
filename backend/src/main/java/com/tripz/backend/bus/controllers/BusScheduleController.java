@@ -21,6 +21,7 @@ import com.tripz.backend.bus.services.BusScheduleService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
 @RequestMapping("/api/v1/bus-schedules")
@@ -58,18 +59,21 @@ public class BusScheduleController {
 
     
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public BusScheduleResponseDTO createBusSchedule(@Valid @RequestBody BusScheduleRequestDTO dto){
         return busScheduleService.createBusSchedule(dto);
     }
 
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public BusScheduleResponseDTO updateBusSchedule(@PathVariable Long id, @Valid @RequestBody BusScheduleRequestDTO dto){
         return busScheduleService.updateBusSchedule(id, dto);
     }
 
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public BusScheduleResponseDTO deleteBusSchedule(@PathVariable Long id){
         return busScheduleService.deleteBusSchedule(id);
     }

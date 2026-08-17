@@ -1,8 +1,17 @@
 import 'dart:convert';
+import 'package:frontend/shared/services/auth_service.dart';
 import 'package:http/http.dart' as http;
 
 class BookingService {
-  final String baseUrl = "http://172.16.104.22:8080/api/v1/booking";
+  final String baseUrl = "http://172.16.104.16:8080/api/v1/booking";
+
+  Future<Map<String, String>> _headers() async {
+    final token = await AuthService().getToken();
+    return {
+      'Content-Type': 'application/json',
+      if (token != null) 'Authorization': 'Bearer $token',
+    };
+  }
 
   Future<Map<String, dynamic>> createBooking(
     Map<String, dynamic> bookingJson,
@@ -11,7 +20,7 @@ class BookingService {
       final uri = Uri.parse(baseUrl);
       final response = await http.post(
         uri,
-        headers: {'Content-Type': 'application/json'},
+        headers: await _headers(),
         body: json.encode(bookingJson),
       );
       print('Status: ${response.statusCode}');
