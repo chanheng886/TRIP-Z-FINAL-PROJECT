@@ -3,7 +3,7 @@ import 'package:frontend/shared/services/auth_service.dart';
 import 'package:http/http.dart' as http;
 
 class AdminDashboardService {
-  final String baseUrl = "http://172.16.104.16:8080/api/v1";
+  final String baseUrl = "http://172.16.104.48:8080/api/v1";
 
   Future<Map<String, String>> _headers() async {
     final token = await AuthService().getToken();
@@ -67,6 +67,14 @@ class AdminDashboardService {
       headers: await _headers(),
     );
     return _decodeList(response, fallback: "Failed to load bookings!");
+  }
+
+  Future<List<dynamic>> getBookingsByDate(String date) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/booking/date/$date'),
+      headers: await _headers(),
+    );
+    return _decodeList(response, fallback: "Failed to load bookings for this date!");
   }
 
   Future<Map<String, dynamic>> createLocation({
@@ -165,6 +173,18 @@ class AdminDashboardService {
       }),
     );
     return _decodeMap(response, fallback: "Failed to create bus schedule!");
+  }
+
+  Future<Map<String, dynamic>> updateBookingStatus({
+    required int bookingId,
+    required String status,
+  }) async {
+    final response = await http.patch(
+      Uri.parse('$baseUrl/booking/$bookingId/status'),
+      headers: await _headers(),
+      body: json.encode({'status': status}),
+    );
+    return _decodeMap(response, fallback: "Failed to update booking status!");
   }
 
   List<dynamic> _decodeList(

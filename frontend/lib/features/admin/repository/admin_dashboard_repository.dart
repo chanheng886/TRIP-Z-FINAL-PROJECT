@@ -58,6 +58,13 @@ class AdminDashboardRepository {
         .toList();
   }
 
+  Future<List<BookingResponse>> fetchBookingsByDate(String date) async {
+    final data = await service.getBookingsByDate(date);
+    return data
+        .map((json) => BookingResponse.fromJson(json as Map<String, dynamic>))
+        .toList();
+  }
+
   Future<Map<String, dynamic>> createLocation({
     required String locationName,
     required String imageUrl,
@@ -131,6 +138,16 @@ class AdminDashboardRepository {
       status: status,
       basePrice: basePrice,
       busTypeId: busTypeId,
+    );
+  }
+
+  Future<Map<String, dynamic>> updateBookingStatus({
+    required int bookingId,
+    required String status,
+  }) {
+    return service.updateBookingStatus(
+      bookingId: bookingId,
+      status: status,
     );
   }
 }

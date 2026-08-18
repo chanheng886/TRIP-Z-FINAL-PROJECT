@@ -155,6 +155,7 @@ class _SeatSelectionScreenState extends State<SeatSelectionMobile> {
 
   Widget _legendDot(Color color, String label, {bool border = false}) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Container(
           width: 14,
@@ -184,8 +185,9 @@ class _SeatSelectionScreenState extends State<SeatSelectionMobile> {
             BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4),
           ],
         ),
-        child: SafeArea(
+          child: SafeArea(
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Expanded(
                 child: Column(

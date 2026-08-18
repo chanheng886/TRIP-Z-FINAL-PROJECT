@@ -68,7 +68,7 @@ class SearchScreenMobile extends StatelessWidget {
                 ),
                 decoration: InputDecoration(
                   prefixIcon: Padding(
-                    padding: const EdgeInsets.only(left: 5, top: 7),
+                    padding: const EdgeInsets.only(left: 14, top: 12),
                     child: const FaIcon(
                       FontAwesomeIcons.magnifyingGlass,
                       color: Color(0xff64748B),

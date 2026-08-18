@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/features/history/ui/history_desktop.dart';
+import 'package:frontend/features/history/ui/history_mobile.dart';
+import 'package:frontend/shared/widgets/responsive_layout.dart';
 
 class HistoryScreen extends StatelessWidget {
   const HistoryScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(body: Center(child: Text('History Booked Screen')));
+    return const ResponsiveLayout(
+      mobile: HistoryMobile(),
+      desktop: HistoryDesktop(),
+    );
   }
 }

@@ -1,7 +1,7 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_remix/flutter_remix.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:frontend/features/auth/viewmodel/auth_viewmodel.dart';
 import 'package:frontend/features/home/models/bus_location.dart';
 import 'package:frontend/features/home/ui/bus_schedule/bus_schedule_mobile.dart';
 import 'package:frontend/features/home/ui/search/search_screen_mobile.dart';
@@ -42,13 +42,17 @@ class _HomeScreenMobileState extends State<HomeScreenMobile> {
           leading: Padding(
             padding: const EdgeInsets.only(left: 10),
             child: Container(
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
                 color: Colors.grey,
                 shape: BoxShape.circle,
               ),
-              child: Image(
-                image: CachedNetworkImageProvider(
-                  'https://i.pinimg.com/736x/c5/8c/9d/c58c9d7eaaf5b09ee7b10bdb07ec1186.jpg',
+              child: Center(
+                child: FaIcon(
+                  FontAwesomeIcons.user,
+                  color: Colors.white,
+                  size: 20,
                 ),
               ),
             ),
@@ -57,7 +61,7 @@ class _HomeScreenMobileState extends State<HomeScreenMobile> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Welcome, chan',
+                'Welcome, ${Get.find<AuthViewmodel>().currentUser?.username ?? 'User'}',
                 style: GoogleFonts.dmSans(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -68,7 +72,7 @@ class _HomeScreenMobileState extends State<HomeScreenMobile> {
                 ),
               ),
               Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Icon(
                     FlutterRemix.map_pin_line,

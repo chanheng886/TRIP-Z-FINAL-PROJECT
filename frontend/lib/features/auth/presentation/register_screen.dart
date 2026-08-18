@@ -84,7 +84,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
         fillColor: inputFieldColor,
         labelText: label,
         labelStyle: GoogleFonts.dmSans(color: secondaryText),
-        prefixIcon: FaIcon(icon, color: AppColors.primary, size: 18),
+        prefixIcon: Padding(
+          padding: const EdgeInsets.only(left: 14, top: 12),
+          child: FaIcon(icon, color: AppColors.primary, size: 18),
+        ),
         suffixIcon: suffix,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),

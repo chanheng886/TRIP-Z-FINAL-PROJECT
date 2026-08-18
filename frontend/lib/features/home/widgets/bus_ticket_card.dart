@@ -39,6 +39,7 @@ class BusTicketCard extends StatelessWidget {
             // Top Section: Route & Subtitle
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Expanded(
                   child: Text(

@@ -11,4 +11,9 @@ class BookingRepository {
     final json = await bookingService.createBooking(request.toJson());
     return BookingResponse.fromJson(json);
   }
+
+  Future<List<BookingResponse>> getUserBookings(int userId) async {
+    final list = await bookingService.getBookingsByUserId(userId);
+    return list.map((json) => BookingResponse.fromJson(json)).toList();
+  }
 }

@@ -12,4 +12,5 @@ import com.tripz.backend.booking.models.Booking;
  */
 public interface BookingRepository extends JpaRepository<Booking, Long> {
     List<Booking> findByBookingDate(LocalDate bookingDate);
+    List<Booking> findByUserIdOrderByBookingDateDesc(Long userId);
 }

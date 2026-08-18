@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:frontend/core/theme/app_colors.dart';
+import 'package:frontend/core/theme/theme_controller.dart';
 import 'package:frontend/features/admin/presentation/admin_dashboard_screen.dart';
 import 'package:frontend/features/auth/models/user.dart';
 import 'package:frontend/features/auth/presentation/login_screen.dart';
@@ -50,10 +51,12 @@ class ProfileScreen extends StatelessWidget {
                   color: AppColors.primary,
                   shape: BoxShape.circle,
                 ),
-                child: FaIcon(
-                  FontAwesomeIcons.user,
-                  color: Colors.white,
-                  size: 40,
+                child: Center(
+                  child: FaIcon(
+                    FontAwesomeIcons.user,
+                    color: Colors.white,
+                    size: 40,
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -91,6 +94,8 @@ class ProfileScreen extends StatelessWidget {
                   value: user.role.name,
                 ),
               ],
+              const SizedBox(height: 24),
+              _DarkModeTile(isDarkMode: isDarkMode),
               const SizedBox(height: 24),
               if (user != null && user.role == UserRole.Admin) ...[
                 SizedBox(
@@ -181,6 +186,7 @@ class _InfoTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
             width: 40,
@@ -191,7 +197,9 @@ class _InfoTile extends StatelessWidget {
                   : const Color(0xffD4F3E2),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: FaIcon(icon, size: 18, color: AppColors.primary),
+            child: Center(
+              child: FaIcon(icon, size: 18, color: AppColors.primary),
+            ),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -218,6 +226,86 @@ class _InfoTile extends StatelessWidget {
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DarkModeTile extends StatelessWidget {
+  final bool isDarkMode;
+
+  const _DarkModeTile({required this.isDarkMode});
+
+  @override
+  Widget build(BuildContext context) {
+    final cardColor = isDarkMode ? const Color(0xFF1E222B) : Colors.white;
+    final themeController = Get.find<ThemeController>();
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: isDarkMode
+                  ? const Color(0xFF1E3A2F)
+                  : const Color(0xffD4F3E2),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Center(
+              child: FaIcon(
+                isDarkMode ? FontAwesomeIcons.moon : FontAwesomeIcons.sun,
+                size: 18,
+                color: AppColors.primary,
+              ),
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Appearance',
+                  style: GoogleFonts.dmSans(
+                    fontSize: 12,
+                    color: isDarkMode
+                        ? const Color(0xFF94A3B8)
+                        : const Color(0xff64748B),
+                  ),
+                ),
+                Text(
+                  isDarkMode ? 'Dark Mode' : 'Light Mode',
+                  style: GoogleFonts.dmSans(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: isDarkMode ? Colors.white : const Color(0xff1E293B),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Obx(() {
+            final isDark = themeController.themeMode.value == ThemeMode.dark;
+            return Switch(
+              value: isDark,
+              onChanged: (_) => themeController.toggleTheme(),
+              activeColor: AppColors.primary,
+              activeTrackColor: AppColors.primary.withOpacity(0.3),
+              inactiveThumbColor: Colors.grey.shade400,
+              inactiveTrackColor: Colors.grey.shade300,
+            );
+          }),
         ],
       ),
     );

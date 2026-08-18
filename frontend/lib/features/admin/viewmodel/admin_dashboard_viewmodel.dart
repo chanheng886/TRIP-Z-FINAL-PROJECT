@@ -25,6 +25,7 @@ class AdminDashboardViewmodel extends GetxController {
   final RxList<BusType> busTypes = <BusType>[].obs;
   final RxList<BusSchedule> schedules = <BusSchedule>[].obs;
   final RxList<BookingResponse> bookings = <BookingResponse>[].obs;
+  final Rxn<DateTime> selectedDate = Rxn<DateTime>();
 
   @override
   void onInit() {
@@ -156,6 +157,53 @@ class AdminDashboardViewmodel extends GetxController {
           basePrice: basePrice,
           busTypeId: busTypeId,
         ));
+  }
+
+  Future<bool> updateBookingStatus({
+    required int bookingId,
+    required String status,
+  }) async {
+    isSubmitting.value = true;
+    errorMessage.value = "";
+    try {
+      final result = await repository.updateBookingStatus(
+        bookingId: bookingId,
+        status: status,
+      );
+      final updated = BookingResponse.fromJson(result);
+      final index = bookings.indexWhere((b) => b.id == bookingId);
+      if (index != -1) {
+        bookings[index] = updated;
+      }
+      return true;
+    } catch (e) {
+      errorMessage.value = e.toString().replaceFirst('Exception: ', '');
+      return false;
+    } finally {
+      isSubmitting.value = false;
+    }
+  }
+
+  Future<void> loadBookingsByDate(DateTime date) async {
+    selectedDate.value = date;
+    isSubmitting.value = true;
+    bookingError.value = "";
+    try {
+      final dateStr =
+          '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+      final result = await repository.fetchBookingsByDate(dateStr);
+      bookings.value = result;
+    } catch (e) {
+      bookingError.value = e.toString().replaceFirst('Exception: ', '');
+      bookings.clear();
+    } finally {
+      isSubmitting.value = false;
+    }
+  }
+
+  Future<void> clearDateFilter() async {
+    selectedDate.value = null;
+    await loadOptions();
   }
 
   Future<bool> _run(Future<Map<String, dynamic>> Function() action) async {

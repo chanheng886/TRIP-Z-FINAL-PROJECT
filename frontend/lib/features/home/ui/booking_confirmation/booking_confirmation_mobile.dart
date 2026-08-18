@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:frontend/app/main_app.dart';
 import 'package:frontend/features/home/models/booking_response.dart';
+import 'package:frontend/features/home/presentation/ticket_screen.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -30,10 +31,12 @@ class BookingConfirmationMobile extends StatelessWidget {
                   color: colorScheme.primary.withOpacity(0.15),
                   shape: BoxShape.circle,
                 ),
-                child: FaIcon(
-                  FontAwesomeIcons.check,
-                  color: colorScheme.primary,
-                  size: 32,
+                child: Center(
+                  child: FaIcon(
+                    FontAwesomeIcons.check,
+                    color: colorScheme.primary,
+                    size: 32,
+                  ),
                 ),
               ),
               const SizedBox(height: 20),
@@ -66,6 +69,7 @@ class BookingConfirmationMobile extends StatelessWidget {
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Expanded(
                           child: Column(
@@ -155,9 +159,39 @@ class BookingConfirmationMobile extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 height: 50,
-                child: ElevatedButton(
+                child: ElevatedButton.icon(
+                  icon: FaIcon(FontAwesomeIcons.ticket, size: 16),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: colorScheme.primary,
+                  ),
+                  onPressed: () {
+                    Get.to(
+                      () => TicketScreen(booking: booking),
+                    );
+                  },
+                  label: Text(
+                    'View Ticket',
+                    style: GoogleFonts.dmSans(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 15,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(
+                      color: colorScheme.primary,
+                      width: 1.5,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                   onPressed: () {
                     Get.offAll(() => MainApp());
@@ -165,7 +199,7 @@ class BookingConfirmationMobile extends StatelessWidget {
                   child: Text(
                     'Back to Home',
                     style: GoogleFonts.dmSans(
-                      color: Colors.white,
+                      color: colorScheme.primary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),

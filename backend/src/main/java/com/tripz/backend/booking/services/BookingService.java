@@ -21,7 +21,7 @@ import com.tripz.backend.bus.repositories.BusBookingRepository;
 import com.tripz.backend.bus.repositories.BusScheduleRepository;
 import com.tripz.backend.user.repositories.UserRepository;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -37,6 +37,15 @@ public class BookingService {
     @Transactional(readOnly = true)
     public List<BookingResponseDTO> getAllBooking() {
         return bookingRepository.findAll()
+                .stream()
+                .map(bookingMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    // ✅ Get All Booking By User ID
+    @Transactional(readOnly = true)
+    public List<BookingResponseDTO> getBookingsByUserId(Long userId) {
+        return bookingRepository.findByUserIdOrderByBookingDateDesc(userId)
                 .stream()
                 .map(bookingMapper::toResponse)
                 .collect(Collectors.toList());
@@ -68,6 +77,17 @@ public class BookingService {
 
         Booking update = bookingMapper.toUpdate(booking, dto);
         Booking saved = bookingRepository.save(update);
+        return bookingMapper.toResponse(saved);
+    }
+
+    // ✅ Update booking status only
+    @Transactional
+    public BookingResponseDTO updateBookingStatus(Long id, BookingStatus status) {
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Booking with id: " + id + " Not Found!"));
+
+        booking.setBookingStatus(status);
+        Booking saved = bookingRepository.save(booking);
         return bookingMapper.toResponse(saved);
     }
 

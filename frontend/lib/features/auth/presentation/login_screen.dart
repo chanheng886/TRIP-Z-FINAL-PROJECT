@@ -86,10 +86,12 @@ class _LoginScreenState extends State<LoginScreen> {
                           color: AppColors.primary,
                           shape: BoxShape.circle,
                         ),
-                        child: const FaIcon(
-                          FontAwesomeIcons.bus,
-                          color: Colors.white,
-                          size: 34,
+                        child: Center(
+                          child: const FaIcon(
+                            FontAwesomeIcons.bus,
+                            color: Colors.white,
+                            size: 34,
+                          ),
                         ),
                       ),
                     ),
@@ -121,10 +123,13 @@ class _LoginScreenState extends State<LoginScreen> {
                         fillColor: inputFieldColor,
                         labelText: 'Username',
                         labelStyle: GoogleFonts.dmSans(color: secondaryText),
-                        prefixIcon: const FaIcon(
-                          FontAwesomeIcons.user,
-                          color: AppColors.primary,
-                          size: 18,
+                        prefixIcon: Padding(
+                          padding: const EdgeInsets.only(left: 14, top: 12),
+                          child: const FaIcon(
+                            FontAwesomeIcons.user,
+                            color: AppColors.primary,
+                            size: 18,
+                          ),
                         ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
@@ -148,10 +153,13 @@ class _LoginScreenState extends State<LoginScreen> {
                         fillColor: inputFieldColor,
                         labelText: 'Password',
                         labelStyle: GoogleFonts.dmSans(color: secondaryText),
-                        prefixIcon: const FaIcon(
-                          FontAwesomeIcons.lock,
-                          color: AppColors.primary,
-                          size: 18,
+                        prefixIcon: Padding(
+                          padding: const EdgeInsets.only(left: 14, top: 12),
+                          child: const FaIcon(
+                            FontAwesomeIcons.lock,
+                            color: AppColors.primary,
+                            size: 18,
+                          ),
                         ),
                         suffixIcon: IconButton(
                           onPressed: () {

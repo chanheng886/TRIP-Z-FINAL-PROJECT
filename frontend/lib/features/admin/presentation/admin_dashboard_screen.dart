@@ -91,7 +91,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
       fillColor: inputFieldColor,
       labelText: label,
       labelStyle: GoogleFonts.dmSans(color: secondaryText),
-      prefixIcon: FaIcon(icon, color: AppColors.primary, size: 18),
+      prefixIcon: Padding(
+        padding: const EdgeInsets.only(left: 14, top: 12),
+        child: FaIcon(icon, color: AppColors.primary, size: 18),
+      ),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
         borderSide: BorderSide.none,
@@ -115,7 +118,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
       fillColor: inputFieldColor,
       labelText: label,
       labelStyle: GoogleFonts.dmSans(color: secondaryText),
-      prefixIcon: FaIcon(icon, color: AppColors.primary, size: 18),
+      prefixIcon: Padding(
+        padding: const EdgeInsets.only(left: 14, top: 12),
+        child: FaIcon(icon, color: AppColors.primary, size: 18),
+      ),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
         borderSide: BorderSide.none,
@@ -668,6 +674,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     Color secondaryText,
   ) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         FaIcon(FontAwesomeIcons.listUl, size: 13, color: AppColors.primary),
         const SizedBox(width: 8),
@@ -697,6 +704,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
             width: 36,
@@ -756,6 +764,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
             width: 36,
@@ -803,6 +812,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
             width: 36,
@@ -931,6 +941,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               FaIcon(FontAwesomeIcons.ticket, size: 16, color: AppColors.primary),
               const SizedBox(width: 10),
@@ -957,6 +968,101 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
             'View all customer bookings',
             style: GoogleFonts.dmSans(fontSize: 13, color: secondaryText),
           ),
+          const SizedBox(height: 20),
+          Obx(() {
+            final selDate = _vm.selectedDate.value;
+            return Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: cardBg,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: selDate != null
+                      ? AppColors.primary.withValues(alpha: 0.3)
+                      : secondaryText.withValues(alpha: 0.15),
+                ),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  FaIcon(FontAwesomeIcons.calendarDay, size: 16, color: AppColors.primary),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      selDate != null
+                          ? 'Filtered: ${DateFormat('EEEE, MMM dd, yyyy').format(selDate)}'
+                          : 'Filter by date',
+                      style: GoogleFonts.dmSans(
+                        fontSize: 13,
+                        fontWeight: selDate != null ? FontWeight.w600 : FontWeight.normal,
+                        color: selDate != null ? primaryText : secondaryText,
+                      ),
+                    ),
+                  ),
+                  if (selDate != null)
+                    GestureDetector(
+                      onTap: () => _vm.clearDateFilter(),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: const Color(0xffEF4444).withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          'Clear',
+                          style: GoogleFonts.dmSans(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xffEF4444),
+                          ),
+                        ),
+                      ),
+                    ),
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: () async {
+                      final now = DateTime.now();
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: selDate ?? now,
+                        firstDate: DateTime(2020),
+                        lastDate: DateTime(now.year + 1),
+                        builder: (context, child) {
+                          final isDark = Theme.of(context).brightness == Brightness.dark;
+                          return Theme(
+                            data: Theme.of(context).copyWith(
+                              colorScheme: isDark
+                                  ? const ColorScheme.dark(primary: AppColors.primary)
+                                  : const ColorScheme.light(primary: AppColors.primary),
+                            ),
+                            child: child!,
+                          );
+                        },
+                      );
+                      if (picked != null && mounted) {
+                        await _vm.loadBookingsByDate(picked);
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        'Pick Date',
+                        style: GoogleFonts.dmSans(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
           const SizedBox(height: 20),
           if (_vm.bookings.isEmpty && _vm.bookingError.value.isNotEmpty)
             Container(
@@ -1071,6 +1177,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Container(
                 width: 36,
@@ -1136,6 +1243,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
               borderRadius: BorderRadius.circular(10),
             ),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 const FaIcon(
                   FontAwesomeIcons.route,
@@ -1196,6 +1304,82 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
               color: secondaryText,
             ),
           ),
+          if (booking.bookingStatus == BookingStatus.Pending) ...[
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    height: 36,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xff10B981),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        elevation: 0,
+                      ),
+                      onPressed: () async {
+                        final ok = await _vm.updateBookingStatus(
+                          bookingId: booking.id,
+                          status: 'Confirmed',
+                        );
+                        if (!mounted) return;
+                        _showSnack(
+                          ok ? 'Booking confirmed!' : 'Failed to confirm booking',
+                          isError: !ok,
+                        );
+                      },
+                      icon: const FaIcon(FontAwesomeIcons.check, size: 12),
+                      label: Text(
+                        'Confirm',
+                        style: GoogleFonts.dmSans(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: SizedBox(
+                    height: 36,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xffEF4444),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        elevation: 0,
+                      ),
+                      onPressed: () async {
+                        final ok = await _vm.updateBookingStatus(
+                          bookingId: booking.id,
+                          status: 'Cancelled',
+                        );
+                        if (!mounted) return;
+                        _showSnack(
+                          ok ? 'Booking cancelled' : 'Failed to cancel booking',
+                          isError: !ok,
+                        );
+                      },
+                      icon: const FaIcon(FontAwesomeIcons.xmark, size: 12),
+                      label: Text(
+                        'Cancel',
+                        style: GoogleFonts.dmSans(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -1204,6 +1388,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   Widget _bookingInfoChip(FaIconData icon, String text, Color color) {
     return Row(
       mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         FaIcon(icon, size: 10, color: color),
         const SizedBox(width: 4),
