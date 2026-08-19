@@ -3,7 +3,7 @@ import 'package:frontend/shared/services/auth_service.dart';
 import 'package:http/http.dart' as http;
 
 class AdminDashboardService {
-  final String baseUrl = "http://172.16.104.48:8080/api/v1";
+  final String baseUrl = "http://172.16.104.45:8080/api/v1";
 
   Future<Map<String, String>> _headers() async {
     final token = await AuthService().getToken();
@@ -74,7 +74,10 @@ class AdminDashboardService {
       Uri.parse('$baseUrl/booking/date/$date'),
       headers: await _headers(),
     );
-    return _decodeList(response, fallback: "Failed to load bookings for this date!");
+    return _decodeList(
+      response,
+      fallback: "Failed to load bookings for this date!",
+    );
   }
 
   Future<Map<String, dynamic>> createLocation({

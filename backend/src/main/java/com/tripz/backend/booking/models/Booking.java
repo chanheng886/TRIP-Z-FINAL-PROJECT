@@ -46,5 +46,5 @@ public class Booking {
 
     @Builder.Default
     @Column(name = "status", nullable = false)
-    private BookingStatus bookingStatus = BookingStatus.Pending;
+    private BookingStatus bookingStatus = BookingStatus.Confirmed;
 }

@@ -46,6 +46,25 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-webmvc</artifactId>
 		</dependency>
+		<!-- Bakong Dependency -->
+		<dependency>
+    <groupId>kh.gov.nbc.bakong_khqr</groupId>
+    <artifactId>sdk-java</artifactId>
+    <version>1.0.0.17</version> <!-- check Maven Central for the latest version -->
+</dependency>
+
+<!-- Optional: only needed if you want the backend to render a scannable
+     PNG QR image itself, rather than having the frontend render the qr string -->
+<dependency>
+    <groupId>com.google.zxing</groupId>
+    <artifactId>core</artifactId>
+    <version>3.5.3</version>
+</dependency>
+<dependency>
+    <groupId>com.google.zxing</groupId>
+    <artifactId>javase</artifactId>
+    <version>3.5.3</version>
+</dependency>
 		<dependency>
 			<groupId>org.springdoc</groupId>
 			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>

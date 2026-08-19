@@ -110,7 +110,7 @@ public class BookingService {
                         .orElseThrow(() -> new RuntimeException("Customer not found")))
                 .bookingDate(LocalDate.now())
                 .paymentMethod(dto.getPaymentMethod())
-                .bookingStatus(BookingStatus.Pending)
+                .bookingStatus(BookingStatus.Confirmed)
                 .totalAmount(BigDecimal.ZERO)
                 .build();
 
