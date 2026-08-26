@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:frontend/features/ai/widgets/ai_chat_floating_button.dart';
 import 'package:frontend/features/contact/presentation/contact_screen.dart';
 import 'package:frontend/features/history/presentation/history_screen.dart';
 import 'package:frontend/features/home/presentation/home_screen.dart';
@@ -33,7 +34,12 @@ class _MainAppState extends State<MainApp> {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      body: _screens[_selectIndex],
+      body: Stack(
+        children: [
+          _screens[_selectIndex],
+          const AiChatFloatingButton(),
+        ],
+      ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectIndex,
         onTap: _onItemTapped,

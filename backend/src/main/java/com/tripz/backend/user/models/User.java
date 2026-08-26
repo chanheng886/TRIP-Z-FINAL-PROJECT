@@ -14,7 +14,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-
 @Table(name = "tb_users")
 @Entity
 @NoArgsConstructor
@@ -46,4 +45,3 @@ public class User {
     @Column(name = "password", nullable = false)
     private String password;
 }
-

@@ -52,6 +52,7 @@ public class SecurityConfig {
                 .requestMatchers(org.springframework.http.HttpMethod.PATCH, "/api/v1/booking/**").hasRole("ADMIN")
                 .requestMatchers(
                     "/api/v1/auth/**",
+                    "/api/v1/ai/**",
                     "/swagger-ui/**",
                     "/swagger-ui.html",
                     "/v3/api-docs/**",

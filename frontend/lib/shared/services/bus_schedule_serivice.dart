@@ -3,7 +3,7 @@ import 'package:frontend/shared/services/auth_service.dart';
 import 'package:http/http.dart' as http;
 
 class BusScheduleService {
-  final String baseUrl = "http://172.16.104.45:8080/api/v1/bus-schedules";
+  final String baseUrl = "http://172.16.104.11:8080/api/v1/bus-schedules";
 
   Future<Map<String, String>> _headers() async {
     final token = await AuthService().getToken();
