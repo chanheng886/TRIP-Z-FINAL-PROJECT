@@ -64,6 +64,8 @@ class _AiChatBottomSheetState extends State<AiChatBottomSheet> {
           basePrice: rec.price,
           fromLocation: rec.fromLocation,
           toLocation: rec.toLocation,
+          busType: rec.busType,
+          companyName: rec.companyName,
         ),
       ),
     );

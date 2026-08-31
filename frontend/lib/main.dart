@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:frontend/app/main_app.dart';
 import 'package:frontend/app/splash_screen.dart';
 import 'package:frontend/core/theme/app_theme.dart';
@@ -9,7 +10,10 @@ import 'package:frontend/features/auth/viewmodel/auth_viewmodel.dart';
 import 'package:frontend/shared/services/auth_service.dart';
 import 'package:get/get.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
+
   Get.put(ThemeController());
   Get.put(AuthViewmodel(AuthRepository(AuthService())));
   runApp(MyApp());

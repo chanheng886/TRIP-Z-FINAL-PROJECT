@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:frontend/features/home/repository/bus_schedule_repository.dart';
-import 'package:frontend/features/home/ui/seats/seat_selection_mobile.dart';
+import 'package:frontend/features/home/presentation/seat_selection_screen.dart';
 import 'package:frontend/features/home/viewmodel/bus_schedule_viewmodel.dart';
 import 'package:frontend/features/home/widgets/bus_ticket_card.dart';
 import 'package:frontend/shared/services/bus_schedule_serivice.dart';
@@ -121,11 +121,13 @@ class _BusScheduleMobileState extends State<BusScheduleMobile> {
               schedule: schedule,
               onBookNow: () {
                 Get.to(
-                  SeatSelectionMobile(
+                  () => SeatSelectionScreen(
                     busScheduleId: schedule.id,
                     basePrice: schedule.basePrice,
                     fromLocation: schedule.fromLocation,
                     toLocation: schedule.toLocation,
+                    busType: schedule.busType,
+                    companyName: schedule.companyName,
                   ),
                 );
               },

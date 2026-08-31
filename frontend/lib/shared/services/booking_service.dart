@@ -1,9 +1,10 @@
 import 'dart:convert';
 import 'package:frontend/shared/services/auth_service.dart';
+import 'package:frontend/shared/services/base_url.dart';
 import 'package:http/http.dart' as http;
 
 class BookingService {
-  final String baseUrl = "http://172.16.104.11:8080/api/v1/booking";
+  final String baseUrl = BaseUrl.booking;
 
   Future<Map<String, String>> _headers() async {
     final token = await AuthService().getToken();

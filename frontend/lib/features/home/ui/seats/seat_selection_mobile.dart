@@ -3,6 +3,8 @@ import 'package:frontend/features/home/repository/booking_repository.dart';
 import 'package:frontend/features/home/repository/bus_schedule_repository.dart';
 import 'package:frontend/features/home/viewmodel/booking_view_model.dart';
 import 'package:frontend/features/home/widgets/booking_form_widget.dart';
+import 'package:frontend/features/home/widgets/bus_vehicle_layout.dart';
+import 'package:frontend/features/home/widgets/minivan_vehicle_layout.dart';
 import 'package:frontend/shared/services/booking_service.dart';
 import 'package:frontend/shared/services/bus_schedule_serivice.dart';
 import 'package:get/get.dart';
@@ -13,6 +15,8 @@ class SeatSelectionMobile extends StatefulWidget {
   final double basePrice;
   final String fromLocation;
   final String toLocation;
+  final String? busType;
+  final String? companyName;
 
   const SeatSelectionMobile({
     super.key,
@@ -20,13 +24,15 @@ class SeatSelectionMobile extends StatefulWidget {
     required this.basePrice,
     required this.fromLocation,
     required this.toLocation,
+    this.busType,
+    this.companyName,
   });
 
   @override
-  State<SeatSelectionMobile> createState() => _SeatSelectionScreenState();
+  State<SeatSelectionMobile> createState() => _SeatSelectionMobileState();
 }
 
-class _SeatSelectionScreenState extends State<SeatSelectionMobile> {
+class _SeatSelectionMobileState extends State<SeatSelectionMobile> {
   final controller = Get.put(
     BookingViewmodel(
       BusScheduleRepository(BusScheduleService()),
@@ -40,36 +46,117 @@ class _SeatSelectionScreenState extends State<SeatSelectionMobile> {
     controller.loadSeatMap(widget.busScheduleId);
   }
 
+  bool get _isMinivan {
+    final type = widget.busType?.toLowerCase() ?? '';
+    return type.contains('van') || type.contains('minivan');
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final colorScheme = theme.colorScheme;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: theme.scaffoldBackgroundColor,
-        title: Text(
-          'Select Seats',
-          style: GoogleFonts.dmSans(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
+        elevation: 0,
+        centerTitle: true,
+        leading: IconButton(
+          icon: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            size: 20,
             color: colorScheme.onSurface,
           ),
+          onPressed: () => Get.back(),
+        ),
+        title: Column(
+          children: [
+            Text(
+              'Select Seats',
+              style: GoogleFonts.dmSans(
+                fontSize: 17,
+                fontWeight: FontWeight.bold,
+                color: colorScheme.onSurface,
+              ),
+            ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  widget.fromLocation,
+                  style: GoogleFonts.dmSans(
+                    fontSize: 12,
+                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_forward_rounded,
+                  size: 12,
+                  color: colorScheme.primary,
+                ),
+                Text(
+                  widget.toLocation,
+                  style: GoogleFonts.dmSans(
+                    fontSize: 12,
+                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
       body: Obx(() {
         if (controller.isLoadingSeats.value) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (controller.seatMapError.value != "") {
           return Center(
-            child: Text(
-              'Failed to load seat map 😟',
-              style: GoogleFonts.dmSans(fontSize: 16),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CircularProgressIndicator(color: colorScheme.primary),
+                const SizedBox(height: 16),
+                Text(
+                  'Loading vehicle layout...',
+                  style: GoogleFonts.dmSans(
+                    fontSize: 14,
+                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                  ),
+                ),
+              ],
             ),
           );
         }
+
+        if (controller.seatMapError.value.isNotEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.error_outline_rounded,
+                  size: 48,
+                  color: Colors.redAccent,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Failed to load vehicle seat map',
+                  style: GoogleFonts.dmSans(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ElevatedButton.icon(
+                  onPressed: () => controller.loadSeatMap(widget.busScheduleId),
+                  icon: const Icon(Icons.refresh_rounded),
+                  label: const Text('Try Again'),
+                ),
+              ],
+            ),
+          );
+        }
+
         final seatMap = controller.seatMap.value;
         if (seatMap == null) {
           return const SizedBox.shrink();
@@ -77,161 +164,343 @@ class _SeatSelectionScreenState extends State<SeatSelectionMobile> {
 
         return Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  _legendDot(colorScheme.primary, 'Selected'),
-                  const SizedBox(width: 16),
-                  _legendDot(Colors.grey.shade400, 'Booked'),
-                  const SizedBox(width: 16),
-                  _legendDot(theme.cardColor, 'Available', border: true),
-                ],
-              ),
-            ),
+            // Vehicle Info & Legend Header
+            _buildVehicleBanner(context, isDark, colorScheme),
+
+            // Scrollable Vehicle Cabin Interior
             Expanded(
-              child: GridView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                itemCount: seatMap.allSeats.length,
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 4,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                ),
-                itemBuilder: (context, index) {
-                  final seat = seatMap.allSeats[index];
-                  final isBooked = seatMap.isBooked(seat);
-
-                  return Obx(() {
-                    final isSelected = controller.selectedSeats.contains(seat);
-
-                    Color bgColor;
-                    Color textColor;
-                    if (isBooked) {
-                      bgColor = Colors.grey.shade400;
-                      textColor = Colors.white;
-                    } else if (isSelected) {
-                      bgColor = colorScheme.primary;
-                      textColor = Colors.white;
-                    } else {
-                      bgColor = theme.cardColor;
-                      textColor = colorScheme.onSurface;
-                    }
-
-                    return InkWell(
-                      onTap: isBooked
-                          ? null
-                          : () => controller.toggleSeat(seat),
-                      borderRadius: BorderRadius.circular(8),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: bgColor,
-                          borderRadius: BorderRadius.circular(8),
-                          border: (!isBooked && !isSelected)
-                              ? Border.all(color: Colors.grey.shade300)
-                              : null,
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          seat,
-                          style: GoogleFonts.dmSans(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: textColor,
-                          ),
-                        ),
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: _isMinivan
+                    ? MinivanVehicleLayout(
+                        seatMap: seatMap,
+                        selectedSeats: controller.selectedSeats,
+                        onSeatSelected: (seat) => controller.toggleSeat(seat),
+                      )
+                    : BusVehicleLayout(
+                        seatMap: seatMap,
+                        selectedSeats: controller.selectedSeats,
+                        onSeatSelected: (seat) => controller.toggleSeat(seat),
                       ),
-                    );
-                  });
-                },
               ),
             ),
-            _buildSummaryBar(context, colorScheme),
+
+            // Bottom Checkout / Summary Bar
+            _buildSummaryBar(context, colorScheme, isDark),
           ],
         );
       }),
     );
   }
 
-  Widget _legendDot(Color color, String label, {bool border = false}) {
+  Widget _buildVehicleBanner(
+    BuildContext context,
+    bool isDark,
+    ColorScheme colorScheme,
+  ) {
+    final vehicleTitle = widget.busType ?? (_isMinivan ? 'VIP Minivan' : 'Express Coach Bus');
+    final company = widget.companyName ?? 'Standard Operator';
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF161922) : Colors.white,
+        border: Border(
+          bottom: BorderSide(
+            color: isDark ? const Color(0xFF2C3242) : const Color(0xFFE2E8F0),
+          ),
+        ),
+      ),
+      child: Column(
+        children: [
+          // Vehicle Type Badge & Operator
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: colorScheme.primary.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      _isMinivan
+                          ? Icons.airport_shuttle_rounded
+                          : Icons.directions_bus_rounded,
+                      size: 18,
+                      color: colorScheme.primary,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        vehicleTitle,
+                        style: GoogleFonts.dmSans(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.onSurface,
+                        ),
+                      ),
+                      Text(
+                        company,
+                        style: GoogleFonts.dmSans(
+                          fontSize: 11,
+                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+
+              // Available seats counter badge
+              Obx(() {
+                final seatMap = controller.seatMap.value;
+                final availableCount = seatMap?.availableSeats.length ?? 0;
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: const Color(0xFF10B981).withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Text(
+                    '$availableCount Seats Left',
+                    style: GoogleFonts.dmSans(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF10B981),
+                    ),
+                  ),
+                );
+              }),
+            ],
+          ),
+
+          const SizedBox(height: 10),
+
+          // Interactive Status Legend
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _legendItem(
+                context,
+                const Color(0xFF22C55E),
+                'Selected',
+                isDark: isDark,
+              ),
+              _legendItem(
+                context,
+                isDark ? const Color(0xFF1E2430) : const Color(0xFFF1F5F9),
+                'Booked',
+                border: true,
+                isDark: isDark,
+              ),
+              _legendItem(
+                context,
+                isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1),
+                'Available',
+                border: true,
+                isDark: isDark,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _legendItem(
+    BuildContext context,
+    Color color,
+    String label, {
+    bool border = false,
+    IconData? icon,
+    required bool isDark,
+  }) {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Container(
-          width: 14,
-          height: 14,
+          width: 18,
+          height: 18,
           decoration: BoxDecoration(
             color: color,
             borderRadius: BorderRadius.circular(4),
-            border: border ? Border.all(color: Colors.grey.shade300) : null,
+            border: border
+                ? Border.all(
+                    color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                  )
+                : null,
           ),
+          child: icon != null
+              ? Icon(
+                  icon,
+                  size: 11,
+                  color: label == 'Selected'
+                      ? Colors.white
+                      : (isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8)),
+                )
+              : null,
         ),
         const SizedBox(width: 6),
-        Text(label, style: GoogleFonts.dmSans(fontSize: 12)),
+        Text(
+          label,
+          style: GoogleFonts.dmSans(
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildSummaryBar(BuildContext context, ColorScheme colorScheme) {
+  Widget _buildSummaryBar(
+    BuildContext context,
+    ColorScheme colorScheme,
+    bool isDark,
+  ) {
     return Obx(() {
-      final count = controller.selectedSeats.length;
+      final selectedList = controller.selectedSeats;
+      final count = selectedList.length;
       final total = count * widget.basePrice;
 
       return Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
         decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
+          color: isDark ? const Color(0xFF161922) : Colors.white,
           boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4),
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.06),
+              blurRadius: 10,
+              offset: const Offset(0, -4),
+            ),
           ],
         ),
-          child: SafeArea(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '$count seat${count == 1 ? '' : 's'} selected',
-                      style: GoogleFonts.dmSans(
-                        fontSize: 13,
-                        color: colorScheme.onSurface,
+              // Selected Seat Chips Preview
+              if (count > 0)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Row(
+                    children: [
+                      Text(
+                        'Seats: ',
+                        style: GoogleFonts.dmSans(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                        ),
                       ),
-                    ),
-                    Text(
-                      '\$${total.toStringAsFixed(2)}',
-                      style: GoogleFonts.dmSans(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: colorScheme.primary,
+                      Expanded(
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: selectedList.map((seat) {
+                              return Container(
+                                margin: const EdgeInsets.only(right: 6),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: colorScheme.primary.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                    color: colorScheme.primary.withValues(alpha: 0.4),
+                                  ),
+                                ),
+                                child: Text(
+                                  seat,
+                                  style: GoogleFonts.dmSans(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: colorScheme.primary,
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: colorScheme.primary,
-                ),
-                onPressed: count == 0
-                    ? null
-                    : () {
-                        showBookingFormSheet(
-                          context,
-                          controller: controller,
-                          busScheduleId: widget.busScheduleId,
-                          basePrice: widget.basePrice,
-                        );
-                      },
-                child: Text(
-                  'Continue',
-                  style: GoogleFonts.dmSans(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
+                    ],
                   ),
                 ),
+
+              // Price Calculation & Continue CTA Button
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '$count seat${count == 1 ? '' : 's'} selected',
+                          style: GoogleFonts.dmSans(
+                            fontSize: 12,
+                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                          ),
+                        ),
+                        Text(
+                          '\$${total.toStringAsFixed(2)}',
+                          style: GoogleFonts.dmSans(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: colorScheme.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: colorScheme.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 14,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: count > 0 ? 3 : 0,
+                    ),
+                    onPressed: count == 0
+                        ? null
+                        : () {
+                            showBookingFormSheet(
+                              context,
+                              controller: controller,
+                              busScheduleId: widget.busScheduleId,
+                              basePrice: widget.basePrice,
+                            );
+                          },
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Continue',
+                          style: GoogleFonts.dmSans(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        const Icon(Icons.arrow_forward_rounded, size: 16),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

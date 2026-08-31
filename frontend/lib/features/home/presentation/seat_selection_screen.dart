@@ -8,6 +8,8 @@ class SeatSelectionScreen extends StatefulWidget {
   final double basePrice;
   final String fromLocation;
   final String toLocation;
+  final String? busType;
+  final String? companyName;
 
   const SeatSelectionScreen({
     super.key,
@@ -15,6 +17,8 @@ class SeatSelectionScreen extends StatefulWidget {
     required this.basePrice,
     required this.fromLocation,
     required this.toLocation,
+    this.busType,
+    this.companyName,
   });
 
   @override
@@ -30,8 +34,17 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
         basePrice: widget.basePrice,
         fromLocation: widget.fromLocation,
         toLocation: widget.toLocation,
+        busType: widget.busType,
+        companyName: widget.companyName,
       ),
-      desktop: SeatSelectionDesktop(),
-    ); // ResponsiveLayout
+      desktop: SeatSelectionDesktop(
+        busScheduleId: widget.busScheduleId,
+        basePrice: widget.basePrice,
+        fromLocation: widget.fromLocation,
+        toLocation: widget.toLocation,
+        busType: widget.busType,
+        companyName: widget.companyName,
+      ),
+    );
   }
 }

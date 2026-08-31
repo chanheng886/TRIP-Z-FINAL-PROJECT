@@ -1,9 +1,10 @@
 import 'dart:convert';
 import 'package:frontend/shared/services/auth_service.dart';
+import 'package:frontend/shared/services/base_url.dart';
 import 'package:http/http.dart' as http;
 
 class AdminDashboardService {
-  final String baseUrl = "http://172.16.104.11:8080/api/v1";
+  final String baseUrl = BaseUrl.baseUrl;
 
   Future<Map<String, String>> _headers() async {
     final token = await AuthService().getToken();

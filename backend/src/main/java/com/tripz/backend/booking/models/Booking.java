@@ -1,11 +1,8 @@
 package com.tripz.backend.booking.models;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
-
 import com.tripz.backend.booking.enums.BookingStatus;
 import com.tripz.backend.user.models.User;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;

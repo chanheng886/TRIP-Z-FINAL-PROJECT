@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:frontend/shared/services/base_url.dart';
 import 'package:http/http.dart' as http;
 
 class AiChatResponse {
@@ -19,7 +20,7 @@ class AiChatResponse {
 }
 
 class AiService {
-  final String baseUrl = "http://172.16.104.11:8080/api/v1/ai";
+  final String baseUrl = BaseUrl.ai;
 
   Future<AiChatResponse> chat({
     required String message,
