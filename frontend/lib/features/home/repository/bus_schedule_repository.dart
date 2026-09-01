@@ -1,6 +1,6 @@
-import 'package:frontend/features/home/models/bus_schedule.dart';
-import 'package:frontend/features/home/models/seat_map.dart';
-import 'package:frontend/shared/services/bus_schedule_serivice.dart';
+import 'package:frontend/shared/model/bus_schedule.dart';
+import 'package:frontend/shared/model/seat_map.dart';
+import 'package:frontend/shared/service/bus_schedule_serivice.dart';
 
 class BusScheduleRepository {
   final BusScheduleService busScheduleService;

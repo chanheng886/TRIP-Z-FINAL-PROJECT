@@ -77,20 +77,59 @@ public class BusScheduleService {
     }
 
     public SeatMapResponseDTO getSeatMap(Long busScheduleId) {
-    BusSchedule schedule = busScheduleRepository.findById(busScheduleId)
-        .orElseThrow(() -> new RuntimeException("Bus schedule not found"));
+        BusSchedule schedule = busScheduleRepository.findById(busScheduleId)
+            .orElseThrow(() -> new RuntimeException("Bus schedule not found"));
 
-    List<String> allSeats = SeatLabelGenerator.generateSeats(schedule.getBus().getSeatCapacity());
+        long capacity = 0;
 
-    List<String> bookedSeats = busBookingRepository.findByBusSchedule_Id(busScheduleId)
-        .stream()
-        .map(BusBooking::getSeatNumber)
-        .collect(Collectors.toList());
+        // 1. Check if schedule BusType name specifies seat count (e.g. "25 Seats Bus" -> 25)
+        if (schedule.getBusType() != null && schedule.getBusType().getBusType() != null) {
+            String busTypeName = schedule.getBusType().getBusType();
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d+)\\s*[Ss]eat").matcher(busTypeName);
+            if (m.find()) {
+                try {
+                    capacity = Long.parseLong(m.group(1));
+                } catch (Exception ignored) {}
+            }
+        }
 
-    return SeatMapResponseDTO.builder()
-        .busScheduleId(busScheduleId)
-        .allSeats(allSeats)
-        .bookedSeats(bookedSeats)
-        .build();
-}
+        // 2. If not found, check Bus's BusType
+        if (capacity <= 0 && schedule.getBus() != null && schedule.getBus().getBusType() != null) {
+            String busTypeName = schedule.getBus().getBusType().getBusType();
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d+)\\s*[Ss]eat").matcher(busTypeName);
+            if (m.find()) {
+                try {
+                    capacity = Long.parseLong(m.group(1));
+                } catch (Exception ignored) {}
+            }
+        }
+
+        // 3. Check Bus seat capacity
+        if (capacity <= 0 && schedule.getBus() != null && schedule.getBus().getSeatCapacity() != null && schedule.getBus().getSeatCapacity() > 0) {
+            capacity = schedule.getBus().getSeatCapacity();
+        }
+
+        // 4. Check Schedule available seats
+        if (capacity <= 0 && schedule.getAvailableSeat() != null && schedule.getAvailableSeat() > 0) {
+            capacity = schedule.getAvailableSeat();
+        }
+
+        // Fallback default
+        if (capacity <= 0) {
+            capacity = 25;
+        }
+
+        List<String> allSeats = SeatLabelGenerator.generateSeats(capacity);
+
+        List<String> bookedSeats = busBookingRepository.findByBusSchedule_Id(busScheduleId)
+            .stream()
+            .map(BusBooking::getSeatNumber)
+            .collect(Collectors.toList());
+
+        return SeatMapResponseDTO.builder()
+            .busScheduleId(busScheduleId)
+            .allSeats(allSeats)
+            .bookedSeats(bookedSeats)
+            .build();
+    }
 }

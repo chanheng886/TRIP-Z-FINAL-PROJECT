@@ -1,4 +1,4 @@
-import 'package:frontend/features/home/models/bus_schedule.dart';
+import 'package:frontend/shared/model/bus_schedule.dart';
 
 class BusScheduleDataFake {
   static List<BusSchedule> schedules = [

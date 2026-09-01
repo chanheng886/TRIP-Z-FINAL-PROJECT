@@ -1,5 +1,5 @@
-import 'package:frontend/features/auth/models/auth_response.dart';
-import 'package:frontend/features/auth/models/user.dart';
+import 'package:frontend/features/auth/model/auth_response.dart';
+import 'package:frontend/features/auth/model/user.dart';
 import 'package:frontend/features/auth/repository/auth_repository.dart';
 import 'package:get/get.dart';
 

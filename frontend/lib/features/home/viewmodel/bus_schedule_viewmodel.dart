@@ -1,4 +1,4 @@
-import 'package:frontend/features/home/models/bus_schedule.dart';
+import 'package:frontend/shared/model/bus_schedule.dart';
 import 'package:frontend/features/home/repository/bus_schedule_repository.dart';
 import 'package:get/get.dart';
 

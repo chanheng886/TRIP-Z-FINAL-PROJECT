@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:frontend/core/theme/app_fonts.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -15,7 +15,7 @@ class _SplashScreenState extends State<SplashScreen> {
       body: Center(
         child: Text(
           'Trip Z',
-          style: GoogleFonts.dmSans(fontSize: 30, fontWeight: FontWeight.bold),
+          style: AppFonts.dmSans(fontSize: 30, fontWeight: FontWeight.bold),
         ),
       ),
     );

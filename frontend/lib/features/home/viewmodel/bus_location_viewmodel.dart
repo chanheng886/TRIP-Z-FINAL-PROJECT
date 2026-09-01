@@ -1,4 +1,4 @@
-import 'package:frontend/features/home/models/bus_location.dart';
+import 'package:frontend/shared/model/bus_location.dart';
 import 'package:frontend/features/home/repository/bus_location_repository.dart';
 import 'package:get/get.dart';
 

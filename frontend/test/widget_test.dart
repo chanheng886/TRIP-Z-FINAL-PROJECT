@@ -3,7 +3,7 @@ import 'package:frontend/core/theme/theme_controller.dart';
 import 'package:frontend/features/auth/repository/auth_repository.dart';
 import 'package:frontend/features/auth/viewmodel/auth_viewmodel.dart';
 import 'package:frontend/main.dart';
-import 'package:frontend/shared/services/auth_service.dart';
+import 'package:frontend/shared/service/auth_service.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

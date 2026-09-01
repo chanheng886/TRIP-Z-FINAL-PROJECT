@@ -1,6 +1,6 @@
-import 'package:frontend/features/home/models/booking_request.dart';
-import 'package:frontend/features/home/models/booking_response.dart';
-import 'package:frontend/shared/services/booking_service.dart';
+import 'package:frontend/shared/model/booking_request.dart';
+import 'package:frontend/shared/model/booking_response.dart';
+import 'package:frontend/shared/service/booking_service.dart';
 
 class BookingRepository {
   final BookingService bookingService;

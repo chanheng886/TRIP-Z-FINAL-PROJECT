@@ -1,11 +1,11 @@
-import 'package:frontend/features/admin/models/bus.dart';
-import 'package:frontend/features/admin/models/bus_route.dart';
+import 'package:frontend/features/admin/model/bus.dart';
+import 'package:frontend/features/admin/model/bus_route.dart';
 import 'package:frontend/features/admin/repository/admin_dashboard_repository.dart';
-import 'package:frontend/features/admin/services/admin_dashboard_service.dart';
-import 'package:frontend/features/auth/models/user.dart';
+import 'package:frontend/features/admin/service/admin_dashboard_service.dart';
+import 'package:frontend/features/auth/model/user.dart';
 import 'package:frontend/features/auth/viewmodel/auth_viewmodel.dart';
-import 'package:frontend/features/home/models/booking_response.dart';
-import 'package:frontend/features/home/models/bus_schedule.dart';
+import 'package:frontend/shared/model/booking_response.dart';
+import 'package:frontend/shared/model/bus_schedule.dart';
 import 'package:frontend/features/home/repository/booking_repository.dart';
 import 'package:get/get.dart';
 

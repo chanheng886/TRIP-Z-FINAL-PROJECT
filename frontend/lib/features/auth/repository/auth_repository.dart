@@ -1,6 +1,6 @@
-import 'package:frontend/features/auth/models/auth_response.dart';
-import 'package:frontend/features/auth/models/user.dart';
-import 'package:frontend/shared/services/auth_service.dart';
+import 'package:frontend/features/auth/model/auth_response.dart';
+import 'package:frontend/features/auth/model/user.dart';
+import 'package:frontend/shared/service/auth_service.dart';
 
 class AuthRepository {
   final AuthService authService;

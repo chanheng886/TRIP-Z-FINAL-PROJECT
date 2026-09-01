@@ -1,5 +1,5 @@
-import 'package:frontend/features/ai/models/ai_message.dart';
-import 'package:frontend/features/ai/repositories/ai_repository.dart';
+import 'package:frontend/features/ai/model/ai_message.dart';
+import 'package:frontend/features/ai/repository/ai_repository.dart';
 import 'package:get/get.dart';
 
 class AiViewmodel extends GetxController {

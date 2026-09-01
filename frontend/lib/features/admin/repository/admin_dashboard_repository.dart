@@ -1,11 +1,11 @@
-import 'package:frontend/features/admin/models/bus.dart';
-import 'package:frontend/features/admin/models/bus_route.dart';
-import 'package:frontend/features/admin/models/bus_type.dart';
-import 'package:frontend/features/admin/models/company.dart';
-import 'package:frontend/features/admin/services/admin_dashboard_service.dart';
-import 'package:frontend/features/home/models/booking_response.dart';
-import 'package:frontend/features/home/models/bus_location.dart';
-import 'package:frontend/features/home/models/bus_schedule.dart';
+import 'package:frontend/features/admin/model/bus.dart';
+import 'package:frontend/features/admin/model/bus_route.dart';
+import 'package:frontend/features/admin/model/bus_type.dart';
+import 'package:frontend/features/admin/model/company.dart';
+import 'package:frontend/features/admin/service/admin_dashboard_service.dart';
+import 'package:frontend/shared/model/booking_response.dart';
+import 'package:frontend/shared/model/bus_location.dart';
+import 'package:frontend/shared/model/bus_schedule.dart';
 
 class AdminDashboardRepository {
   final AdminDashboardService service;
