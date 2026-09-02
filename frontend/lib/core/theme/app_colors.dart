@@ -1,23 +1,34 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  // Brand — same in both light & dark
-  static const primary = Color(0xff4FD18B);
+  // Brand — from design specs
+  static const green = Color(0xFF22C55E);
+  static const greenBright = Color(0xFF34D979);
+  static const limeGradientEnd = Color(0xFFA3D900);
+  static const limeGradientEndDark = Color(0xFFB8E600);
+
+  static const primary = green; // #22C55E
   static const accent = Color(0xffFDEFE7);
 
   // Light mode
-  static const lightBackground = Color(0xffF7F8FC);
-  static const lightCardBackground = Color(0xffEFF6F2);
-  static const lightInputField = Color(0xffFFFFFF);
-  static const lightPrimaryText = Color(0xff1E293B);
-  static const lightSecondaryText = Color(0xff64748B);
+  static const lightBg = Color(0xFFE7E7E7);
+  static const lightSurface = Color(0xFFF5F5F7);
+  static const lightPrimaryText = Color(0xFF1A1A2E);
+  static const lightSecondaryText = Color(0xFF9CA3AF);
+
+  static const lightBackground = lightBg; // #E7E7E7
+  static const lightCardBackground = lightSurface; // #F5F5F7
+  static const lightInputField = Color(0xFFFFFFFF);
   static const lightAlertText = Color(0xffE53E3E);
 
-  // Dark mode — inverted, keeping brand colors consistent
-  static const darkBackground = Color(0xff121417);
-  static const darkCardBackground = Color(0xff1E2126);
-  static const darkInputField = Color(0xff2A2E35);
-  static const darkPrimaryText = Color(0xffF1F5F9);
-  static const darkSecondaryText = Color(0xff94A3B8);
+  // Dark mode
+  static const darkBg = Color(0xFF121214);
+  static const darkSurface = Color(0xFF1C1C1F);
+  static const darkPrimaryText = Color(0xFFF2F2F2);
+  static const darkSecondaryText = Color(0xFF8A8A8E);
+
+  static const darkBackground = darkBg; // #121214
+  static const darkCardBackground = darkSurface; // #1C1C1F
+  static const darkInputField = Color(0xFF242428);
   static const darkAlertText = Color(0xffF87171);
 }

@@ -146,6 +146,8 @@ final Map<String, String> kmKH = {
 
   // Profile & Settings
   'profile': 'ព័ត៌មានផ្ទាល់ខ្លួន',
+  'profile_and_settings': 'គណនី & ការកំណត់',
+  'profile & settings': 'គណនី & ការកំណត់',
   'me': 'គណនី',
   'account_info': 'ព័ត៌មានគណនី',
   'role': 'តួនាទី',
@@ -157,6 +159,10 @@ final Map<String, String> kmKH = {
   'english': 'English (អង់គ្លេស)',
   'khmer': 'ភាសាខ្មែរ (Khmer)',
   'dashboard': 'ផ្ទាំងគ្រប់គ្រងរដ្ឋបាល',
+  'admin_dashboard': 'ផ្ទាំងគ្រប់គ្រងរដ្ឋបាល',
+  'Admin dashboard': 'ផ្ទាំងគ្រប់គ្រងរដ្ឋបាល',
+  'pause_notifications': 'ផ្អាកការជូនដំណឹង',
+  'log_out': 'ចាកចេញពីគណនី',
   'settings': 'ការកំណត់',
   'about_us': 'អំពីយើង',
   'privacy_policy': 'គោលការណ៍ឯកជនភាព',
