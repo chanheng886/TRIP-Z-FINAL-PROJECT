@@ -8,7 +8,7 @@ import 'package:frontend/features/home/viewmodel/bus_schedule_viewmodel.dart';
 import 'package:frontend/features/home/view/widgets/bus_ticket_card.dart';
 import 'package:frontend/shared/service/bus_schedule_serivice.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
+// import 'package:google_fonts/google_fonts.dart';
 
 class BusScheduleMobile extends StatefulWidget {
   final String fromLocationName;

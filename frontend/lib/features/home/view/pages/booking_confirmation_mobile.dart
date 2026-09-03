@@ -6,7 +6,7 @@ import 'package:frontend/core/theme/app_fonts.dart';
 import 'package:frontend/shared/model/booking_response.dart';
 import 'package:frontend/features/home/view/pages/ticket_screen.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
+// import 'package:google_fonts/google_fonts.dart';
 
 class BookingConfirmationMobile extends StatelessWidget {
   final BookingResponse booking;
@@ -167,9 +167,7 @@ class BookingConfirmationMobile extends StatelessWidget {
                     backgroundColor: colorScheme.primary,
                   ),
                   onPressed: () {
-                    Get.to(
-                      () => TicketScreen(booking: booking),
-                    );
+                    Get.to(() => TicketScreen(booking: booking));
                   },
                   label: Text(
                     'view_ticket'.tr,
@@ -187,10 +185,7 @@ class BookingConfirmationMobile extends StatelessWidget {
                 height: 50,
                 child: OutlinedButton(
                   style: OutlinedButton.styleFrom(
-                    side: BorderSide(
-                      color: colorScheme.primary,
-                      width: 1.5,
-                    ),
+                    side: BorderSide(color: colorScheme.primary, width: 1.5),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -222,17 +217,11 @@ class BookingConfirmationMobile extends StatelessWidget {
         children: [
           Text(
             label,
-            style: AppFonts.dmSans(
-              fontSize: 13,
-              color: Colors.grey.shade600,
-            ),
+            style: AppFonts.dmSans(fontSize: 13, color: Colors.grey.shade600),
           ),
           Text(
             value,
-            style: AppFonts.dmSans(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-            ),
+            style: AppFonts.dmSans(fontSize: 13, fontWeight: FontWeight.w600),
           ),
         ],
       ),

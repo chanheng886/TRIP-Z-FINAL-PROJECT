@@ -6,6 +6,7 @@ import 'package:frontend/core/theme/app_fonts.dart';
 import 'package:frontend/features/home/repository/bus_location_repository.dart';
 import 'package:frontend/features/home/viewmodel/bus_location_viewmodel.dart';
 import 'package:frontend/shared/service/bus_location_service.dart';
+import 'package:frontend/shared/service/user_location_service.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -14,9 +15,11 @@ class SearchScreenMobile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(
-      BusLocationViewmodel(BusLocationRepository(BusLocationService())),
-    );
+    final controller = Get.isRegistered<BusLocationViewmodel>()
+        ? Get.find<BusLocationViewmodel>()
+        : Get.put(
+            BusLocationViewmodel(BusLocationRepository(BusLocationService())),
+          );
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final scaffoldBg = isDarkMode
         ? const Color(0xFF12161E)
@@ -126,44 +129,149 @@ class SearchScreenMobile extends StatelessWidget {
                   ),
                 ),
               )
-            : ListView.builder(
+            : ListView(
                 padding: const EdgeInsets.only(top: kToolbarHeight + 24),
-                itemCount: controller.filteredLocations.length,
-                itemBuilder: (context, index) {
-                  final loc = controller.filteredLocations[index];
-                  final localizedName = loc.locationName.trDb;
+                children: [
+                  // Use Current Location Tile
+                  if (controller.searchQuery.value.isEmpty) ...[
+                    InkWell(
+                      onTap: () async {
+                        final userLocService =
+                            Get.isRegistered<UserLocationService>()
+                            ? Get.find<UserLocationService>()
+                            : Get.put(UserLocationService());
 
-                  return InkWell(
-                    onTap: () {
-                      Get.back(result: loc);
-                    },
-                    child: ListTile(
-                      leading: const FaIcon(
-                        FontAwesomeIcons.locationDot,
-                        size: 16,
-                        color: Color(0xff4FD18B),
-                      ),
-                      title: Text(
-                        localizedName,
-                        style: AppFonts.dmSans(
-                          color: isDarkMode ? Colors.white : Colors.black87,
-                          fontWeight: FontWeight.w500,
+                        Get.snackbar(
+                          "Locating...",
+                          "Detecting your GPS position...",
+                          snackPosition: SnackPosition.BOTTOM,
+                          duration: const Duration(seconds: 2),
+                        );
+
+                        final pos = await userLocService.determinePosition(
+                          showErrors: true,
+                        );
+                        if (pos != null) {
+                          final nearest = userLocService.nearestStation.value;
+                          if (nearest != null) {
+                            final match = controller.locations.firstWhereOrNull(
+                              (l) =>
+                                  nearest.city.toLowerCase().contains(
+                                    l.locationName.toLowerCase(),
+                                  ) ||
+                                  l.locationName.toLowerCase().contains(
+                                    nearest.city.toLowerCase(),
+                                  ) ||
+                                  nearest.name.toLowerCase().contains(
+                                    l.locationName.toLowerCase(),
+                                  ),
+                            );
+                            if (match != null) {
+                              Get.back(result: match);
+                              return;
+                            }
+                          }
+                        }
+                      },
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 6,
+                        ),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF22C55E).withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: const Color(
+                              0xFF22C55E,
+                            ).withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 36,
+                              height: 36,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF22C55E),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Center(
+                                child: Icon(
+                                  Icons.my_location_rounded,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Use My Current Location",
+                                    style: AppFonts.dmSans(
+                                      color: const Color(0xFF22C55E),
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                  Text(
+                                    "Auto-detect nearest bus terminal via GPS",
+                                    style: AppFonts.dmSans(
+                                      color: isDarkMode
+                                          ? const Color(0xFF94A3B8)
+                                          : const Color(0xFF64748B),
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      subtitle: (localizedName != loc.locationName)
-                          ? Text(
-                              loc.locationName,
-                              style: AppFonts.dmSans(
-                                fontSize: 12,
-                                color: isDarkMode
-                                    ? const Color(0xFF94A3B8)
-                                    : const Color(0xff64748B),
-                              ),
-                            )
-                          : null,
                     ),
-                  );
-                },
+                    const Divider(height: 16),
+                  ],
+
+                  // Destination List
+                  ...controller.filteredLocations.map((loc) {
+                    final localizedName = loc.locationName.trDb;
+                    return InkWell(
+                      onTap: () {
+                        Get.back(result: loc);
+                      },
+                      child: ListTile(
+                        leading: const FaIcon(
+                          FontAwesomeIcons.locationDot,
+                          size: 16,
+                          color: Color(0xff4FD18B),
+                        ),
+                        title: Text(
+                          localizedName,
+                          style: AppFonts.dmSans(
+                            color: isDarkMode ? Colors.white : Colors.black87,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        subtitle: (localizedName != loc.locationName)
+                            ? Text(
+                                loc.locationName,
+                                style: AppFonts.dmSans(
+                                  fontSize: 12,
+                                  color: isDarkMode
+                                      ? const Color(0xFF94A3B8)
+                                      : const Color(0xff64748B),
+                                ),
+                              )
+                            : null,
+                      ),
+                    );
+                  }),
+                ],
               );
       }),
     );

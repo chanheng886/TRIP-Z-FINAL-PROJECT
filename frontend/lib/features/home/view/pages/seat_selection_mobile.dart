@@ -10,7 +10,7 @@ import 'package:frontend/features/home/view/widgets/minivan_vehicle_layout.dart'
 import 'package:frontend/shared/service/booking_service.dart';
 import 'package:frontend/shared/service/bus_schedule_serivice.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
+// import 'package:google_fonts/google_fonts.dart';
 
 class SeatSelectionMobile extends StatefulWidget {
   final int busScheduleId;
@@ -90,7 +90,9 @@ class _SeatSelectionMobileState extends State<SeatSelectionMobile> {
                   widget.fromLocation.trDb,
                   style: AppFonts.dmSans(
                     fontSize: 12,
-                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                    color: isDark
+                        ? const Color(0xFF94A3B8)
+                        : const Color(0xFF64748B),
                   ),
                 ),
                 Icon(
@@ -102,7 +104,9 @@ class _SeatSelectionMobileState extends State<SeatSelectionMobile> {
                   widget.toLocation.trDb,
                   style: AppFonts.dmSans(
                     fontSize: 12,
-                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                    color: isDark
+                        ? const Color(0xFF94A3B8)
+                        : const Color(0xFF64748B),
                   ),
                 ),
               ],
@@ -122,7 +126,9 @@ class _SeatSelectionMobileState extends State<SeatSelectionMobile> {
                   'Loading vehicle layout...',
                   style: AppFonts.dmSans(
                     fontSize: 14,
-                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                    color: isDark
+                        ? const Color(0xFF94A3B8)
+                        : const Color(0xFF64748B),
                   ),
                 ),
               ],
@@ -176,7 +182,10 @@ class _SeatSelectionMobileState extends State<SeatSelectionMobile> {
             Expanded(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 child: _isMinivan
                     ? MinivanVehicleLayout(
                         seatMap: seatMap,
@@ -204,7 +213,8 @@ class _SeatSelectionMobileState extends State<SeatSelectionMobile> {
     bool isDark,
     ColorScheme colorScheme,
   ) {
-    final vehicleTitle = widget.busType ?? (_isMinivan ? 'VIP Minivan' : 'Express Coach Bus');
+    final vehicleTitle =
+        widget.busType ?? (_isMinivan ? 'VIP Minivan' : 'Express Coach Bus');
     final company = widget.companyName ?? 'Standard Operator';
 
     return Container(
@@ -255,7 +265,9 @@ class _SeatSelectionMobileState extends State<SeatSelectionMobile> {
                         company,
                         style: AppFonts.dmSans(
                           fontSize: 11,
-                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                          color: isDark
+                              ? const Color(0xFF94A3B8)
+                              : const Color(0xFF64748B),
                         ),
                       ),
                     ],
@@ -268,7 +280,10 @@ class _SeatSelectionMobileState extends State<SeatSelectionMobile> {
                 final seatMap = controller.seatMap.value;
                 final availableCount = seatMap?.availableSeats.length ?? 0;
                 return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFF10B981).withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(20),
@@ -342,7 +357,9 @@ class _SeatSelectionMobileState extends State<SeatSelectionMobile> {
             borderRadius: BorderRadius.circular(4),
             border: border
                 ? Border.all(
-                    color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                    color: isDark
+                        ? const Color(0xFF334155)
+                        : const Color(0xFFCBD5E1),
                   )
                 : null,
           ),
@@ -352,7 +369,9 @@ class _SeatSelectionMobileState extends State<SeatSelectionMobile> {
                   size: 11,
                   color: label == 'Selected'
                       ? Colors.white
-                      : (isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8)),
+                      : (isDark
+                            ? const Color(0xFF64748B)
+                            : const Color(0xFF94A3B8)),
                 )
               : null,
         ),
@@ -406,7 +425,9 @@ class _SeatSelectionMobileState extends State<SeatSelectionMobile> {
                         style: AppFonts.dmSans(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                          color: isDark
+                              ? const Color(0xFF94A3B8)
+                              : const Color(0xFF64748B),
                         ),
                       ),
                       Expanded(
@@ -421,10 +442,14 @@ class _SeatSelectionMobileState extends State<SeatSelectionMobile> {
                                   vertical: 2,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: colorScheme.primary.withValues(alpha: 0.15),
+                                  color: colorScheme.primary.withValues(
+                                    alpha: 0.15,
+                                  ),
                                   borderRadius: BorderRadius.circular(6),
                                   border: Border.all(
-                                    color: colorScheme.primary.withValues(alpha: 0.4),
+                                    color: colorScheme.primary.withValues(
+                                      alpha: 0.4,
+                                    ),
                                   ),
                                 ),
                                 child: Text(
@@ -455,7 +480,9 @@ class _SeatSelectionMobileState extends State<SeatSelectionMobile> {
                           '$count seat${count == 1 ? '' : 's'} selected',
                           style: AppFonts.dmSans(
                             fontSize: 12,
-                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                            color: isDark
+                                ? const Color(0xFF94A3B8)
+                                : const Color(0xFF64748B),
                           ),
                         ),
                         Text(
