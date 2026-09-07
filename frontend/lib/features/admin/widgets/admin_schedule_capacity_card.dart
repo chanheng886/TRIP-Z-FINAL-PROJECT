@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_fonts.dart';
+import 'package:get/get.dart';
 
 class AdminScheduleCapacityCard extends StatelessWidget {
   final int available;
@@ -52,7 +53,7 @@ class AdminScheduleCapacityCard extends StatelessWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Trip Availability',
+                        'trip_availability'.tr,
                         style: AppFonts.dmSans(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
@@ -67,7 +68,7 @@ class AdminScheduleCapacityCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                '${(availPercent * 100).toStringAsFixed(0)}% Open',
+                '${(availPercent * 100).toStringAsFixed(0)}% ${'open'.tr}',
                 style: AppFonts.dmSans(
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
@@ -117,7 +118,7 @@ class AdminScheduleCapacityCard extends StatelessWidget {
                     const SizedBox(width: 5),
                     Expanded(
                       child: Text(
-                        'Available: $available',
+                        '${'available'.tr}: $available',
                         style: AppFonts.dmSans(
                           fontSize: 11,
                           color: secondaryText,
@@ -147,7 +148,7 @@ class AdminScheduleCapacityCard extends StatelessWidget {
                     const SizedBox(width: 5),
                     Flexible(
                       child: Text(
-                        'Booked: $booked',
+                        '${'booked'.tr}: $booked',
                         style: AppFonts.dmSans(
                           fontSize: 11,
                           color: secondaryText,

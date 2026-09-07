@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_fonts.dart';
+import 'package:get/get.dart';
 
 class AdminSectionHeader extends StatelessWidget {
   final String title;
@@ -39,7 +40,7 @@ class AdminSectionHeader extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  title,
+                  title.tr,
                   style: AppFonts.dmSans(
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
@@ -61,7 +62,7 @@ class AdminSectionHeader extends StatelessWidget {
               child: Row(
                 children: [
                   Text(
-                    'Manage',
+                    'manage'.tr,
                     style: AppFonts.dmSans(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,

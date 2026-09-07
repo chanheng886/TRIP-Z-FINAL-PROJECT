@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_fonts.dart';
+import 'package:get/get.dart';
 
 class AdminFormHeroHeader extends StatelessWidget {
   final String title;
@@ -62,7 +63,7 @@ class AdminFormHeroHeader extends StatelessWidget {
                   children: [
                     Flexible(
                       child: Text(
-                        title,
+                        title.tr,
                         style: AppFonts.dmSans(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
@@ -83,7 +84,7 @@ class AdminFormHeroHeader extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        '$count total',
+                        '$count ${'total_suffix'.tr}',
                         style: AppFonts.dmSans(
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
@@ -95,7 +96,7 @@ class AdminFormHeroHeader extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  subtitle,
+                  subtitle.tr,
                   style: AppFonts.dmSans(fontSize: 11, color: secondaryText),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_fonts.dart';
+import 'package:get/get.dart';
 
 class AdminHeroBanner extends StatelessWidget {
   final double totalRevenue;
@@ -59,7 +60,7 @@ class AdminHeroBanner extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'TOTAL REVENUE',
+                      'total_revenue'.tr,
                       style: AppFonts.dmSans(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
@@ -104,7 +105,7 @@ class AdminHeroBanner extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        'View Bookings',
+                        'view_bookings'.tr,
                         style: AppFonts.dmSans(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
@@ -130,9 +131,9 @@ class AdminHeroBanner extends StatelessWidget {
             children: [
               Expanded(
                 child: _buildBannerMiniStat(
-                  'Bookings',
+                  'bookings'.tr,
                   '$totalBookings',
-                  '$confirmedBookings paid',
+                  '$confirmedBookings ${'paid'.tr}',
                   AppColors.greenBright,
                 ),
               ),
@@ -143,9 +144,9 @@ class AdminHeroBanner extends StatelessWidget {
               ),
               Expanded(
                 child: _buildBannerMiniStat(
-                  'Buses',
+                  'buses'.tr,
                   '$totalBuses',
-                  'Fleet count',
+                  'fleet_count'.tr,
                   AppColors.green,
                 ),
               ),
@@ -156,9 +157,9 @@ class AdminHeroBanner extends StatelessWidget {
               ),
               Expanded(
                 child: _buildBannerMiniStat(
-                  'Routes',
+                  'routes'.tr,
                   '$totalRoutes',
-                  'Active lines',
+                  'active_lines'.tr,
                   AppColors.greenBright,
                 ),
               ),

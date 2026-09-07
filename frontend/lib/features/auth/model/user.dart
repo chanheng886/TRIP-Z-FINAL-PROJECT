@@ -48,4 +48,22 @@ class User {
       'phone': phone,
     };
   }
+
+  User copyWith({
+    int? id,
+    String? username,
+    UserRole? role,
+    String? gender,
+    String? email,
+    String? phone,
+  }) {
+    return User(
+      id: id ?? this.id,
+      username: username ?? this.username,
+      role: role ?? this.role,
+      gender: gender ?? this.gender,
+      email: email ?? this.email,
+      phone: phone ?? this.phone,
+    );
+  }
 }

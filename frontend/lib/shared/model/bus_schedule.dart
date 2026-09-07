@@ -2,11 +2,12 @@ import 'package:intl/intl.dart';
 
 enum BusScheduleStatus {
   Available,
-  Booked;
+  Booked,
+  Cancelled;
 
   static BusScheduleStatus fromString(String value) {
     return BusScheduleStatus.values.firstWhere(
-      (e) => e.name == value,
+      (e) => e.name.toLowerCase() == value.toLowerCase(),
       orElse: () => BusScheduleStatus.Available,
     );
   }

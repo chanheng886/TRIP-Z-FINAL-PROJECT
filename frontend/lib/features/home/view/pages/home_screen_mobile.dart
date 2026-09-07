@@ -17,6 +17,7 @@ import 'package:frontend/features/home/viewmodel/bus_location_viewmodel.dart';
 import 'package:frontend/shared/model/bus_location.dart';
 import 'package:frontend/shared/model/bus_station.dart';
 import 'package:frontend/shared/service/bus_location_service.dart';
+import 'package:frontend/shared/service/user_location_service.dart';
 import 'package:get/get.dart';
 
 class HomeScreenMobile extends StatefulWidget {
@@ -34,8 +35,83 @@ class _HomeScreenMobileState extends State<HomeScreenMobile> {
   int? fromLocationId;
   int? toLocationId;
 
+  late final BusLocationViewmodel _locVM;
+  late final UserLocationService _userLocService;
+  Worker? _nearestStationWorker;
+
+  @override
+  void initState() {
+    super.initState();
+    _locVM = Get.isRegistered<BusLocationViewmodel>()
+        ? Get.find<BusLocationViewmodel>()
+        : Get.put(
+            BusLocationViewmodel(BusLocationRepository(BusLocationService())),
+          );
+    _userLocService = Get.isRegistered<UserLocationService>()
+        ? Get.find<UserLocationService>()
+        : Get.put(UserLocationService());
+
+    _initDefaultLocations();
+
+    // Listen to nearest detected station via GPS to auto-set departure if empty
+    _nearestStationWorker = ever(_userLocService.nearestStation, (BusStation? station) {
+      if (station != null && fromLocation.text.isEmpty && mounted) {
+        _handleStationSelected(station, showNotification: false);
+      }
+    });
+  }
+
+  void _initDefaultLocations() {
+    // Default leaving date to today if empty
+    if (leavingDate.text.isEmpty) {
+      final now = DateTime.now();
+      leavingDate.text =
+          "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
+    }
+
+    // Default departure to nearest detected station or Phnom Penh
+    final nearest = _userLocService.nearestStation.value;
+    if (nearest != null) {
+      _handleStationSelected(nearest, showNotification: false);
+    } else {
+      _setDepartureCity('Phnom Penh');
+    }
+  }
+
+  void _setDepartureCity(String cityName) {
+    final match = _locVM.locations.firstWhereOrNull(
+      (l) =>
+          l.locationName.toLowerCase() == cityName.toLowerCase() ||
+          cityName.toLowerCase().contains(l.locationName.toLowerCase()) ||
+          l.locationName.toLowerCase().contains(cityName.toLowerCase()),
+    );
+    if (match != null) {
+      setState(() {
+        fromLocation.text = match.locationName;
+        fromLocationId = match.id;
+      });
+    } else {
+      setState(() {
+        fromLocation.text = cityName;
+        final lower = cityName.toLowerCase();
+        if (lower.contains('phnom penh')) {
+          fromLocationId = 1;
+        } else if (lower.contains('siem reap')) {
+          fromLocationId = 2;
+        } else if (lower.contains('sihanoukville')) {
+          fromLocationId = 3;
+        } else if (lower.contains('battambang')) {
+          fromLocationId = 4;
+        } else if (lower.contains('kampot')) {
+          fromLocationId = 5;
+        }
+      });
+    }
+  }
+
   @override
   void dispose() {
+    _nearestStationWorker?.dispose();
     fromLocation.dispose();
     toLocation.dispose();
     leavingDate.dispose();
@@ -104,24 +180,33 @@ class _HomeScreenMobileState extends State<HomeScreenMobile> {
     }
   }
 
-  void _handleStationSelected(BusStation station) {
+  void _handleStationSelected(
+    BusStation station, {
+    bool showNotification = true,
+  }) {
     setState(() {
-      fromLocation.text = station.name;
-
-      // Look up location from BusLocationViewmodel
-      if (Get.isRegistered<BusLocationViewmodel>()) {
-        final locVM = Get.find<BusLocationViewmodel>();
-        final match = locVM.locations.firstWhereOrNull((l) =>
-            station.city.toLowerCase().contains(l.locationName.toLowerCase()) ||
-            l.locationName.toLowerCase().contains(station.city.toLowerCase()) ||
-            station.name.toLowerCase().contains(l.locationName.toLowerCase()));
-        if (match != null) {
-          fromLocationId = match.id;
-        }
+      // 1. Resolve matched BusLocation (city / province) from location database
+      BusLocation? match;
+      if (_locVM.locations.isNotEmpty) {
+        match = _locVM.locations.firstWhereOrNull(
+          (l) =>
+              station.city.toLowerCase() == l.locationName.toLowerCase() ||
+              station.city.toLowerCase().contains(
+                l.locationName.toLowerCase(),
+              ) ||
+              l.locationName.toLowerCase().contains(
+                station.city.toLowerCase(),
+              ) ||
+              station.name.toLowerCase().contains(l.locationName.toLowerCase()),
+        );
       }
 
-      // Fallback matching by city name
-      if (fromLocationId == null) {
+      // 2. Set departure location to the city/province (e.g. "Phnom Penh")
+      if (match != null) {
+        fromLocation.text = match.locationName;
+        fromLocationId = match.id;
+      } else {
+        fromLocation.text = station.city;
         final lower = station.city.toLowerCase();
         if (lower.contains('phnom penh')) {
           fromLocationId = 1;
@@ -135,24 +220,29 @@ class _HomeScreenMobileState extends State<HomeScreenMobile> {
           fromLocationId = 5;
         }
       }
+
+      // If destination was previously identical to departure, clear it
+      if (toLocationId != null && toLocationId == fromLocationId) {
+        toLocation.clear();
+        toLocationId = null;
+      }
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        backgroundColor: const Color(0xFF22C55E),
-        content: Text(
-          "Selected departure: ${station.name}",
-          style: AppFonts.dmSans(
-            fontSize: 14,
-            color: Colors.white,
+    if (showNotification && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          backgroundColor: const Color(0xFF22C55E),
+          content: Text(
+            "Departure set to: ${fromLocation.text} (${station.name})",
+            style: AppFonts.dmSans(fontSize: 14, color: Colors.white),
           ),
         ),
-      ),
-    );
+      );
+    }
   }
 
   void _handleFindBus() {

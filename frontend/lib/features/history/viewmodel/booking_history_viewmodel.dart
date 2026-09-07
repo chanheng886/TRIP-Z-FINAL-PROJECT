@@ -62,7 +62,17 @@ class BookingHistoryViewmodel extends GetxController {
       repository.fetchSchedules(),
     ]);
     buses.assignAll(results[0] as List<Bus>);
-    routes.assignAll(results[1] as List<BusRoute>);
+    final rawRoutes = results[1] as List<BusRoute>;
+    final seen = <String>{};
+    final uniqueRoutes = <BusRoute>[];
+    for (final r in rawRoutes) {
+      final key =
+          '${r.fromLocation.trim().toLowerCase()}->${r.toLocation.trim().toLowerCase()}';
+      if (seen.add(key)) {
+        uniqueRoutes.add(r);
+      }
+    }
+    routes.assignAll(uniqueRoutes);
     schedules.assignAll(results[2] as List<BusSchedule>);
   }
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_fonts.dart';
+import 'package:get/get.dart';
 
 class QuickActionItem {
   final String label;
@@ -54,7 +55,7 @@ class AdminQuickActions extends StatelessWidget {
                   FaIcon(a.icon, size: 11, color: AppColors.green),
                   const SizedBox(width: 6),
                   Text(
-                    a.label,
+                    a.label.tr,
                     style: AppFonts.dmSans(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,

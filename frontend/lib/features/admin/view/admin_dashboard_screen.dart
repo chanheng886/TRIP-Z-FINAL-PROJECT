@@ -63,12 +63,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   String _status = 'Available';
 
   final List<AdminTabItem> _tabs = const [
-    AdminTabItem(title: 'Overview', icon: FontAwesomeIcons.chartPie),
-    AdminTabItem(title: 'Locations', icon: FontAwesomeIcons.locationDot),
-    AdminTabItem(title: 'Buses', icon: FontAwesomeIcons.bus),
-    AdminTabItem(title: 'Routes', icon: FontAwesomeIcons.road),
-    AdminTabItem(title: 'Schedules', icon: FontAwesomeIcons.calendarDays),
-    AdminTabItem(title: 'Bookings', icon: FontAwesomeIcons.ticket),
+    AdminTabItem(title: 'overview', icon: FontAwesomeIcons.chartPie),
+    AdminTabItem(title: 'locations', icon: FontAwesomeIcons.locationDot),
+    AdminTabItem(title: 'buses', icon: FontAwesomeIcons.bus),
+    AdminTabItem(title: 'routes', icon: FontAwesomeIcons.road),
+    AdminTabItem(title: 'schedules', icon: FontAwesomeIcons.calendarDays),
+    AdminTabItem(title: 'bookings', icon: FontAwesomeIcons.ticket),
   ];
 
   @override
@@ -212,12 +212,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     if (ok) {
       _locationNameController.clear();
       _locationImageUrlController.clear();
-      _showSnack('Location added successfully!', isError: false);
+      _showSnack('location_added_success'.tr, isError: false);
       _vm.loadOptions();
     } else {
       _showSnack(
         _vm.errorMessage.value.isEmpty
-            ? 'Failed to add location!'
+            ? 'failed_add_location'.tr
             : _vm.errorMessage.value,
         isError: true,
       );
@@ -241,11 +241,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         : '';
 
     if (companyName.isEmpty) {
-      _showSnack('Please select or enter a company name!', isError: true);
+      _showSnack('fill_bus_fields'.tr, isError: true);
       return;
     }
     if (busType.isEmpty) {
-      _showSnack('Please select or enter a bus type!', isError: true);
+      _showSnack('fill_bus_fields'.tr, isError: true);
       return;
     }
 
@@ -267,12 +267,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         _busSeatController.clear();
         _busImageUrlController.clear();
       });
-      _showSnack('Bus added successfully!', isError: false);
+      _showSnack('bus_added_success'.tr, isError: false);
       _vm.loadOptions();
     } else {
       _showSnack(
         _vm.errorMessage.value.isEmpty
-            ? 'Failed to add bus!'
+            ? 'failed_add_bus'.tr
             : _vm.errorMessage.value,
         isError: true,
       );
@@ -282,15 +282,29 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   Future<void> _submitRoute() async {
     if (!_routeKey.currentState!.validate()) return;
     if (_fromLocationId == null || _toLocationId == null) {
-      _showSnack('Please select both locations!', isError: true);
+      _showSnack('select_both_locations'.tr, isError: true);
       return;
     }
     if (_fromLocationId == _toLocationId) {
-      _showSnack('From and To locations must be different!', isError: true);
+      _showSnack('different_locations_error'.tr, isError: true);
       return;
     }
     final from = _vm.locations.firstWhere((l) => l.id == _fromLocationId);
     final to = _vm.locations.firstWhere((l) => l.id == _toLocationId);
+
+    final exists = _vm.routes.any((r) =>
+        r.fromLocation.trim().toLowerCase() ==
+            from.locationName.trim().toLowerCase() &&
+        r.toLocation.trim().toLowerCase() ==
+            to.locationName.trim().toLowerCase());
+    if (exists) {
+      _showSnack(
+        'route_already_exists'.tr,
+        isError: true,
+      );
+      return;
+    }
+
     final ok = await _vm.createRoute(
       fromLocation: from.locationName,
       toLocation: to.locationName,
@@ -301,12 +315,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         _fromLocationId = null;
         _toLocationId = null;
       });
-      _showSnack('Route added successfully!', isError: false);
+      _showSnack('route_added_success'.tr, isError: false);
       _vm.loadOptions();
     } else {
       _showSnack(
         _vm.errorMessage.value.isEmpty
-            ? 'Failed to add route!'
+            ? 'failed_add_route'.tr
             : _vm.errorMessage.value,
         isError: true,
       );
@@ -321,9 +335,41 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         _travelDate == null ||
         _departureTime == null ||
         _arrivalTime == null) {
-      _showSnack('Please fill all schedule fields!', isError: true);
+      _showSnack('fill_all_schedule_fields'.tr, isError: true);
       return;
     }
+
+    final depMinutes = _departureTime!.hour * 60 + _departureTime!.minute;
+    final arrMinutes = _arrivalTime!.hour * 60 + _arrivalTime!.minute;
+    if (arrMinutes <= depMinutes) {
+      _showSnack('arrival_after_departure_error'.tr, isError: true);
+      return;
+    }
+
+    final selectedDateStr = DateFormat('yyyy-MM-dd').format(_travelDate!);
+    final hasOverlap = _vm.schedules.any((s) {
+      if (s.busId != _selectedBusId) return false;
+      if (s.status == BusScheduleStatus.Cancelled) return false;
+      final sDateStr = DateFormat('yyyy-MM-dd').format(s.travelDate);
+      if (sDateStr != selectedDateStr) return false;
+
+      final sDepParts = s.departureTime.split(':');
+      final sArrParts = s.arrivalTime.split(':');
+      if (sDepParts.length < 2 || sArrParts.length < 2) return false;
+      final sDep = int.parse(sDepParts[0]) * 60 + int.parse(sDepParts[1]);
+      final sArr = int.parse(sArrParts[0]) * 60 + int.parse(sArrParts[1]);
+
+      return depMinutes < sArr && arrMinutes > sDep;
+    });
+
+    if (hasOverlap) {
+      _showSnack(
+        'bus_overlap_error'.tr,
+        isError: true,
+      );
+      return;
+    }
+
     final ok = await _vm.createBusSchedule(
       busId: _selectedBusId!,
       routeId: _selectedRouteId!,
@@ -348,12 +394,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         _priceController.clear();
         _status = 'Available';
       });
-      _showSnack('Bus schedule added successfully!', isError: false);
+      _showSnack('schedule_added_success'.tr, isError: false);
       _vm.loadOptions();
     } else {
       _showSnack(
         _vm.errorMessage.value.isEmpty
-            ? 'Failed to add bus schedule!'
+            ? 'failed_add_schedule'.tr
             : _vm.errorMessage.value,
         isError: true,
       );
@@ -472,7 +518,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          'Syncing fleet data...',
+                          'syncing_fleet_data'.tr,
                           style: AppFonts.dmSans(
                             color: primaryText,
                             fontSize: 14,
@@ -538,7 +584,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                               color: Colors.white,
                             ),
                             label: Text(
-                              'Retry Connection',
+                              'retry_connection'.tr,
                               style: AppFonts.dmSans(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w600,
@@ -586,42 +632,42 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
 
     final summaryCards = [
       SummaryCardData(
-        label: 'Fleet Buses',
+        label: 'fleet_buses',
         count: _vm.buses.length,
         icon: FontAwesomeIcons.bus,
         color: AppColors.green,
         tabIndex: 2,
       ),
       SummaryCardData(
-        label: 'Active Routes',
+        label: 'active_routes',
         count: _vm.routes.length,
         icon: FontAwesomeIcons.road,
         color: AppColors.greenBright,
         tabIndex: 3,
       ),
       SummaryCardData(
-        label: 'Trips Scheduled',
+        label: 'trips_scheduled',
         count: _vm.schedules.length,
         icon: FontAwesomeIcons.calendarDays,
         color: AppColors.green,
         tabIndex: 4,
       ),
       SummaryCardData(
-        label: 'Companies',
+        label: 'companies',
         count: _vm.companies.length,
         icon: FontAwesomeIcons.building,
         color: AppColors.greenBright,
         tabIndex: 2,
       ),
       SummaryCardData(
-        label: 'Locations',
+        label: 'locations',
         count: _vm.locations.length,
         icon: FontAwesomeIcons.locationDot,
         color: AppColors.green,
         tabIndex: 1,
       ),
       SummaryCardData(
-        label: 'Bus Types',
+        label: 'bus_types',
         count: _vm.busTypes.length,
         icon: FontAwesomeIcons.sitemap,
         color: AppColors.greenBright,
@@ -631,22 +677,22 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
 
     final quickActions = [
       QuickActionItem(
-        label: '+ Location',
+        label: 'quick_add_location',
         icon: FontAwesomeIcons.locationDot,
         onTap: () => _navigateToTab(1),
       ),
       QuickActionItem(
-        label: '+ Add Bus',
+        label: 'quick_add_bus',
         icon: FontAwesomeIcons.bus,
         onTap: () => _navigateToTab(2),
       ),
       QuickActionItem(
-        label: '+ Add Route',
+        label: 'quick_add_route',
         icon: FontAwesomeIcons.road,
         onTap: () => _navigateToTab(3),
       ),
       QuickActionItem(
-        label: '+ Schedule',
+        label: 'quick_add_schedule',
         icon: FontAwesomeIcons.calendarPlus,
         onTap: () => _navigateToTab(4),
       ),
@@ -678,7 +724,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Fleet Metric Breakdown',
+                'fleet_metric_breakdown'.tr,
                 style: AppFonts.dmSans(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -686,7 +732,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                 ),
               ),
               Text(
-                'Tap to manage',
+                'tap_to_manage'.tr,
                 style: AppFonts.dmSans(fontSize: 12, color: secondaryText),
               ),
             ],
@@ -733,7 +779,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           // Recent Schedules Feed
           if (_vm.schedules.isNotEmpty) ...[
             AdminSectionHeader(
-              title: 'Recent Schedules',
+              title: 'recent_schedules',
               icon: FontAwesomeIcons.calendarDays,
               primaryText: primaryText,
               onViewAll: () => _navigateToTab(4),
@@ -757,7 +803,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           // Recent Buses Feed
           if (_vm.buses.isNotEmpty) ...[
             AdminSectionHeader(
-              title: 'Recent Fleet Buses',
+              title: 'recent_fleet_buses',
               icon: FontAwesomeIcons.bus,
               primaryText: primaryText,
               onViewAll: () => _navigateToTab(2),
@@ -780,7 +826,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           // Recent Routes Feed
           if (_vm.routes.isNotEmpty) ...[
             AdminSectionHeader(
-              title: 'Active Routes',
+              title: 'active_routes',
               icon: FontAwesomeIcons.road,
               primaryText: primaryText,
               onViewAll: () => _navigateToTab(3),
@@ -812,8 +858,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           AdminFormHeroHeader(
-            title: 'Location Registry',
-            subtitle: 'Register terminal cities and pickup locations',
+            title: 'location_registry'.tr,
+            subtitle: 'register_terminal_cities'.tr,
             icon: FontAwesomeIcons.locationDot,
             count: _vm.locations.length,
             isDark: isDark,
@@ -834,7 +880,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    'Add New Destination',
+                    'add_new_destination'.tr,
                     style: AppFonts.dmSans(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -846,12 +892,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                     controller: _locationNameController,
                     textInputAction: TextInputAction.next,
                     decoration: _fieldDecoration(
-                      label: 'Location Name (e.g. Phnom Penh)',
+                      label: 'location_name_label'.tr,
                       icon: FontAwesomeIcons.mapLocationDot,
                     ),
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
-                        return 'Location name is required';
+                        return 'location_name_required'.tr;
                       }
                       return null;
                     },
@@ -861,12 +907,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                     controller: _locationImageUrlController,
                     textInputAction: TextInputAction.done,
                     decoration: _fieldDecoration(
-                      label: 'Image URL',
+                      label: 'image_url_label'.tr,
                       icon: FontAwesomeIcons.image,
                     ),
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
-                        return 'Image URL is required';
+                        return 'image_url_required'.tr;
                       }
                       return null;
                     },
@@ -875,7 +921,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                   _submitButton(
                     _vm.isSubmitting.value,
                     _submitLocation,
-                    'Add Location Destination',
+                    'add_location_destination'.tr,
                   ),
                 ],
               ),
@@ -884,7 +930,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           const SizedBox(height: 22),
           if (_vm.locations.isNotEmpty) ...[
             Text(
-              'Existing Destinations (${_vm.locations.length})',
+              '${'existing_destinations'.tr} (${_vm.locations.length})',
               style: AppFonts.dmSans(
                 fontSize: 15,
                 fontWeight: FontWeight.bold,
@@ -956,8 +1002,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           AdminFormHeroHeader(
-            title: 'Bus Fleet Registry',
-            subtitle: 'Register new vehicles & manage company fleets',
+            title: 'bus_fleet_registry'.tr,
+            subtitle: 'register_new_vehicles'.tr,
             icon: FontAwesomeIcons.bus,
             count: _vm.buses.length,
             isDark: isDark,
@@ -978,7 +1024,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    'Register New Bus',
+                    'register_new_bus'.tr,
                     style: AppFonts.dmSans(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -990,7 +1036,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                     Padding(
                       padding: const EdgeInsets.only(bottom: 10),
                       child: Text(
-                        'No existing companies. Enter a company name below.',
+                        'no_existing_companies'.tr,
                         style: AppFonts.dmSans(
                           fontSize: 12,
                           color: secondaryText,
@@ -1009,7 +1055,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                     ),
                     initialValue: _selectedCompanyId,
                     decoration: _dropdownDecoration(
-                      label: 'Select Company',
+                      label: 'select_company'.tr,
                       icon: FontAwesomeIcons.building,
                     ),
                     dropdownColor: cardBackground,
@@ -1041,7 +1087,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                   TextFormField(
                     controller: _busCompanyNameController,
                     decoration: _fieldDecoration(
-                      label: 'Or type new company name',
+                      label: 'or_type_company'.tr,
                       icon: FontAwesomeIcons.pen,
                     ),
                     onChanged: (v) {
@@ -1063,7 +1109,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                     ),
                     initialValue: _selectedBusTypeId,
                     decoration: _dropdownDecoration(
-                      label: 'Select Bus Type',
+                      label: 'select_bus_type'.tr,
                       icon: FontAwesomeIcons.sitemap,
                     ),
                     dropdownColor: cardBackground,
@@ -1095,7 +1141,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                   TextFormField(
                     controller: _busTypeNameController,
                     decoration: _fieldDecoration(
-                      label: 'Or type new bus type',
+                      label: 'or_type_bus_type'.tr,
                       icon: FontAwesomeIcons.pen,
                     ),
                     onChanged: (v) {
@@ -1109,12 +1155,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                     controller: _plateController,
                     textInputAction: TextInputAction.next,
                     decoration: _fieldDecoration(
-                      label: 'License Plate (e.g. PP-2A-9988)',
+                      label: 'license_plate_label'.tr,
                       icon: FontAwesomeIcons.idCard,
                     ),
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
-                        return 'Plate number is required';
+                        return 'plate_number_required'.tr;
                       }
                       return null;
                     },
@@ -1125,15 +1171,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                     keyboardType: TextInputType.number,
                     textInputAction: TextInputAction.next,
                     decoration: _fieldDecoration(
-                      label: 'Seat Capacity (e.g. 40)',
+                      label: 'seat_capacity_label'.tr,
                       icon: FontAwesomeIcons.users,
                     ),
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
-                        return 'Seat capacity is required';
+                        return 'seat_capacity_required'.tr;
                       }
                       if (int.tryParse(value.trim()) == null) {
-                        return 'Enter a valid number';
+                        return 'enter_valid_number'.tr;
                       }
                       return null;
                     },
@@ -1143,7 +1189,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                     controller: _busImageUrlController,
                     textInputAction: TextInputAction.done,
                     decoration: _fieldDecoration(
-                      label: 'Bus Photo URL (optional)',
+                      label: 'bus_photo_url_label'.tr,
                       icon: FontAwesomeIcons.image,
                     ),
                   ),
@@ -1151,7 +1197,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                   _submitButton(
                     _vm.isSubmitting.value,
                     _submitBus,
-                    'Register Bus to Fleet',
+                    'register_bus_to_fleet'.tr,
                   ),
                 ],
               ),
@@ -1160,7 +1206,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           const SizedBox(height: 22),
           if (_vm.buses.isNotEmpty) ...[
             Text(
-              'Fleet Vehicles (${_vm.buses.length})',
+              '${'fleet_vehicles'.tr} (${_vm.buses.length})',
               style: AppFonts.dmSans(
                 fontSize: 15,
                 fontWeight: FontWeight.bold,
@@ -1191,8 +1237,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           AdminFormHeroHeader(
-            title: 'Route Network',
-            subtitle: 'Create origin and destination routes',
+            title: 'route_network'.tr,
+            subtitle: 'create_origin_dest_routes'.tr,
             icon: FontAwesomeIcons.road,
             count: _vm.routes.length,
             isDark: isDark,
@@ -1213,7 +1259,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    'Connect New Route',
+                    'connect_new_route'.tr,
                     style: AppFonts.dmSans(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -1225,7 +1271,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                     Padding(
                       padding: const EdgeInsets.only(bottom: 12),
                       child: Text(
-                        'No destinations available yet. Add locations first.',
+                        'no_destinations_available'.tr,
                         style: AppFonts.dmSans(color: secondaryText),
                       ),
                     ),
@@ -1241,7 +1287,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                     ),
                     initialValue: _fromLocationId,
                     decoration: _dropdownDecoration(
-                      label: 'From (Origin)',
+                      label: 'from_origin'.tr,
                       icon: FontAwesomeIcons.locationDot,
                     ),
                     dropdownColor: cardBackground,
@@ -1272,7 +1318,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                     ),
                     initialValue: _toLocationId,
                     decoration: _dropdownDecoration(
-                      label: 'To (Destination)',
+                      label: 'to_destination'.tr,
                       icon: FontAwesomeIcons.flag,
                     ),
                     dropdownColor: cardBackground,
@@ -1294,7 +1340,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                   _submitButton(
                     _vm.isSubmitting.value,
                     _submitRoute,
-                    'Create Route Line',
+                    'create_route_line'.tr,
                   ),
                 ],
               ),
@@ -1303,7 +1349,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           const SizedBox(height: 22),
           if (_vm.routes.isNotEmpty) ...[
             Text(
-              'Active Route Lines (${_vm.routes.length})',
+              '${'active_route_lines'.tr} (${_vm.routes.length})',
               style: AppFonts.dmSans(
                 fontSize: 15,
                 fontWeight: FontWeight.bold,
@@ -1334,8 +1380,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           AdminFormHeroHeader(
-            title: 'Trip Scheduler',
-            subtitle: 'Schedule departure times, routes, and fares',
+            title: 'trip_scheduler'.tr,
+            subtitle: 'schedule_times_routes_fares'.tr,
             icon: FontAwesomeIcons.calendarDays,
             count: _vm.schedules.length,
             isDark: isDark,
@@ -1356,7 +1402,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    'Schedule New Trip',
+                    'schedule_new_trip'.tr,
                     style: AppFonts.dmSans(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -1376,7 +1422,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                     ),
                     initialValue: _selectedBusId,
                     decoration: _dropdownDecoration(
-                      label: 'Select Bus Vehicle',
+                      label: 'select_bus_vehicle'.tr,
                       icon: FontAwesomeIcons.bus,
                     ),
                     dropdownColor: cardBackground,
@@ -1407,7 +1453,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                     ),
                     initialValue: _selectedRouteId,
                     decoration: _dropdownDecoration(
-                      label: 'Select Travel Route',
+                      label: 'select_travel_route'.tr,
                       icon: FontAwesomeIcons.road,
                     ),
                     dropdownColor: cardBackground,
@@ -1438,7 +1484,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                     ),
                     initialValue: _selectedScheduleBusTypeId,
                     decoration: _dropdownDecoration(
-                      label: 'Select Bus Type',
+                      label: 'select_bus_type'.tr,
                       icon: FontAwesomeIcons.sitemap,
                     ),
                     dropdownColor: cardBackground,
@@ -1459,7 +1505,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                   ),
                   const SizedBox(height: 16),
                   _pickerField(
-                    label: 'Travel Date',
+                    label: 'travel_date_label'.tr,
                     icon: FontAwesomeIcons.calendarDays,
                     value: _travelDate == null
                         ? null
@@ -1471,7 +1517,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                     children: [
                       Expanded(
                         child: _pickerField(
-                          label: 'Departure',
+                          label: 'departure_label'.tr,
                           icon: FontAwesomeIcons.clock,
                           value: _departureTime == null
                               ? null
@@ -1482,7 +1528,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                       const SizedBox(width: 10),
                       Expanded(
                         child: _pickerField(
-                          label: 'Arrival',
+                          label: 'arrival_label'.tr,
                           icon: FontAwesomeIcons.clock,
                           value: _arrivalTime == null
                               ? null
@@ -1501,15 +1547,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                           keyboardType: TextInputType.number,
                           textInputAction: TextInputAction.next,
                           decoration: _fieldDecoration(
-                            label: 'Available Seats',
+                            label: 'available_seats_label'.tr,
                             icon: FontAwesomeIcons.users,
                           ),
                           validator: (value) {
                             if (value == null || value.trim().isEmpty) {
-                              return 'Required';
+                              return 'required'.tr;
                             }
                             if (int.tryParse(value.trim()) == null) {
-                              return 'Invalid';
+                              return 'invalid'.tr;
                             }
                             return null;
                           },
@@ -1524,15 +1570,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                           ),
                           textInputAction: TextInputAction.next,
                           decoration: _fieldDecoration(
-                            label: 'Base Price (\$)',
+                            label: 'base_price_label'.tr,
                             icon: FontAwesomeIcons.moneyBill1,
                           ),
                           validator: (value) {
                             if (value == null || value.trim().isEmpty) {
-                              return 'Required';
+                              return 'required'.tr;
                             }
                             if (double.tryParse(value.trim()) == null) {
-                              return 'Invalid';
+                              return 'invalid'.tr;
                             }
                             return null;
                           },
@@ -1547,7 +1593,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                       Padding(
                         padding: const EdgeInsets.only(left: 4, bottom: 8),
                         child: Text(
-                          'Schedule Status',
+                          'schedule_status'.tr,
                           style: AppFonts.dmSans(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
@@ -1632,7 +1678,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                   _submitButton(
                     _vm.isSubmitting.value,
                     _submitSchedule,
-                    'Publish Trip Schedule',
+                    'publish_trip_schedule'.tr,
                   ),
                 ],
               ),
@@ -1641,7 +1687,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           const SizedBox(height: 22),
           if (_vm.schedules.isNotEmpty) ...[
             Text(
-              'Scheduled Departures (${_vm.schedules.length})',
+              '${'scheduled_departures'.tr} (${_vm.schedules.length})',
               style: AppFonts.dmSans(
                 fontSize: 15,
                 fontWeight: FontWeight.bold,
@@ -1673,8 +1719,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           AdminFormHeroHeader(
-            title: 'Customer Bookings',
-            subtitle: 'Real-time reservation log & passenger history',
+            title: 'customer_bookings'.tr,
+            subtitle: 'realtime_reservation_log'.tr,
             icon: FontAwesomeIcons.ticket,
             count: _vm.bookings.length,
             isDark: isDark,
@@ -1718,7 +1764,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                     child: Text(
                       selDate != null
                           ? DateFormat('EEE, MMM dd, yyyy').format(selDate)
-                          : 'Filter bookings by date',
+                          : 'filter_bookings_date'.tr,
                       style: AppFonts.dmSans(
                         fontSize: 12,
                         fontWeight: selDate != null
@@ -1744,7 +1790,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
-                          'Clear',
+                          'clear'.tr,
                           style: AppFonts.dmSans(
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
@@ -1792,7 +1838,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                       minimumSize: const Size(0, 32),
                     ),
                     child: Text(
-                      'Pick Date',
+                      'pick_date'.tr,
                       style: AppFonts.dmSans(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
@@ -1826,7 +1872,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                     ),
                     const SizedBox(height: 10),
                     Text(
-                      'Failed to load bookings',
+                      'failed_load_bookings'.tr,
                       style: AppFonts.dmSans(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
@@ -1850,7 +1896,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                         size: 13,
                         color: Colors.white,
                       ),
-                      label: const Text('Retry Bookings'),
+                      label: Text('retry_bookings'.tr),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.green,
                         shape: RoundedRectangleBorder(
@@ -1880,7 +1926,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                     ),
                     const SizedBox(height: 10),
                     Text(
-                      'No bookings recorded yet',
+                      'no_bookings_recorded'.tr,
                       style: AppFonts.dmSans(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
@@ -1889,7 +1935,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Passenger reservations will appear here.',
+                      'passenger_reservations_appear'.tr,
                       style: AppFonts.dmSans(
                         fontSize: 12,
                         color: secondaryText,
@@ -1926,7 +1972,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
       child: InputDecorator(
         decoration: _fieldDecoration(label: label, icon: icon),
         child: Text(
-          value ?? 'Select',
+          value ?? 'select'.tr,
           style: AppFonts.dmSans(
             fontSize: 14,
             fontWeight: value == null ? FontWeight.normal : FontWeight.w600,

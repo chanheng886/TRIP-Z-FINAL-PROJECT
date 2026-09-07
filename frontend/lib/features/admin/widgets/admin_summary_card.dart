@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_fonts.dart';
+import 'package:get/get.dart';
 
 class SummaryCardData {
   final String label;
@@ -92,7 +93,7 @@ class AdminSummaryCard extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               ),
               Text(
-                card.label,
+                card.label.tr,
                 style: AppFonts.dmSans(
                   fontSize: 10,
                   fontWeight: FontWeight.w500,

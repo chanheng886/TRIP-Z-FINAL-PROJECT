@@ -46,6 +46,20 @@ class ProfileViewModel extends GetxController {
     _languageController.changeLanguage(languageCode, countryCode);
   }
 
+  Future<bool> updateProfile({
+    required String username,
+    required String email,
+    required String phone,
+    required String gender,
+  }) async {
+    return await _authVM.updateProfile(
+      username: username,
+      email: email,
+      phone: phone,
+      gender: gender,
+    );
+  }
+
   Future<void> logout() async {
     await _authVM.logout();
   }

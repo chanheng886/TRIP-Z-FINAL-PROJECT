@@ -79,6 +79,38 @@ class AuthViewmodel extends GetxController {
     }
   }
 
+  Future<bool> updateProfile({
+    required String username,
+    required String email,
+    required String phone,
+    required String gender,
+  }) async {
+    if (auth.value == null) return false;
+    try {
+      isLoading.value = true;
+      final updatedUser = auth.value!.user.copyWith(
+        username: username,
+        email: email,
+        phone: phone,
+        gender: gender,
+      );
+      final updatedAuth = AuthResponse(
+        token: auth.value!.token,
+        tokenType: auth.value!.tokenType,
+        expiresIn: auth.value!.expiresIn,
+        user: updatedUser,
+      );
+      await authRepository.saveSession(auth: updatedAuth);
+      auth.value = updatedAuth;
+      return true;
+    } catch (e) {
+      errorMessage.value = e.toString().replaceFirst('Exception: ', '');
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
   Future<void> logout() async {
     await authRepository.clearSession();
     auth.value = null;

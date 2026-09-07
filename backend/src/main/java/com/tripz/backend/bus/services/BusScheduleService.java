@@ -11,6 +11,7 @@ import com.tripz.backend.bus.models.BusBooking;
 import com.tripz.backend.bus.models.BusSchedule;
 import com.tripz.backend.bus.repositories.BusBookingRepository;
 import com.tripz.backend.bus.repositories.BusScheduleRepository;
+import com.tripz.backend.bus.enums.BusScheduleStatus;
 import com.tripz.backend.bus.utils.SeatLabelGenerator;
 
 import lombok.RequiredArgsConstructor;
@@ -53,6 +54,27 @@ public class BusScheduleService {
 
     //✅✅ Create Bus Schedule
     public BusScheduleResponseDTO createBusSchedule(BusScheduleRequestDTO dto){
+        if (dto.getDepartureTime() != null && dto.getArrivalTime() != null) {
+            if (!dto.getDepartureTime().isBefore(dto.getArrivalTime())) {
+                throw new IllegalArgumentException("Arrival time must be after departure time!");
+            }
+        }
+
+        boolean hasOverlap = busScheduleRepository.existsOverlappingSchedule(
+            dto.getBusId(),
+            dto.getTravelDate(),
+            dto.getDepartureTime(),
+            dto.getArrivalTime(),
+            BusScheduleStatus.Cancelled
+        );
+
+        if (hasOverlap) {
+            throw new IllegalArgumentException(
+                "This bus is already scheduled for another trip overlapping this time window (" + 
+                dto.getDepartureTime() + " - " + dto.getArrivalTime() + ") on " + dto.getTravelDate() + "!"
+            );
+        }
+
         BusSchedule schedule = busScheduleMapper.toEntity(dto);
         BusSchedule saved = busScheduleRepository.save(schedule);
         return busScheduleMapper.toResponse(saved);
@@ -61,7 +83,30 @@ public class BusScheduleService {
     //✅✅ Update Bus Schedule
     public BusScheduleResponseDTO updateBusSchedule(Long id, BusScheduleRequestDTO dto){
         BusSchedule schedule = busScheduleRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Schedule with id: " + "Not Found!"));
+            .orElseThrow(() -> new RuntimeException("Schedule with id: " + id + " Not Found!"));
+
+        if (dto.getDepartureTime() != null && dto.getArrivalTime() != null) {
+            if (!dto.getDepartureTime().isBefore(dto.getArrivalTime())) {
+                throw new IllegalArgumentException("Arrival time must be after departure time!");
+            }
+        }
+
+        boolean hasOverlap = busScheduleRepository.existsOverlappingScheduleExcludingId(
+            dto.getBusId(),
+            id,
+            dto.getTravelDate(),
+            dto.getDepartureTime(),
+            dto.getArrivalTime(),
+            BusScheduleStatus.Cancelled
+        );
+
+        if (hasOverlap) {
+            throw new IllegalArgumentException(
+                "This bus is already scheduled for another trip overlapping this time window (" + 
+                dto.getDepartureTime() + " - " + dto.getArrivalTime() + ") on " + dto.getTravelDate() + "!"
+            );
+        }
+
         BusSchedule updated = busScheduleMapper.toUpdate(schedule, dto);
         BusSchedule saved = busScheduleRepository.save(updated);
         return busScheduleMapper.toResponse(saved);

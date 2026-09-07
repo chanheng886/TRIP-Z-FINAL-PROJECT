@@ -44,7 +44,18 @@ class AdminDashboardViewmodel extends GetxController {
       _safeLoad(() => repository.fetchLocations(), (v) => locations.value = v, 'locations', errors),
       _safeLoad(() => repository.fetchCompanies(), (v) => companies.value = v, 'companies', errors),
       _safeLoad(() => repository.fetchBuses(), (v) => buses.value = v, 'buses', errors),
-      _safeLoad(() => repository.fetchRoutes(), (v) => routes.value = v, 'routes', errors),
+      _safeLoad(() => repository.fetchRoutes(), (v) {
+        final seen = <String>{};
+        final unique = <BusRoute>[];
+        for (final r in v) {
+          final key =
+              '${r.fromLocation.trim().toLowerCase()}->${r.toLocation.trim().toLowerCase()}';
+          if (seen.add(key)) {
+            unique.add(r);
+          }
+        }
+        routes.value = unique;
+      }, 'routes', errors),
       _safeLoad(() => repository.fetchBusTypes(), (v) => busTypes.value = v, 'bus types', errors),
       _safeLoad(() => repository.fetchSchedules(), (v) => schedules.value = v, 'schedules', errors),
       _safeLoadBooking(() => repository.fetchBookings(), (v) => bookings.value = v),

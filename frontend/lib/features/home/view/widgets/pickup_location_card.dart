@@ -7,6 +7,7 @@ import 'package:frontend/features/home/data/bus_station_repository.dart';
 import 'package:frontend/features/home/view/pages/bus_stations_map_screen.dart';
 import 'package:frontend/features/home/view/widgets/bus_station_detail_bottom_sheet.dart';
 import 'package:frontend/shared/model/bus_station.dart';
+import 'package:frontend/shared/service/road_routing_service.dart';
 import 'package:frontend/shared/service/user_location_service.dart';
 import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
@@ -32,6 +33,7 @@ class _PickupLocationCardState extends State<PickupLocationCard> {
   late final UserLocationService _userLocService;
 
   late final Worker _posWorker;
+  List<LatLng> _roadRoutePoints = [];
 
   @override
   void initState() {
@@ -40,6 +42,7 @@ class _PickupLocationCardState extends State<PickupLocationCard> {
         ? Get.find<UserLocationService>()
         : Get.put(UserLocationService());
     _stations = _repository.getAllStations();
+    _updateRoadRoute();
 
     _posWorker = ever(_userLocService.currentPosition, (pos) {
       if (pos != null && mounted) {
@@ -47,8 +50,25 @@ class _PickupLocationCardState extends State<PickupLocationCard> {
           LatLng(pos.latitude, pos.longitude),
           14.5,
         );
+        _updateRoadRoute();
       }
     });
+  }
+
+  void _updateRoadRoute() async {
+    final nearest = _userLocService.nearestStation.value ?? _stations.first;
+    final userPos = _userLocService.userLatLng;
+    final nearestLatLng = LatLng(nearest.latitude, nearest.longitude);
+
+    final result = await RoadRoutingService().getRoadRoute(
+      userPos,
+      nearestLatLng,
+    );
+    if (mounted) {
+      setState(() {
+        _roadRoutePoints = result.points;
+      });
+    }
   }
 
   @override
@@ -219,11 +239,24 @@ class _PickupLocationCardState extends State<PickupLocationCard> {
                         userAgentPackageName: 'com.tripz.frontend',
                       ),
 
-                      // Polyline Route from User to Nearest Station
+                      // Polyline Route from User to Nearest Station via Real Roads
                       PolylineLayer(
                         polylines: [
+                          // Route casing
                           Polyline(
-                            points: [userPos, nearestLatLng],
+                            points: _roadRoutePoints.isNotEmpty
+                                ? _roadRoutePoints
+                                : [userPos, nearestLatLng],
+                            color: const Color(0xFF1D4ED8).withValues(alpha: 0.35),
+                            strokeWidth: 6.5,
+                            strokeCap: StrokeCap.round,
+                            strokeJoin: StrokeJoin.round,
+                          ),
+                          // Core navigation line
+                          Polyline(
+                            points: _roadRoutePoints.isNotEmpty
+                                ? _roadRoutePoints
+                                : [userPos, nearestLatLng],
                             color: const Color(0xFF2563EB),
                             strokeWidth: 4.0,
                             strokeCap: StrokeCap.round,

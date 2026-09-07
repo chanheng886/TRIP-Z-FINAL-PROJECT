@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_fonts.dart';
+import 'package:get/get.dart';
 
 class AdminHeader extends StatelessWidget {
   final Color pageBackground;
@@ -66,7 +67,7 @@ class AdminHeader extends StatelessWidget {
                   children: [
                     Flexible(
                       child: Text(
-                        'Admin Console',
+                        'admin_console'.tr,
                         style: AppFonts.dmSans(
                           fontSize: 17,
                           fontWeight: FontWeight.bold,
@@ -90,7 +91,7 @@ class AdminHeader extends StatelessWidget {
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
-                        'PORTAL',
+                        'admin_portal'.tr,
                         style: AppFonts.dmSans(
                           fontSize: 9,
                           fontWeight: FontWeight.w800,
@@ -103,7 +104,7 @@ class AdminHeader extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Fleet & Operations Management',
+                  'fleet_operations_mgmt'.tr,
                   style: AppFonts.dmSans(
                     fontSize: 11,
                     color: secondaryText,
@@ -140,7 +141,7 @@ class AdminHeader extends StatelessWidget {
                 ),
                 const SizedBox(width: 5),
                 Text(
-                  'Live',
+                  'live'.tr,
                   style: AppFonts.dmSans(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,

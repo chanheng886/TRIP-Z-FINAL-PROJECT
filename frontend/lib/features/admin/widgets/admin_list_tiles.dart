@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:frontend/core/localization/db_translator.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_fonts.dart';
 import 'package:frontend/shared/model/booking_response.dart';
 import 'package:frontend/shared/model/bus_schedule.dart';
+import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
 class AdminBusListTile extends StatelessWidget {
@@ -66,7 +68,7 @@ class AdminBusListTile extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '${bus.companyName} • ${bus.busType}',
+                  '${(bus.companyName as String).trDb} • ${(bus.busType as String).trDb}',
                   style: AppFonts.dmSans(fontSize: 11, color: secondaryText),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -82,7 +84,7 @@ class AdminBusListTile extends StatelessWidget {
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
-              '${bus.seatCapacity} seats',
+              '${bus.seatCapacity} ${'seats'.tr}',
               style: AppFonts.dmSans(
                 fontSize: 10,
                 fontWeight: FontWeight.w600,
@@ -114,6 +116,9 @@ class AdminRouteListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final from = (route.fromLocation as String).trDb;
+    final to = (route.toLocation as String).trDb;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -145,7 +150,7 @@ class AdminRouteListTile extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    route.fromLocation,
+                    from,
                     style: AppFonts.dmSans(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
@@ -165,7 +170,7 @@ class AdminRouteListTile extends StatelessWidget {
                 ),
                 Expanded(
                   child: Text(
-                    route.toLocation,
+                    to,
                     style: AppFonts.dmSans(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
@@ -209,6 +214,9 @@ class AdminScheduleListTile extends StatelessWidget {
         ? AppColors.green
         : (isDark ? const Color(0xFF8A8A8E) : const Color(0xFF9CA3AF));
 
+    final from = schedule.fromLocation.trDb;
+    final to = schedule.toLocation.trDb;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -240,7 +248,7 @@ class AdminScheduleListTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${schedule.fromLocation} → ${schedule.toLocation}',
+                  '$from → $to',
                   style: AppFonts.dmSans(
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
@@ -267,7 +275,7 @@ class AdminScheduleListTile extends StatelessWidget {
               borderRadius: BorderRadius.circular(6),
             ),
             child: Text(
-              schedule.status.name,
+              schedule.status.name.trDb,
               style: AppFonts.dmSans(
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
@@ -306,10 +314,13 @@ class AdminBookingCard extends StatelessWidget {
     };
 
     final statusLabel = switch (booking.bookingStatus) {
-      BookingStatus.Pending => 'Pending',
-      BookingStatus.Confirmed => 'Confirmed',
-      BookingStatus.Cancelled => 'Cancelled',
+      BookingStatus.Pending => 'status_pending'.tr,
+      BookingStatus.Confirmed => 'status_confirmed'.tr,
+      BookingStatus.Cancelled => 'status_cancelled'.tr,
     };
+
+    final from = booking.fromLocation.trDb;
+    final to = booking.toLocation.trDb;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -355,7 +366,7 @@ class AdminBookingCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                     Text(
-                      'Booking #${booking.id}',
+                      '${'booking_id'.tr} #${booking.id}',
                       style: AppFonts.dmSans(
                         fontSize: 11,
                         color: secondaryText,
@@ -403,7 +414,7 @@ class AdminBookingCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    '${booking.fromLocation} → ${booking.toLocation}',
+                    '$from → $to',
                     style: AppFonts.dmSans(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
@@ -433,7 +444,7 @@ class AdminBookingCard extends StatelessWidget {
               ),
               _bookingInfoChip(
                 FontAwesomeIcons.couch,
-                'Seats: ${booking.seatNumbers.join(', ')}',
+                '${'seats'.tr}: ${booking.seatNumbers.join(', ')}',
                 secondaryText,
               ),
               _bookingInfoChip(
@@ -443,7 +454,7 @@ class AdminBookingCard extends StatelessWidget {
               ),
               _bookingInfoChip(
                 FontAwesomeIcons.creditCard,
-                booking.paymentMethod,
+                booking.paymentMethod.trDb,
                 secondaryText,
               ),
             ],
@@ -452,7 +463,7 @@ class AdminBookingCard extends StatelessWidget {
           Container(height: 1, color: borderColor),
           const SizedBox(height: 8),
           Text(
-            'Booked on ${DateFormat('MMM dd, yyyy • hh:mm a').format(booking.bookingDate)}',
+            DateFormat('MMM dd, yyyy • hh:mm a').format(booking.bookingDate),
             style: AppFonts.dmSans(fontSize: 11, color: secondaryText),
           ),
         ],

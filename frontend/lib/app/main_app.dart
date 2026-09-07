@@ -38,10 +38,7 @@ class _MainAppState extends State<MainApp> {
 
     return Scaffold(
       body: Stack(
-        children: [
-          _screens[_selectIndex],
-          const AiChatFloatingButton(),
-        ],
+        children: [_screens[_selectIndex], const AiChatFloatingButton()],
       ),
       bottomNavigationBar: Obx(() {
         // Access locale to ensure reactivity when language switches
@@ -76,8 +73,11 @@ class _MainAppState extends State<MainApp> {
               label: 'nav_contact'.tr,
             ),
             BottomNavigationBarItem(
-              icon: const FaIcon(FontAwesomeIcons.circleUser),
-              activeIcon: const FaIcon(FontAwesomeIcons.circleUser, size: 28),
+              icon: const FaIcon(FontAwesomeIcons.solidCircleUser),
+              activeIcon: const FaIcon(
+                FontAwesomeIcons.solidCircleUser,
+                size: 28,
+              ),
               label: 'nav_me'.tr,
             ),
           ],

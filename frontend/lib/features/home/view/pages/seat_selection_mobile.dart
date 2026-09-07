@@ -10,7 +10,6 @@ import 'package:frontend/features/home/view/widgets/minivan_vehicle_layout.dart'
 import 'package:frontend/shared/service/booking_service.dart';
 import 'package:frontend/shared/service/bus_schedule_serivice.dart';
 import 'package:get/get.dart';
-// import 'package:google_fonts/google_fonts.dart';
 
 class SeatSelectionMobile extends StatefulWidget {
   final int busScheduleId;

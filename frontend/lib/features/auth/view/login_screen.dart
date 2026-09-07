@@ -7,7 +7,6 @@ import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/features/auth/view/register_screen.dart';
 import 'package:frontend/features/auth/viewmodel/auth_viewmodel.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -96,7 +95,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           : const Color(0xFFE8F8F0),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: AppColors.primary.withOpacity(0.3),
+                        color: AppColors.primary.withValues(alpha: 0.3),
                       ),
                     ),
                     child: Row(

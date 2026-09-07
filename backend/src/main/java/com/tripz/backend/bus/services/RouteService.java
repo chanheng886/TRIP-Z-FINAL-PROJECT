@@ -37,11 +37,12 @@ public class RouteService {
     //✅ Get From Location and To Location
     public RouteResponseDTO getRouteByFromLocationNameAndToLocationName(String fromLocationName, String toLocationName){
         Location fromLocation = locationRepository.findByLocationName(fromLocationName)
-            .orElseThrow(() -> new RuntimeException("Location name: " + fromLocationName + "Not Found!"));
+            .orElseThrow(() -> new RuntimeException("Location name: " + fromLocationName + " Not Found!"));
         Location toLocation = locationRepository.findByLocationName(toLocationName)
-            .orElseThrow(() -> new RuntimeException("Location name: " + toLocationName));
+            .orElseThrow(() -> new RuntimeException("Location name: " + toLocationName + " Not Found!"));
 
-        Route route = routeRepository.findByFromLocationAndToLocation(fromLocation, toLocation);
+        Route route = routeRepository.findByFromLocationAndToLocation(fromLocation, toLocation)
+            .orElseThrow(() -> new RuntimeException("Route from " + fromLocationName + " to " + toLocationName + " Not Found!"));
         return routeMapper.toResponse(route);
     }
 
@@ -49,10 +50,18 @@ public class RouteService {
     public RouteResponseDTO createRoute(RouteRequestDTO dto){
         Location fromLocation = locationRepository
             .findByLocationName(dto.getFromLocation())
-            .orElseThrow(() -> new RuntimeException("Location Not Found!"));
+            .orElseThrow(() -> new RuntimeException("Location Not Found: " + dto.getFromLocation()));
         Location toLocation = locationRepository
             .findByLocationName(dto.getToLocation())   
-            .orElseThrow(() -> new RuntimeException("Location Not Found!"));
+            .orElseThrow(() -> new RuntimeException("Location Not Found: " + dto.getToLocation()));
+
+        if (fromLocation.getId().equals(toLocation.getId())) {
+            throw new IllegalArgumentException("From and To locations cannot be the same!");
+        }
+
+        if (routeRepository.existsByFromLocationAndToLocation(fromLocation, toLocation)) {
+            throw new IllegalArgumentException("Route from " + fromLocation.getLocationName() + " to " + toLocation.getLocationName() + " already exists!");
+        }
         
         Route route = routeMapper.toEntity(dto, fromLocation, toLocation);
         Route save = routeRepository.save(route);
@@ -61,11 +70,21 @@ public class RouteService {
 
     //✅ Update Route
     public RouteResponseDTO updateRoute(Long id, RouteRequestDTO dto){
-        Route route = routeRepository.findById(id).orElseThrow(() -> new RuntimeException("Route with id: " + id + "Not Found!"));
+        Route route = routeRepository.findById(id).orElseThrow(() -> new RuntimeException("Route with id: " + id + " Not Found!"));
         Location fromLocation = locationRepository.findByLocationName(dto.getFromLocation())
-            .orElseThrow(() -> new RuntimeException("Location Not Found!"));
+            .orElseThrow(() -> new RuntimeException("Location Not Found: " + dto.getFromLocation()));
         Location toLocation = locationRepository.findByLocationName(dto.getToLocation())
-            .orElseThrow(() -> new RuntimeException("Location Not Found!"));
+            .orElseThrow(() -> new RuntimeException("Location Not Found: " + dto.getToLocation()));
+
+        if (fromLocation.getId().equals(toLocation.getId())) {
+            throw new IllegalArgumentException("From and To locations cannot be the same!");
+        }
+
+        routeRepository.findByFromLocationAndToLocation(fromLocation, toLocation).ifPresent(existing -> {
+            if (!existing.getId().equals(id)) {
+                throw new IllegalArgumentException("Route from " + fromLocation.getLocationName() + " to " + toLocation.getLocationName() + " already exists!");
+            }
+        });
 
         routeMapper.toUpdate(route, fromLocation, toLocation);
         Route updated = routeRepository.save(route);

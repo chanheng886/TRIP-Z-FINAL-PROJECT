@@ -1,6 +1,7 @@
 package com.tripz.backend.bus.repositories;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,6 +14,7 @@ public interface RouteRepository extends JpaRepository<Route, Long> {
     @EntityGraph(attributePaths = {"fromLocation", "toLocation"})
     List<Route> findAll();
 
-    Route findByFromLocationAndToLocation(Location fromLocation, Location toLocation);
+    Optional<Route> findByFromLocationAndToLocation(Location fromLocation, Location toLocation);
 
+    boolean existsByFromLocationAndToLocation(Location fromLocation, Location toLocation);
 }

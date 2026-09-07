@@ -7,6 +7,7 @@ import 'package:frontend/core/theme/app_fonts.dart';
 import 'package:frontend/features/home/data/bus_station_repository.dart';
 import 'package:frontend/features/home/view/widgets/bus_station_detail_bottom_sheet.dart';
 import 'package:frontend/shared/model/bus_station.dart';
+import 'package:frontend/shared/service/road_routing_service.dart';
 import 'package:frontend/shared/service/user_location_service.dart';
 import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
@@ -40,6 +41,8 @@ class _BusStationsMapScreenState extends State<BusStationsMapScreen> {
   bool _showListView = false;
   Worker? _posWorker;
 
+  List<LatLng> _roadRoutePoints = [];
+
   @override
   void initState() {
     super.initState();
@@ -58,6 +61,7 @@ class _BusStationsMapScreenState extends State<BusStationsMapScreen> {
         _userLocService.nearestStation.value ??
         _allStations.first;
     _filterStations();
+    _updateRoadRoute();
 
     if (widget.initialStation == null) {
       _posWorker = ever(_userLocService.currentPosition, (pos) {
@@ -67,8 +71,25 @@ class _BusStationsMapScreenState extends State<BusStationsMapScreen> {
             setState(() {
               _selectedStation = nearest;
             });
+            _updateRoadRoute();
           }
         }
+      });
+    }
+  }
+
+  void _updateRoadRoute() async {
+    if (_selectedStation == null) return;
+    final userPos = _userLocService.userLatLng;
+    final destPos = LatLng(
+      _selectedStation!.latitude,
+      _selectedStation!.longitude,
+    );
+
+    final result = await RoadRoutingService().getRoadRoute(userPos, destPos);
+    if (mounted) {
+      setState(() {
+        _roadRoutePoints = result.points;
       });
     }
   }
@@ -93,6 +114,7 @@ class _BusStationsMapScreenState extends State<BusStationsMapScreen> {
     setState(() {
       _selectedStation = station;
     });
+    _updateRoadRoute();
     if (moveMap) {
       _mapController.move(LatLng(station.latitude, station.longitude), 15.5);
     }
@@ -161,7 +183,7 @@ class _BusStationsMapScreenState extends State<BusStationsMapScreen> {
                 interactionOptions: const InteractionOptions(
                   flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
                 ),
-                onTap: (_, __) {
+                onTap: (_, _) {
                   FocusScope.of(context).unfocus();
                 },
               ),
@@ -172,14 +194,27 @@ class _BusStationsMapScreenState extends State<BusStationsMapScreen> {
                   userAgentPackageName: 'com.tripz.frontend',
                 ),
 
-                // Polyline Connecting User Location to Selected Station
+                // Polyline Connecting User Location to Selected Station via Real Roads
                 if (_selectedStation != null)
                   PolylineLayer(
                     polylines: [
+                      // Outer casing / glow for high contrast
                       Polyline(
-                        points: [userPos, selectedLatLng],
+                        points: _roadRoutePoints.isNotEmpty
+                            ? _roadRoutePoints
+                            : [userPos, selectedLatLng],
+                        color: const Color(0xFF1D4ED8).withValues(alpha: 0.35),
+                        strokeWidth: 7.0,
+                        strokeCap: StrokeCap.round,
+                        strokeJoin: StrokeJoin.round,
+                      ),
+                      // Core navigation road route
+                      Polyline(
+                        points: _roadRoutePoints.isNotEmpty
+                            ? _roadRoutePoints
+                            : [userPos, selectedLatLng],
                         color: const Color(0xFF2563EB),
-                        strokeWidth: 4.0,
+                        strokeWidth: 4.5,
                         strokeCap: StrokeCap.round,
                         strokeJoin: StrokeJoin.round,
                       ),
@@ -441,7 +476,7 @@ class _BusStationsMapScreenState extends State<BusStationsMapScreen> {
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
                         itemCount: _cities.length,
-                        separatorBuilder: (_, __) => const SizedBox(width: 8),
+                        separatorBuilder: (_, _) => const SizedBox(width: 8),
                         itemBuilder: (context, index) {
                           final city = _cities[index];
                           final isSelected = _selectedCity == city;
@@ -583,7 +618,7 @@ class _BusStationsMapScreenState extends State<BusStationsMapScreen> {
                         child: ListView.separated(
                           padding: const EdgeInsets.symmetric(vertical: 8),
                           itemCount: _filteredStations.length,
-                          separatorBuilder: (_, __) => const Divider(height: 1),
+                          separatorBuilder: (_, _) => const Divider(height: 1),
                           itemBuilder: (context, index) {
                             final station = _filteredStations[index];
                             final isSelected =
