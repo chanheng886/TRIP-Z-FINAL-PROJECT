@@ -30,4 +30,6 @@ public class UserRequestDTO {
 
     @Pattern(regexp = "^[0-9]{10,12}", message = "Phone must be 10-12 digits")
     private String phone;
+
+    private String profileImage;
 }

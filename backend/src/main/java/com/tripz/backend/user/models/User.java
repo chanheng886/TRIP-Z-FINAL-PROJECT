@@ -44,4 +44,7 @@ public class User {
 
     @Column(name = "password", nullable = false)
     private String password;
+
+    @Column(name = "profile_image", columnDefinition = "TEXT")
+    private String profileImage;
 }

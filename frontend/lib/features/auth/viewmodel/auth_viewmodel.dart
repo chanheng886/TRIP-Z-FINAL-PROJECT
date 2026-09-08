@@ -84,16 +84,35 @@ class AuthViewmodel extends GetxController {
     required String email,
     required String phone,
     required String gender,
+    String? profileImage,
   }) async {
     if (auth.value == null) return false;
     try {
       isLoading.value = true;
-      final updatedUser = auth.value!.user.copyWith(
-        username: username,
-        email: email,
-        phone: phone,
-        gender: gender,
-      );
+      errorMessage.value = "";
+      
+      User updatedUser;
+      try {
+        updatedUser = await authRepository.updateProfile(
+          userId: auth.value!.user.id,
+          username: username,
+          email: email,
+          phone: phone,
+          gender: gender,
+          role: auth.value!.user.role.name,
+          profileImage: profileImage ?? auth.value!.user.profileImage,
+        );
+      } catch (apiErr) {
+        print('Backend update warning (falling back to local): $apiErr');
+        updatedUser = auth.value!.user.copyWith(
+          username: username,
+          email: email,
+          phone: phone,
+          gender: gender,
+          profileImage: profileImage ?? auth.value!.user.profileImage,
+        );
+      }
+
       final updatedAuth = AuthResponse(
         token: auth.value!.token,
         tokenType: auth.value!.tokenType,

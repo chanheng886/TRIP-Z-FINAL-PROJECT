@@ -3,7 +3,9 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_fonts.dart';
 import 'package:frontend/features/profile/viewmodel/profile_viewmodel.dart';
+import 'package:frontend/shared/widgets/user_avatar.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -20,6 +22,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late TextEditingController _emailController;
   late TextEditingController _phoneController;
   String _selectedGender = 'Male';
+  String? _profileImage;
   bool _isSubmitting = false;
 
   @override
@@ -30,6 +33,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _emailController = TextEditingController(text: user?.email ?? '');
     _phoneController = TextEditingController(text: user?.phone ?? '');
     _selectedGender = (user?.gender.isNotEmpty == true) ? user!.gender : 'Male';
+    _profileImage = user?.profileImage;
   }
 
   @override
@@ -49,6 +53,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       email: _emailController.text.trim(),
       phone: _phoneController.text.trim(),
       gender: _selectedGender,
+      profileImage: _profileImage,
     );
     setState(() => _isSubmitting = false);
 
@@ -78,6 +83,183 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 
+  void _showImagePickerSheet(BuildContext context, bool isDarkMode) {
+    final sheetBg = isDarkMode ? const Color(0xFF1E222B) : Colors.white;
+    final primaryText = isDarkMode ? AppColors.darkPrimaryText : AppColors.lightPrimaryText;
+    final secondaryText = isDarkMode ? AppColors.darkSecondaryText : AppColors.lightSecondaryText;
+    final borderColor = isDarkMode ? const Color(0xFF2C313C) : const Color(0xFFE2E8F0);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: sheetBg,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: isDarkMode ? Colors.white24 : Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Text(
+                  'change_profile_photo'.tr.isNotEmpty ? 'change_profile_photo'.tr : 'Change Profile Photo',
+                  style: AppFonts.dmSans(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: primaryText,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'select_photo_source'.tr.isNotEmpty ? 'select_photo_source'.tr : 'Choose where to get your profile picture',
+                  style: AppFonts.dmSans(
+                    fontSize: 13,
+                    color: secondaryText,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+
+                // Camera Option
+                _buildPickerOption(
+                  icon: Icons.camera_alt_rounded,
+                  title: 'take_photo'.tr.isNotEmpty ? 'take_photo'.tr : 'Take a Photo',
+                  subtitle: 'Use camera to capture a new photo',
+                  color: AppColors.green,
+                  isDark: isDarkMode,
+                  borderColor: borderColor,
+                  onTap: () async {
+                    Navigator.of(ctx).pop();
+                    final base64Img = await _viewModel.pickImageBase64(ImageSource.camera);
+                    if (base64Img != null && mounted) {
+                      setState(() => _profileImage = base64Img);
+                    }
+                  },
+                ),
+                const SizedBox(height: 12),
+
+                // Gallery Option
+                _buildPickerOption(
+                  icon: Icons.photo_library_rounded,
+                  title: 'choose_from_gallery'.tr.isNotEmpty ? 'choose_from_gallery'.tr : 'Choose from Gallery',
+                  subtitle: 'Select an existing photo from device album',
+                  color: const Color(0xFF3B82F6),
+                  isDark: isDarkMode,
+                  borderColor: borderColor,
+                  onTap: () async {
+                    Navigator.of(ctx).pop();
+                    final base64Img = await _viewModel.pickImageBase64(ImageSource.gallery);
+                    if (base64Img != null && mounted) {
+                      setState(() => _profileImage = base64Img);
+                    }
+                  },
+                ),
+
+                // Remove Photo Option (if photo exists)
+                if (_profileImage != null && _profileImage!.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  _buildPickerOption(
+                    icon: Icons.delete_outline_rounded,
+                    title: 'remove_photo'.tr.isNotEmpty ? 'remove_photo'.tr : 'Remove Photo',
+                    subtitle: 'Reset to default avatar initials',
+                    color: const Color(0xFFEF4444),
+                    isDark: isDarkMode,
+                    borderColor: borderColor,
+                    onTap: () {
+                      Navigator.of(ctx).pop();
+                      setState(() => _profileImage = '');
+                    },
+                  ),
+                ],
+                const SizedBox(height: 10),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildPickerOption({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+    required bool isDark,
+    required Color borderColor,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF252A35) : const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: borderColor, width: 1),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(
+                child: Icon(icon, size: 22, color: color),
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: AppFonts.dmSans(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? AppColors.darkPrimaryText : AppColors.lightPrimaryText,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: AppFonts.dmSans(
+                      fontSize: 12,
+                      color: isDark ? AppColors.darkSecondaryText : AppColors.lightSecondaryText,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: isDark ? Colors.white38 : Colors.grey.shade400,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
@@ -98,7 +280,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     final user = _viewModel.currentUser;
     final username = user?.username.isNotEmpty == true ? user!.username : 'User';
-    final initial = username.isNotEmpty ? username[0].toUpperCase() : 'U';
 
     return Scaffold(
       backgroundColor: pageBg,
@@ -144,75 +325,77 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // 1. Avatar Preview & Camera Edit Icon
+              // 1. Avatar Preview & Camera Edit Icon (Tap to change)
               Center(
-                child: Stack(
-                  children: [
-                    Container(
-                      width: 96,
-                      height: 96,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: const LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [AppColors.green, AppColors.limeGradientEnd],
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.green.withValues(alpha: 0.35),
-                            blurRadius: 16,
-                            offset: const Offset(0, 6),
-                          ),
-                        ],
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(48),
+                  onTap: () => _showImagePickerSheet(context, isDarkMode),
+                  child: Stack(
+                    children: [
+                      UserAvatar(
+                        profileImage: _profileImage,
+                        username: _usernameController.text.isNotEmpty
+                            ? _usernameController.text
+                            : username,
+                        size: 96,
+                        fontSize: 38,
+                        isDark: isDarkMode,
+                        showBorder: true,
+                        borderColor: AppColors.green.withValues(alpha: 0.6),
+                        borderWidth: 3,
                       ),
-                      child: Center(
-                        child: Text(
-                          initial,
-                          style: AppFonts.dmSans(
-                            fontSize: 38,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color: AppColors.green,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: pageBg,
-                            width: 3,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.2),
-                              blurRadius: 6,
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: AppColors.green,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: pageBg,
+                              width: 3,
                             ),
-                          ],
-                        ),
-                        child: const Center(
-                          child: FaIcon(
-                            FontAwesomeIcons.camera,
-                            size: 12,
-                            color: Colors.white,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.2),
+                                blurRadius: 6,
+                              ),
+                            ],
+                          ),
+                          child: const Center(
+                            child: FaIcon(
+                              FontAwesomeIcons.camera,
+                              size: 12,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
+              Center(
+                child: TextButton.icon(
+                  onPressed: () => _showImagePickerSheet(context, isDarkMode),
+                  icon: const FaIcon(FontAwesomeIcons.camera, size: 12, color: AppColors.green),
+                  label: Text(
+                    'change_photo'.tr.isNotEmpty ? 'change_photo'.tr : 'Change Photo',
+                    style: AppFonts.dmSans(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.green,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 4),
               Center(
                 child: Text(
-                  username,
+                  _usernameController.text.isNotEmpty ? _usernameController.text : username,
                   style: AppFonts.dmSans(
                     fontSize: 17,
                     fontWeight: FontWeight.bold,

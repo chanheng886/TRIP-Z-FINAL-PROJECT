@@ -70,6 +70,52 @@ class AuthService {
     }
   }
 
+  Future<Map<String, dynamic>> updateProfile({
+    required int userId,
+    required String username,
+    required String email,
+    required String phone,
+    required String gender,
+    required String role,
+    String? profileImage,
+  }) async {
+    try {
+      final token = await getToken();
+      final url = '${BaseUrl.baseUrl}/users/$userId';
+      final payload = {
+        'username': username,
+        'email': email,
+        'phone': phone,
+        'gender': gender,
+        'role': role,
+        if (profileImage != null) 'profileImage': profileImage,
+      };
+
+      final response = await http.put(
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+        body: json.encode(payload),
+      );
+
+      print('Update Profile Status: ${response.statusCode}');
+      print('Update Profile Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else {
+        throw Exception(
+          _extractErrorMessage(response, fallback: "Failed to update profile!"),
+        );
+      }
+    } catch (e) {
+      print('Update Profile Exception: $e');
+      rethrow;
+    }
+  }
+
   String _extractErrorMessage(
     http.Response response, {
     required String fallback,

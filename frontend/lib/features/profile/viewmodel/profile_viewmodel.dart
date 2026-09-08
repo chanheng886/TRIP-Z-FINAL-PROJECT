@@ -6,12 +6,17 @@ import 'package:frontend/features/auth/viewmodel/auth_viewmodel.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'dart:convert';
+import 'package:image_picker/image_picker.dart';
+
 class ProfileViewModel extends GetxController {
   final AuthViewmodel _authVM = Get.find<AuthViewmodel>();
   final LanguageController _languageController = Get.find<LanguageController>();
   final ThemeController _themeController = Get.find<ThemeController>();
+  final ImagePicker _picker = ImagePicker();
 
   final RxBool pauseNotifications = false.obs;
+  final RxBool isUploadingImage = false.obs;
 
   static const String _notificationsKey = 'pause_notifications';
 
@@ -46,17 +51,37 @@ class ProfileViewModel extends GetxController {
     _languageController.changeLanguage(languageCode, countryCode);
   }
 
+  Future<String?> pickImageBase64(ImageSource source) async {
+    try {
+      final XFile? file = await _picker.pickImage(
+        source: source,
+        maxWidth: 600,
+        maxHeight: 600,
+        imageQuality: 80,
+      );
+      if (file == null) return null;
+      final bytes = await file.readAsBytes();
+      final base64String = base64Encode(bytes);
+      return 'data:image/jpeg;base64,$base64String';
+    } catch (e) {
+      print('Error picking image: $e');
+      return null;
+    }
+  }
+
   Future<bool> updateProfile({
     required String username,
     required String email,
     required String phone,
     required String gender,
+    String? profileImage,
   }) async {
     return await _authVM.updateProfile(
       username: username,
       email: email,
       phone: phone,
       gender: gender,
+      profileImage: profileImage,
     );
   }
 

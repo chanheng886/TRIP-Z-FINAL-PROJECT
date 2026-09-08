@@ -50,5 +50,26 @@ class AuthRepository {
     return AuthResponse(token: token, tokenType: 'Bearer', expiresIn: 0, user: User.fromJson(userJson));
   }
 
+  Future<User> updateProfile({
+    required int userId,
+    required String username,
+    required String email,
+    required String phone,
+    required String gender,
+    required String role,
+    String? profileImage,
+  }) async {
+    final json = await authService.updateProfile(
+      userId: userId,
+      username: username,
+      email: email,
+      phone: phone,
+      gender: gender,
+      role: role,
+      profileImage: profileImage,
+    );
+    return User.fromJson(json);
+  }
+
   Future<void> clearSession() => authService.clearSession();
 }

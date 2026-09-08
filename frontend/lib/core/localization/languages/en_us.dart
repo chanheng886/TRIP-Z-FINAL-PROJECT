@@ -437,4 +437,12 @@ final Map<String, String> enUS = {
   'QR Pay': 'QR Pay',
   'Bakong': 'Bakong',
   'Bakong KHQR': 'Bakong KHQR',
+
+  // Profile Photo
+  'change_profile_photo': 'Change Profile Photo',
+  'change_photo': 'Change Photo',
+  'select_photo_source': 'Choose where to get your profile picture',
+  'take_photo': 'Take a Photo',
+  'choose_from_gallery': 'Choose from Gallery',
+  'remove_photo': 'Remove Photo',
 };

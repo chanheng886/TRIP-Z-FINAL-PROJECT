@@ -435,4 +435,12 @@ final Map<String, String> kmKH = {
   'QR Pay': 'ស្កេន QR',
   'Bakong': 'បាគង',
   'Bakong KHQR': 'បាគង KHQR',
+
+  // Profile Photo
+  'change_profile_photo': 'ផ្លាស់ប្តូររូបថតគណនី',
+  'change_photo': 'ផ្លាស់ប្តូររូបថត',
+  'select_photo_source': 'ជ្រើសរើសប្រភពរូបថតគណនីរបស់អ្នក',
+  'take_photo': 'ថតរូបថ្មី',
+  'choose_from_gallery': 'ជ្រើសពីរូបភាពទូរស័ព្ទ',
+  'remove_photo': 'លុបរូបថតចេញ',
 };

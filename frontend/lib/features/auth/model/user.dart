@@ -17,6 +17,7 @@ class User {
   final String gender;
   final String email;
   final String phone;
+  final String? profileImage;
 
   User({
     required this.id,
@@ -25,16 +26,18 @@ class User {
     required this.gender,
     required this.email,
     required this.phone,
+    this.profileImage,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
       id: json['id'] as int,
-      username: json['username'] as String,
+      username: json['username'] as String? ?? '',
       role: UserRole.fromString(json['role'] as String? ?? 'Customer'),
       gender: json['gender'] as String? ?? '',
       email: json['email'] as String? ?? '',
       phone: json['phone'] as String? ?? '',
+      profileImage: json['profileImage'] as String? ?? json['profile_image'] as String?,
     );
   }
 
@@ -46,6 +49,7 @@ class User {
       'gender': gender,
       'email': email,
       'phone': phone,
+      if (profileImage != null) 'profileImage': profileImage,
     };
   }
 
@@ -56,6 +60,7 @@ class User {
     String? gender,
     String? email,
     String? phone,
+    String? profileImage,
   }) {
     return User(
       id: id ?? this.id,
@@ -64,6 +69,7 @@ class User {
       gender: gender ?? this.gender,
       email: email ?? this.email,
       phone: phone ?? this.phone,
+      profileImage: profileImage ?? this.profileImage,
     );
   }
 }

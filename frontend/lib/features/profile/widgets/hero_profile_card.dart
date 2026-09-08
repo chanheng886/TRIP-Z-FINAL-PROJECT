@@ -5,6 +5,7 @@ import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_fonts.dart';
 import 'package:frontend/features/auth/model/user.dart';
 import 'package:frontend/features/profile/view/edit_profile_screen.dart';
+import 'package:frontend/shared/widgets/user_avatar.dart';
 import 'package:get/get.dart';
 
 class HeroProfileCard extends StatelessWidget {
@@ -27,7 +28,6 @@ class HeroProfileCard extends StatelessWidget {
     final email = user?.email.isNotEmpty == true
         ? user!.email
         : 'user@tripz.kh';
-    final initial = username.isNotEmpty ? username[0].toUpperCase() : 'U';
     final memberId = 'TRIPZ-USR-${user?.id ?? 1024}';
 
     return Container(
@@ -60,60 +60,16 @@ class HeroProfileCard extends StatelessWidget {
           Row(
             children: [
               // Avatar with Online indicator (tap to edit profile)
-              InkWell(
-                borderRadius: BorderRadius.circular(33),
+              UserAvatar(
+                profileImage: user?.profileImage,
+                username: username,
+                size: 66,
+                fontSize: 26,
+                showOnlineIndicator: true,
+                isDark: isDark,
+                borderColor: AppColors.green.withValues(alpha: 0.5),
+                borderWidth: 2,
                 onTap: () => Get.to(() => const EditProfileScreen()),
-                child: Stack(
-                  children: [
-                    Container(
-                      width: 66,
-                      height: 66,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: const LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [AppColors.green, AppColors.limeGradientEnd],
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.green.withValues(alpha: 0.35),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Center(
-                        child: Text(
-                          initial,
-                          style: AppFonts.dmSans(
-                            fontSize: 26,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      bottom: 2,
-                      right: 2,
-                      child: Container(
-                        width: 14,
-                        height: 14,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF10B981),
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: isDark
-                                ? const Color(0xFF15181E)
-                                : const Color(0xFF1C1F2E),
-                            width: 2.2,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
               ),
               const SizedBox(width: 16),
               // Name, Role & Email

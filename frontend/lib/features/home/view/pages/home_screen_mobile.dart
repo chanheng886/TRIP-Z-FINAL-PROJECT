@@ -5,6 +5,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:frontend/core/localization/language_controller.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_fonts.dart';
+import 'package:frontend/features/auth/model/user.dart';
 import 'package:frontend/features/auth/viewmodel/auth_viewmodel.dart';
 import 'package:frontend/features/home/view/pages/bus_schedule_mobile.dart';
 import 'package:frontend/features/home/view/pages/search_screen_mobile.dart';
@@ -14,10 +15,12 @@ import 'package:frontend/features/home/view/widgets/home_search_card.dart';
 import 'package:frontend/features/home/view/widgets/pickup_location_card.dart';
 import 'package:frontend/features/home/repository/bus_location_repository.dart';
 import 'package:frontend/features/home/viewmodel/bus_location_viewmodel.dart';
+import 'package:frontend/features/profile/view/profile_screen.dart';
 import 'package:frontend/shared/model/bus_location.dart';
 import 'package:frontend/shared/model/bus_station.dart';
 import 'package:frontend/shared/service/bus_location_service.dart';
 import 'package:frontend/shared/service/user_location_service.dart';
+import 'package:frontend/shared/widgets/user_avatar.dart';
 import 'package:get/get.dart';
 
 class HomeScreenMobile extends StatefulWidget {
@@ -328,14 +331,15 @@ class _HomeScreenMobileState extends State<HomeScreenMobile> {
               child: Obx(() {
                 // Reactive trigger on language changes
                 final _ = languageController.locale.value;
-                final user =
-                    Get.find<AuthViewmodel>().currentUser?.username ?? 'Chan';
+                final currentUser = Get.find<AuthViewmodel>().currentUser;
+                final user = currentUser?.username ?? 'User';
 
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Top Header: Welcome, [User] & Avatar
                     _buildHeader(
+                      currentUser: currentUser,
                       username: user,
                       isDarkMode: isDarkMode,
                       textPrimary: textPrimary,
@@ -376,6 +380,7 @@ class _HomeScreenMobileState extends State<HomeScreenMobile> {
   }
 
   Widget _buildHeader({
+    required User? currentUser,
     required String username,
     required bool isDarkMode,
     required Color textPrimary,
@@ -385,18 +390,18 @@ class _HomeScreenMobileState extends State<HomeScreenMobile> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // Left: Greeting Title & Subtitle
+        // Left: Greeting & Subtitle
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '${'welcome'.tr.isNotEmpty ? 'welcome'.tr : 'Welcome'}, $username',
+                'welcome'.tr + (username.isNotEmpty ? ', $username' : '!'),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: AppFonts.dmSans(
                   fontSize: 22,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w800,
                   color: textPrimary,
                 ),
               ),
@@ -428,56 +433,16 @@ class _HomeScreenMobileState extends State<HomeScreenMobile> {
         ),
         const SizedBox(width: 12),
 
-        // Right: Circular User Avatar
-        Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: isDarkMode ? const Color(0xFF2C313C) : Colors.white,
-              width: 2,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: ClipOval(
-            child: CachedNetworkImage(
-              imageUrl:
-                  'https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=300&q=80',
-              fit: BoxFit.cover,
-              placeholder: (context, url) => Container(
-                color: isDarkMode
-                    ? const Color(0xFF2C313C)
-                    : Colors.grey.shade300,
-                child: const Center(
-                  child: FaIcon(
-                    FontAwesomeIcons.user,
-                    size: 18,
-                    color: Colors.white70,
-                  ),
-                ),
-              ),
-              errorWidget: (context, url, error) => Container(
-                color: const Color(0xFF4FD18B),
-                child: Center(
-                  child: Text(
-                    username.isNotEmpty ? username[0].toUpperCase() : 'U',
-                    style: AppFonts.dmSans(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
+        // Right: Dynamic User Avatar
+        UserAvatar(
+          profileImage: currentUser?.profileImage,
+          username: username,
+          size: 48,
+          isDark: isDarkMode,
+          showBorder: true,
+          borderColor: isDarkMode ? const Color(0xFF2C313C) : Colors.white,
+          borderWidth: 2,
+          onTap: () => Get.to(() => const ProfileScreen()),
         ),
       ],
     );

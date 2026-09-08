@@ -19,15 +19,17 @@ public class UserMapper {
         .gender(dto.getGender())
         .email(dto.getEmail())
         .phone(dto.getPhone())
+        .profileImage(dto.getProfileImage())
         .build();
     }
 
     public User toUpdate(User user, UserRequestDTO dto){
-        user.setUsername(dto.getUsername());
-        user.setRole(dto.getRole());
-        user.setGender(dto.getGender());
-        user.setEmail(dto.getEmail());
-        user.setPhone(dto.getPhone());
+        if (dto.getUsername() != null) user.setUsername(dto.getUsername());
+        if (dto.getRole() != null) user.setRole(dto.getRole());
+        if (dto.getGender() != null) user.setGender(dto.getGender());
+        if (dto.getEmail() != null) user.setEmail(dto.getEmail());
+        if (dto.getPhone() != null) user.setPhone(dto.getPhone());
+        if (dto.getProfileImage() != null) user.setProfileImage(dto.getProfileImage());
         return user;
     }
 
@@ -39,6 +41,7 @@ public class UserMapper {
         .gender(user.getGender())
         .email(user.getEmail())
         .phone(user.getPhone())
+        .profileImage(user.getProfileImage())
         .build();
     }
 }
