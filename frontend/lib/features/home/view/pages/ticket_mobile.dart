@@ -4,6 +4,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:frontend/core/localization/db_translator.dart';
 import 'package:frontend/core/theme/app_fonts.dart';
 import 'package:frontend/shared/model/booking_response.dart';
+import 'package:frontend/shared/service/payment_launcher_service.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -76,6 +77,76 @@ class TicketMobile extends StatelessWidget {
               FontAwesomeIcons.idCard,
               'qr_code_instruction'.tr,
             ),
+            if (booking.paymentMethod.toLowerCase().contains('acleda')) ...[
+              const SizedBox(height: 18),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton.icon(
+                  icon: const FaIcon(
+                    FontAwesomeIcons.buildingColumns,
+                    size: 15,
+                    color: Color(0xFFFFDF79),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF0F3B66),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      side: const BorderSide(
+                        color: Color(0xFFD4AF37),
+                        width: 1.2,
+                      ),
+                    ),
+                  ),
+                  onPressed: () {
+                    PaymentLauncherService.launchAcledaSuperApp(
+                      amount: booking.totalAmount,
+                      bookingCode: '${booking.id}',
+                    );
+                  },
+                  label: Text(
+                    'open_acleda_app'.tr,
+                    style: AppFonts.dmSans(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ),
+            ] else if (booking.paymentMethod.toLowerCase().contains('aba')) ...[
+              const SizedBox(height: 18),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton.icon(
+                  icon: const FaIcon(
+                    FontAwesomeIcons.buildingColumns,
+                    size: 15,
+                    color: Colors.white,
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF005A9C),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  onPressed: () {
+                    PaymentLauncherService.launchAbaMobileApp();
+                  },
+                  label: Text(
+                    'open_aba_app'.tr,
+                    style: AppFonts.dmSans(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ),
+            ],
             const SizedBox(height: 30),
           ],
         ),
@@ -220,8 +291,8 @@ class TicketMobile extends StatelessWidget {
                   context,
                   isDark,
                   colorScheme,
-                  FontAwesomeIcons.creditCard,
-                  'Payment',
+                  _getPaymentIcon(booking.paymentMethod),
+                  'payment_method'.tr,
                   booking.paymentMethod.trDb,
                 ),
               ],
@@ -414,5 +485,15 @@ class TicketMobile extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  FaIconData _getPaymentIcon(String method) {
+    final lower = method.toLowerCase();
+    if (lower.contains('paypal')) return FontAwesomeIcons.paypal;
+    if (lower.contains('master')) return FontAwesomeIcons.ccMastercard;
+    if (lower.contains('acleda') || lower.contains('aba') || lower.contains('bank')) {
+      return FontAwesomeIcons.buildingColumns;
+    }
+    return FontAwesomeIcons.creditCard;
   }
 }

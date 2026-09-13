@@ -3,10 +3,11 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_fonts.dart';
 import 'package:frontend/features/auth/viewmodel/auth_viewmodel.dart';
-import 'package:frontend/features/home/view/pages/booking_confirmation_screen.dart';
+import 'package:frontend/features/home/view/pages/payment_processing_screen.dart';
 import 'package:frontend/features/home/viewmodel/booking_view_model.dart';
 import 'package:frontend/shared/model/booking_request.dart';
 import 'package:frontend/shared/model/passenger.dart';
+import 'package:frontend/shared/service/payment_launcher_service.dart';
 import 'package:get/get.dart';
 
 void showBookingFormSheet(
@@ -14,6 +15,10 @@ void showBookingFormSheet(
   required BookingViewmodel controller,
   required int busScheduleId,
   required double basePrice,
+  String fromLocation = 'Origin',
+  String toLocation = 'Destination',
+  String? busType,
+  String? companyName,
 }) {
   final authVM = Get.find<AuthViewmodel>();
   final user = authVM.currentUser;
@@ -22,7 +27,7 @@ void showBookingFormSheet(
   final phoneController = TextEditingController(text: user?.phone ?? '');
   final emailController = TextEditingController(text: user?.email ?? '');
   String selectedGender = (user?.gender.isNotEmpty == true) ? user!.gender : 'Male';
-  String selectedPayment = 'Cash';
+  String selectedPayment = 'ACLEDA Bank';
 
   final totalAmount = controller.selectedSeats.length * basePrice;
 
@@ -365,42 +370,85 @@ void showBookingFormSheet(
 
                         const SizedBox(height: 18),
 
-                        // Payment Method Cards
+                        // Payment Method Section Header
                         _buildFieldHeader('payment_method'.tr, primaryText),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            _buildPaymentCard(
-                              title: 'Cash',
-                              icon: FontAwesomeIcons.moneyBillWave,
-                              accentColor: const Color(0xFF10B981),
-                              value: 'Cash',
-                              selectedValue: selectedPayment,
-                              isDark: isDarkMode,
-                              onTap: () => setModalState(() => selectedPayment = 'Cash'),
-                            ),
-                            const SizedBox(width: 8),
-                            _buildPaymentCard(
-                              title: 'Card',
-                              icon: FontAwesomeIcons.solidCreditCard,
-                              accentColor: const Color(0xFF3B82F6),
-                              value: 'Card',
-                              selectedValue: selectedPayment,
-                              isDark: isDarkMode,
-                              onTap: () => setModalState(() => selectedPayment = 'Card'),
-                            ),
-                            const SizedBox(width: 8),
-                            _buildPaymentCard(
-                              title: 'QR Pay',
-                              icon: FontAwesomeIcons.qrcode,
-                              accentColor: const Color(0xFF8B5CF6),
-                              value: 'QR Pay',
-                              selectedValue: selectedPayment,
-                              isDark: isDarkMode,
-                              onTap: () => setModalState(() => selectedPayment = 'QR Pay'),
-                            ),
-                          ],
+                        const SizedBox(height: 10),
+
+                        // 1. ACLEDA Bank (Top / Recommended)
+                        _buildPaymentTile(
+                          title: 'ACLEDA Bank',
+                          subtitle: 'acleda_desc'.tr,
+                          icon: FontAwesomeIcons.buildingColumns,
+                          accentColor: const Color(0xFF0F3B66),
+                          value: 'ACLEDA Bank',
+                          selectedValue: selectedPayment,
+                          isDark: isDarkMode,
+                          cardBg: cardBg,
+                          borderColor: borderColor,
+                          primaryText: primaryText,
+                          secondaryText: secondaryText,
+                          isFeatured: true,
+                          badgeText: 'recommended'.tr,
+                          badgeBgColor: const Color(0xFFD4AF37),
+                          badgeTextColor: const Color(0xFF1E293B),
+                          onTap: () => setModalState(() => selectedPayment = 'ACLEDA Bank'),
                         ),
+                        const SizedBox(height: 8),
+
+                        // 2. ABA Bank
+                        _buildPaymentTile(
+                          title: 'ABA Bank',
+                          subtitle: 'aba_desc'.tr,
+                          icon: FontAwesomeIcons.buildingColumns,
+                          accentColor: const Color(0xFF005A9C),
+                          value: 'ABA Bank',
+                          selectedValue: selectedPayment,
+                          isDark: isDarkMode,
+                          cardBg: cardBg,
+                          borderColor: borderColor,
+                          primaryText: primaryText,
+                          secondaryText: secondaryText,
+                          onTap: () => setModalState(() => selectedPayment = 'ABA Bank'),
+                        ),
+                        const SizedBox(height: 8),
+
+                        // 3. PayPal
+                        _buildPaymentTile(
+                          title: 'PayPal',
+                          subtitle: 'paypal_desc'.tr,
+                          icon: FontAwesomeIcons.paypal,
+                          accentColor: const Color(0xFF0079C1),
+                          value: 'PayPal',
+                          selectedValue: selectedPayment,
+                          isDark: isDarkMode,
+                          cardBg: cardBg,
+                          borderColor: borderColor,
+                          primaryText: primaryText,
+                          secondaryText: secondaryText,
+                          onTap: () => setModalState(() => selectedPayment = 'PayPal'),
+                        ),
+                        const SizedBox(height: 8),
+
+                        // 4. Mastercard
+                        _buildPaymentTile(
+                          title: 'Mastercard',
+                          subtitle: 'mastercard_desc'.tr,
+                          icon: FontAwesomeIcons.ccMastercard,
+                          accentColor: const Color(0xFFEB001B),
+                          value: 'Mastercard',
+                          selectedValue: selectedPayment,
+                          isDark: isDarkMode,
+                          cardBg: cardBg,
+                          borderColor: borderColor,
+                          primaryText: primaryText,
+                          secondaryText: secondaryText,
+                          onTap: () => setModalState(() => selectedPayment = 'Mastercard'),
+                        ),
+
+                        const SizedBox(height: 10),
+
+                        // Selected Payment Info Pill
+                        _buildPaymentInfoPill(selectedPayment, isDarkMode),
 
                         const SizedBox(height: 24),
 
@@ -481,67 +529,65 @@ void showBookingFormSheet(
                                         passengers: passengers,
                                       );
 
-                                      final success = await controller.submitBooking(request);
-                                      if (success) {
-                                        if (context.mounted) {
-                                          Navigator.of(context).pop(); // close sheet
-                                        }
-                                        Get.off(
-                                          () => BookingConfirmationScreen(
-                                            booking: controller.bookingResult.value!,
-                                          ),
-                                        );
-                                      } else {
-                                        if (context.mounted) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(
-                                              backgroundColor: const Color(0xFFEF4444),
-                                              behavior: SnackBarBehavior.floating,
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.circular(12),
-                                              ),
-                                              content: Text(
-                                                controller.submitError.value.isNotEmpty
-                                                    ? controller.submitError.value
-                                                    : 'Booking failed. Please try again.',
-                                                style: AppFonts.dmSans(
-                                                  color: Colors.white,
-                                                  fontWeight: FontWeight.w600,
-                                                ),
-                                              ),
-                                            ),
-                                          );
-                                        }
-                                      }
+                                      // Launch real ACLEDA Super App / banking app
+                                      PaymentLauncherService.launchPaymentMethod(
+                                        selectedPayment,
+                                        amount: totalAmount,
+                                        bookingCode: 'TRIPZ-$busScheduleId',
+                                      );
+
+                                      // Close bottom sheet and navigate to Payment Processing Screen
+                                      Navigator.of(context).pop();
+
+                                      Get.to(
+                                        () => PaymentProcessingScreen(
+                                          controller: controller,
+                                          request: request,
+                                          fromLocation: fromLocation,
+                                          toLocation: toLocation,
+                                          busType: busType,
+                                          companyName: companyName,
+                                          totalAmount: totalAmount,
+                                        ),
+                                      );
                                     },
-                              child: isSubmitting
-                                  ? const SizedBox(
-                                      width: 22,
-                                      height: 22,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2.5,
-                                        color: Colors.white,
-                                      ),
-                                    )
-                                  : Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        const FaIcon(
-                                          FontAwesomeIcons.circleCheck,
-                                          size: 16,
-                                          color: Colors.white,
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          '${'confirm_booking'.tr} • \$${totalAmount.toStringAsFixed(2)}',
-                                          style: AppFonts.dmSans(
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.white,
-                                          ),
-                                        ),
-                                      ],
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  FaIcon(
+                                    selectedPayment.toLowerCase().contains('acleda')
+                                        ? FontAwesomeIcons.buildingColumns
+                                        : (selectedPayment.toLowerCase().contains('aba')
+                                            ? FontAwesomeIcons.buildingColumns
+                                            : (selectedPayment.toLowerCase().contains('paypal')
+                                                ? FontAwesomeIcons.paypal
+                                                : FontAwesomeIcons.ccMastercard)),
+                                    size: 15,
+                                    color: selectedPayment.toLowerCase().contains('acleda')
+                                        ? const Color(0xFFFFDF79)
+                                        : Colors.white,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    selectedPayment.toLowerCase().contains('acleda')
+                                        ? 'Pay with ACLEDA • \$${totalAmount.toStringAsFixed(2)}'
+                                        : (selectedPayment.toLowerCase().contains('aba')
+                                            ? 'Pay with ABA • \$${totalAmount.toStringAsFixed(2)}'
+                                            : '${'proceed_to_payment'.tr} • \$${totalAmount.toStringAsFixed(2)}'),
+                                    style: AppFonts.dmSans(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
                                     ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  const Icon(
+                                    Icons.arrow_forward_rounded,
+                                    size: 16,
+                                    color: Colors.white,
+                                  ),
+                                ],
+                              ),
                             );
                           }),
                         ),
@@ -671,53 +717,215 @@ Widget _buildGenderChip({
   );
 }
 
-Widget _buildPaymentCard({
+Widget _buildPaymentTile({
   required String title,
+  required String subtitle,
   required FaIconData icon,
   required Color accentColor,
   required String value,
   required String selectedValue,
   required bool isDark,
+  required Color cardBg,
+  required Color borderColor,
+  required Color primaryText,
+  required Color secondaryText,
   required VoidCallback onTap,
+  bool isFeatured = false,
+  String? badgeText,
+  Color? badgeBgColor,
+  Color? badgeTextColor,
 }) {
   final isSelected = selectedValue == value;
-  return Expanded(
-    child: InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? accentColor.withValues(alpha: isDark ? 0.2 : 0.1)
-              : (isDark ? const Color(0xFF1A1C24) : const Color(0xFFF1F5F9)),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: isSelected
-                ? accentColor
-                : (isDark ? const Color(0xFF2A2E39) : const Color(0xFFE2E8F0)),
-            width: isSelected ? 1.5 : 1,
-          ),
+  final activeAccent = isFeatured ? const Color(0xFFD4AF37) : accentColor;
+
+  return InkWell(
+    onTap: onTap,
+    borderRadius: BorderRadius.circular(16),
+    child: AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+      decoration: BoxDecoration(
+        color: isSelected
+            ? accentColor.withValues(alpha: isDark ? 0.22 : 0.08)
+            : cardBg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isSelected ? activeAccent : borderColor,
+          width: isSelected ? 1.8 : 1,
         ),
-        child: Column(
-          children: [
-            FaIcon(
-              icon,
-              size: 16,
-              color: isSelected ? accentColor : const Color(0xFF94A3B8),
+        boxShadow: isSelected
+            ? [
+                BoxShadow(
+                  color: activeAccent.withValues(alpha: isDark ? 0.3 : 0.12),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ]
+            : null,
+      ),
+      child: Row(
+        children: [
+          // Icon Container with Brand Theme
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: accentColor.withValues(alpha: isDark ? 0.28 : 0.12),
+              borderRadius: BorderRadius.circular(12),
+              border: isFeatured
+                  ? Border.all(
+                      color: const Color(0xFFD4AF37).withValues(alpha: 0.6),
+                      width: 1.2,
+                    )
+                  : null,
             ),
-            const SizedBox(height: 6),
-            Text(
-              title,
-              style: AppFonts.dmSans(
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                color: isSelected ? accentColor : (isDark ? Colors.white70 : const Color(0xFF64748B)),
+            child: Center(
+              child: FaIcon(
+                icon,
+                size: 17,
+                color: isFeatured && isDark
+                    ? const Color(0xFFFFDF79)
+                    : (isSelected
+                        ? (isFeatured ? const Color(0xFFD4AF37) : accentColor)
+                        : (isDark ? Colors.white70 : accentColor)),
               ),
             ),
-          ],
-        ),
+          ),
+          const SizedBox(width: 12),
+
+          // Title & Subtitle & Badge
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        title,
+                        style: AppFonts.dmSans(
+                          fontSize: 13,
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                          color: primaryText,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (badgeText != null) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 7,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: badgeBgColor ?? const Color(0xFFD4AF37),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          badgeText,
+                          style: AppFonts.dmSans(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: badgeTextColor ?? Colors.black87,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: AppFonts.dmSans(
+                    fontSize: 11,
+                    color: secondaryText,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(width: 8),
+
+          // Radio Selection Indicator
+          Container(
+            width: 20,
+            height: 20,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: isSelected
+                    ? activeAccent
+                    : (isDark
+                        ? const Color(0xFF4A5568)
+                        : const Color(0xFFCBD5E1)),
+                width: isSelected ? 6 : 1.5,
+              ),
+              color: isSelected ? Colors.white : Colors.transparent,
+            ),
+          ),
+        ],
       ),
+    ),
+  );
+}
+
+Widget _buildPaymentInfoPill(String selectedPayment, bool isDark) {
+  String infoText;
+  IconData infoIcon = Icons.shield_outlined;
+  Color iconColor = AppColors.green;
+
+  switch (selectedPayment) {
+    case 'ACLEDA Bank':
+      infoText = 'Scan KHQR or pay directly with ACLEDA Mobile app upon confirmation.';
+      iconColor = const Color(0xFFD4AF37);
+      break;
+    case 'ABA Bank':
+      infoText = 'Scan KHQR or pay directly with ABA Mobile (ABA PAY).';
+      iconColor = const Color(0xFF005A9C);
+      break;
+    case 'PayPal':
+      infoText = 'Pay securely with your PayPal account or linked cards.';
+      iconColor = const Color(0xFF0079C1);
+      break;
+    case 'Mastercard':
+      infoText = 'Pay securely with Mastercard 128-bit encrypted checkout.';
+      iconColor = const Color(0xFFEB001B);
+      break;
+    default:
+      infoText = 'Select your payment method to proceed.';
+  }
+
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+    decoration: BoxDecoration(
+      color: iconColor.withValues(alpha: isDark ? 0.12 : 0.06),
+      borderRadius: BorderRadius.circular(10),
+      border: Border.all(
+        color: iconColor.withValues(alpha: 0.25),
+        width: 1,
+      ),
+    ),
+    child: Row(
+      children: [
+        Icon(infoIcon, size: 14, color: iconColor),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            infoText,
+            style: AppFonts.dmSans(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
+            ),
+          ),
+        ),
+      ],
     ),
   );
 }

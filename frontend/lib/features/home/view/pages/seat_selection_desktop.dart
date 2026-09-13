@@ -417,6 +417,10 @@ class _SeatSelectionDesktopState extends State<SeatSelectionDesktop> {
                           controller: controller,
                           busScheduleId: widget.busScheduleId,
                           basePrice: widget.basePrice,
+                          fromLocation: widget.fromLocation,
+                          toLocation: widget.toLocation,
+                          busType: widget.busType,
+                          companyName: widget.companyName,
                         );
                       },
                 child: Text(

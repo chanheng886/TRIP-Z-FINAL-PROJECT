@@ -516,6 +516,10 @@ class _SeatSelectionMobileState extends State<SeatSelectionMobile> {
                               controller: controller,
                               busScheduleId: widget.busScheduleId,
                               basePrice: widget.basePrice,
+                              fromLocation: widget.fromLocation,
+                              toLocation: widget.toLocation,
+                              busType: widget.busType,
+                              companyName: widget.companyName,
                             );
                           },
                     child: Row(

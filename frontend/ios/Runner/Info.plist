@@ -66,5 +66,18 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>acledamobile</string>
+		<string>acleda</string>
+		<string>acledabank</string>
+		<string>acledabankqr</string>
+		<string>bakong</string>
+		<string>abamobilebank</string>
+		<string>aba</string>
+		<string>paypal</string>
+		<string>https</string>
+		<string>http</string>
+	</array>
 </dict>
 </plist>

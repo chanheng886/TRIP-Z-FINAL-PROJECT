@@ -5,6 +5,7 @@ import 'package:frontend/core/localization/db_translator.dart';
 import 'package:frontend/core/theme/app_fonts.dart';
 import 'package:frontend/shared/model/booking_response.dart';
 import 'package:frontend/features/home/view/pages/ticket_screen.dart';
+import 'package:frontend/shared/service/payment_launcher_service.dart';
 import 'package:get/get.dart';
 // import 'package:google_fonts/google_fonts.dart';
 
@@ -131,7 +132,7 @@ class BookingConfirmationMobile extends StatelessWidget {
                       '${booking.travelDate.year}-${booking.travelDate.month.toString().padLeft(2, '0')}-${booking.travelDate.day.toString().padLeft(2, '0')}',
                     ),
                     _row('seats'.tr, booking.seatNumbers.join(', ')),
-                    _row('Payment', booking.paymentMethod.trDb),
+                    _row('payment_method'.tr, booking.paymentMethod.trDb),
                     _row('status'.tr, booking.bookingStatus.name.trDb),
                     const Divider(height: 32),
                     Row(
@@ -158,6 +159,78 @@ class BookingConfirmationMobile extends StatelessWidget {
                 ),
               ),
               const Spacer(),
+              if (booking.paymentMethod.toLowerCase().contains('acleda')) ...[
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton.icon(
+                    icon: const FaIcon(
+                      FontAwesomeIcons.buildingColumns,
+                      size: 16,
+                      color: Color(0xFFFFDF79),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0F3B66),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: const BorderSide(
+                          color: Color(0xFFD4AF37),
+                          width: 1.2,
+                        ),
+                      ),
+                      elevation: 2,
+                    ),
+                    onPressed: () {
+                      PaymentLauncherService.launchAcledaSuperApp(
+                        amount: booking.totalAmount,
+                        bookingCode: '${booking.id}',
+                      );
+                    },
+                    label: Text(
+                      'open_acleda_app'.tr,
+                      style: AppFonts.dmSans(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ] else if (booking.paymentMethod.toLowerCase().contains('aba')) ...[
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton.icon(
+                    icon: const FaIcon(
+                      FontAwesomeIcons.buildingColumns,
+                      size: 16,
+                      color: Colors.white,
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF005A9C),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 2,
+                    ),
+                    onPressed: () {
+                      PaymentLauncherService.launchAbaMobileApp();
+                    },
+                    label: Text(
+                      'open_aba_app'.tr,
+                      style: AppFonts.dmSans(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
               SizedBox(
                 width: double.infinity,
                 height: 50,
