@@ -31,7 +31,6 @@ public class BusScheduleRequestDTO {
     @NotNull(message = "Arrivals Time is Required")
     private LocalTime arrivalTime;
 
-    @NotNull(message = "Available seats is required")
     private Long availableSeat;
 
     @NotNull(message = "Status is required")

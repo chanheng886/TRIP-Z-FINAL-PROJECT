@@ -523,10 +523,14 @@ class _HistoryMobileState extends State<HistoryMobile> {
     bool isDark,
     ColorScheme colorScheme,
   ) {
-    final isAvailable = schedule.status == BusScheduleStatus.Available;
-    final statusColor = isAvailable
-        ? const Color(0xff22C55E)
-        : const Color(0xffF59E0B);
+    final isExpired =
+        schedule.isExpired || schedule.status == BusScheduleStatus.Expired;
+    final isAvailable =
+        !isExpired && schedule.status == BusScheduleStatus.Available;
+    final statusColor = isExpired
+        ? const Color(0xFFEF4444)
+        : (isAvailable ? const Color(0xff22C55E) : const Color(0xffF59E0B));
+    final statusLabel = isExpired ? 'expired'.tr : schedule.status.name.trDb;
     final dateStr =
         '${schedule.travelDate.day.toString().padLeft(2, '0')}/${schedule.travelDate.month.toString().padLeft(2, '0')}/${schedule.travelDate.year}';
 
@@ -578,7 +582,7 @@ class _HistoryMobileState extends State<HistoryMobile> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    schedule.status.name.trDb,
+                    statusLabel,
                     style: AppFonts.dmSans(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,

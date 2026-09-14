@@ -15,6 +15,7 @@ import 'package:frontend/features/admin/widgets/admin_schedule_capacity_card.dar
 import 'package:frontend/features/admin/widgets/admin_section_header.dart';
 import 'package:frontend/features/admin/widgets/admin_summary_card.dart';
 import 'package:frontend/features/admin/widgets/admin_tab_bar.dart';
+import 'package:frontend/features/admin/view/admin_all_schedules_screen.dart';
 import 'package:frontend/shared/model/booking_response.dart';
 import 'package:frontend/shared/model/bus_schedule.dart';
 import 'package:get/get.dart';
@@ -292,16 +293,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     final from = _vm.locations.firstWhere((l) => l.id == _fromLocationId);
     final to = _vm.locations.firstWhere((l) => l.id == _toLocationId);
 
-    final exists = _vm.routes.any((r) =>
-        r.fromLocation.trim().toLowerCase() ==
-            from.locationName.trim().toLowerCase() &&
-        r.toLocation.trim().toLowerCase() ==
-            to.locationName.trim().toLowerCase());
+    final exists = _vm.routes.any(
+      (r) =>
+          r.fromLocation.trim().toLowerCase() ==
+              from.locationName.trim().toLowerCase() &&
+          r.toLocation.trim().toLowerCase() ==
+              to.locationName.trim().toLowerCase(),
+    );
     if (exists) {
-      _showSnack(
-        'route_already_exists'.tr,
-        isError: true,
-      );
+      _showSnack('route_already_exists'.tr, isError: true);
       return;
     }
 
@@ -363,10 +363,19 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     });
 
     if (hasOverlap) {
-      _showSnack(
-        'bus_overlap_error'.tr,
-        isError: true,
-      );
+      _showSnack('bus_overlap_error'.tr, isError: true);
+      return;
+    }
+
+    final selectedBus = _vm.buses.firstWhereOrNull(
+      (b) => b.id == _selectedBusId,
+    );
+    final availableSeats =
+        int.tryParse(_scheduleSeatController.text.trim()) ??
+        (selectedBus != null ? int.tryParse(selectedBus.seatCapacity) ?? 0 : 0);
+
+    if (availableSeats <= 0) {
+      _showSnack('select_bus_vehicle'.tr, isError: true);
       return;
     }
 
@@ -376,7 +385,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
       travelDate: DateFormat('yyyy-MM-dd').format(_travelDate!),
       departureTime: _formatTime(_departureTime!),
       arrivalTime: _formatTime(_arrivalTime!),
-      availableSeat: int.parse(_scheduleSeatController.text.trim()),
+      availableSeat: availableSeats,
       status: _status,
       basePrice: double.parse(_priceController.text.trim()),
       busTypeId: _selectedScheduleBusTypeId!,
@@ -618,7 +627,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   // --- OVERVIEW TAB ---
   Widget _buildOverviewTab() {
     final availableSchedules = _vm.schedules
-        .where((s) => s.status == BusScheduleStatus.Available)
+        .where((s) => !s.isExpired && s.status == BusScheduleStatus.Available)
         .length;
     final bookedSchedules = _vm.schedules
         .where((s) => s.status == BusScheduleStatus.Booked)
@@ -782,7 +791,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
               title: 'recent_schedules',
               icon: FontAwesomeIcons.calendarDays,
               primaryText: primaryText,
-              onViewAll: () => _navigateToTab(4),
+              onViewAll: () =>
+                  Get.to(() => AdminAllSchedulesScreen(viewModel: _vm)),
             ),
             const SizedBox(height: 10),
             ..._vm.schedules
@@ -1411,6 +1421,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                   ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<int>(
+                    key: ValueKey('bus_$_selectedBusId'),
                     isExpanded: true,
                     borderRadius: BorderRadius.circular(18),
                     elevation: 8,
@@ -1420,7 +1431,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                       size: 22,
                       color: AppColors.green,
                     ),
-                    initialValue: _selectedBusId,
+                    initialValue:
+                        _selectedBusId != null &&
+                            _vm.buses.any((b) => b.id == _selectedBusId)
+                        ? _selectedBusId
+                        : null,
                     decoration: _dropdownDecoration(
                       label: 'select_bus_vehicle'.tr,
                       icon: FontAwesomeIcons.bus,
@@ -1431,17 +1446,41 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                           (b) => DropdownMenuItem(
                             value: b.id,
                             child: Text(
-                              '${b.plateNumber} • ${b.companyName.trDb}',
+                              '${b.plateNumber} • ${b.companyName.trDb} (${b.seatCapacity} ${'seats'.tr})',
                               style: _dropdownTextStyle(),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         )
                         .toList(),
-                    onChanged: (v) => setState(() => _selectedBusId = v),
+                    onChanged: (v) {
+                      setState(() {
+                        _selectedBusId = v;
+                        if (v != null) {
+                          final selectedBus = _vm.buses.firstWhereOrNull(
+                            (b) => b.id == v,
+                          );
+                          if (selectedBus != null) {
+                            _scheduleSeatController.text =
+                                selectedBus.seatCapacity;
+                            final matchingType = _vm.busTypes.firstWhereOrNull(
+                              (t) =>
+                                  t.busType.trim().toLowerCase() ==
+                                  selectedBus.busType.trim().toLowerCase(),
+                            );
+                            if (matchingType != null) {
+                              _selectedScheduleBusTypeId = matchingType.id;
+                            }
+                          }
+                        } else {
+                          _scheduleSeatController.clear();
+                        }
+                      });
+                    },
                   ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<int>(
+                    key: ValueKey('route_$_selectedRouteId'),
                     isExpanded: true,
                     borderRadius: BorderRadius.circular(18),
                     elevation: 8,
@@ -1451,7 +1490,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                       size: 22,
                       color: AppColors.green,
                     ),
-                    initialValue: _selectedRouteId,
+                    initialValue:
+                        _selectedRouteId != null &&
+                            _vm.routes.any((r) => r.id == _selectedRouteId)
+                        ? _selectedRouteId
+                        : null,
                     decoration: _dropdownDecoration(
                       label: 'select_travel_route'.tr,
                       icon: FontAwesomeIcons.road,
@@ -1473,6 +1516,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                   ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<int>(
+                    key: ValueKey('type_$_selectedScheduleBusTypeId'),
                     isExpanded: true,
                     borderRadius: BorderRadius.circular(18),
                     elevation: 8,
@@ -1482,7 +1526,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                       size: 22,
                       color: AppColors.green,
                     ),
-                    initialValue: _selectedScheduleBusTypeId,
+                    initialValue:
+                        _selectedScheduleBusTypeId != null &&
+                            _vm.busTypes.any(
+                              (t) => t.id == _selectedScheduleBusTypeId,
+                            )
+                        ? _selectedScheduleBusTypeId
+                        : null,
                     decoration: _dropdownDecoration(
                       label: 'select_bus_type'.tr,
                       icon: FontAwesomeIcons.sitemap,
@@ -1544,15 +1594,26 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                       Expanded(
                         child: TextFormField(
                           controller: _scheduleSeatController,
+                          readOnly: true,
                           keyboardType: TextInputType.number,
                           textInputAction: TextInputAction.next,
-                          decoration: _fieldDecoration(
-                            label: 'available_seats_label'.tr,
-                            icon: FontAwesomeIcons.users,
-                          ),
+                          decoration:
+                              _fieldDecoration(
+                                label: 'available_seats_label'.tr,
+                                icon: FontAwesomeIcons.users,
+                              ).copyWith(
+                                helperText: _selectedBusId != null
+                                    ? 'auto_filled_from_bus'.tr
+                                    : null,
+                                helperStyle: AppFonts.dmSans(
+                                  color: AppColors.green,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
                           validator: (value) {
                             if (value == null || value.trim().isEmpty) {
-                              return 'required'.tr;
+                              return 'select_bus_vehicle'.tr;
                             }
                             if (int.tryParse(value.trim()) == null) {
                               return 'invalid'.tr;
@@ -1686,25 +1747,100 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           ),
           const SizedBox(height: 22),
           if (_vm.schedules.isNotEmpty) ...[
-            Text(
-              '${'scheduled_departures'.tr} (${_vm.schedules.length})',
-              style: AppFonts.dmSans(
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
-                color: primaryText,
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '${'scheduled_departures'.tr} (${_vm.schedules.length})',
+                  style: AppFonts.dmSans(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: primaryText,
+                  ),
+                ),
+                if (_vm.schedules.length > 5)
+                  TextButton.icon(
+                    onPressed: () =>
+                        Get.to(() => AdminAllSchedulesScreen(viewModel: _vm)),
+                    icon: const Icon(
+                      Icons.arrow_forward_rounded,
+                      size: 15,
+                      color: AppColors.green,
+                    ),
+                    label: Text(
+                      'see_more'.tr,
+                      style: AppFonts.dmSans(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.green,
+                      ),
+                    ),
+                  ),
+              ],
             ),
             const SizedBox(height: 10),
-            ..._vm.schedules.map(
-              (s) => AdminScheduleListTile(
-                schedule: s,
-                isDark: isDark,
-                cardBg: cardBackground,
-                primaryText: primaryText,
-                secondaryText: secondaryText,
-                borderColor: borderColor,
+            ..._vm.schedules
+                .take(5)
+                .map(
+                  (s) => AdminScheduleListTile(
+                    schedule: s,
+                    isDark: isDark,
+                    cardBg: cardBackground,
+                    primaryText: primaryText,
+                    secondaryText: secondaryText,
+                    borderColor: borderColor,
+                  ),
+                ),
+            if (_vm.schedules.length > 5) ...[
+              const SizedBox(height: 8),
+              InkWell(
+                borderRadius: BorderRadius.circular(14),
+                onTap: () =>
+                    Get.to(() => AdminAllSchedulesScreen(viewModel: _vm)),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 14,
+                    horizontal: 16,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? const Color(0xFF1E2620)
+                        : const Color(0xFFEFFDF5),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: AppColors.green.withValues(alpha: 0.35),
+                      width: 1.2,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const FaIcon(
+                        FontAwesomeIcons.listCheck,
+                        size: 15,
+                        color: AppColors.green,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${'see_more'.tr} (${_vm.schedules.length - 5} ${'more'.tr})',
+                        style: AppFonts.dmSans(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.green,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      const Icon(
+                        Icons.arrow_forward_rounded,
+                        size: 16,
+                        color: AppColors.green,
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
+              const SizedBox(height: 12),
+            ],
           ],
         ],
       ),

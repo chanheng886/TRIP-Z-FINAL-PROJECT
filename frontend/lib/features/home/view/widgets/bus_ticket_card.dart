@@ -16,7 +16,14 @@ class BusTicketCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final isAvailable = schedule.status == BusScheduleStatus.Available;
+    final isExpired =
+        schedule.isExpired || schedule.status == BusScheduleStatus.Expired;
+    final isAvailable =
+        !isExpired && schedule.status == BusScheduleStatus.Available;
+    final statusColor = isExpired
+        ? Colors.red
+        : (isAvailable ? Colors.green : Colors.grey);
+    final statusLabel = isExpired ? 'expired'.tr : schedule.status.name.trDb;
 
     return Container(
       width: double.infinity,
@@ -64,17 +71,15 @@ class BusTicketCard extends StatelessWidget {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: isAvailable
-                        ? Colors.green.withOpacity(0.1)
-                        : Colors.red.withOpacity(0.1),
+                    color: statusColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    schedule.status.name.trDb,
+                    statusLabel,
                     style: AppFonts.dmSans(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: isAvailable ? Colors.green : Colors.red,
+                      color: statusColor,
                     ),
                   ),
                 ),
@@ -211,7 +216,8 @@ class BusTicketCard extends StatelessWidget {
                   ],
                 ),
                 ElevatedButton(
-                  onPressed: schedule.availableSeat > 0 ? onBookNow : null,
+                  onPressed:
+                      !isExpired && schedule.availableSeat > 0 ? onBookNow : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xff4FD18B),
                     foregroundColor: Colors.white,

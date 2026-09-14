@@ -36,7 +36,7 @@ public class BusScheduleMapper {
         .travelDate(dto.getTravelDate())
         .departureTime(dto.getDepartureTime())
         .arrivalTime(dto.getArrivalTime())
-        .availableSeat(dto.getAvailableSeat())
+        .availableSeat(dto.getAvailableSeat() != null ? dto.getAvailableSeat() : bus.getSeatCapacity())
         .basePrice(dto.getBasePrice())
         .busType(busType)
         .busScheduleStatus(dto.getStatus())
@@ -65,6 +65,17 @@ public class BusScheduleMapper {
 
     //✅ To Response
     public BusScheduleResponseDTO toResponse(BusSchedule busSchedule){
+        com.tripz.backend.bus.enums.BusScheduleStatus status = busSchedule.getBusScheduleStatus();
+        if (busSchedule.getTravelDate() != null && busSchedule.getDepartureTime() != null) {
+            java.time.LocalDateTime departureDateTime = java.time.LocalDateTime.of(
+                busSchedule.getTravelDate(), 
+                busSchedule.getDepartureTime()
+            );
+            if (departureDateTime.isBefore(java.time.LocalDateTime.now()) && status != com.tripz.backend.bus.enums.BusScheduleStatus.Cancelled) {
+                status = com.tripz.backend.bus.enums.BusScheduleStatus.Expired;
+            }
+        }
+
         return BusScheduleResponseDTO.builder()
         .id(busSchedule.getId())
         .busId(busSchedule.getBus().getId())
@@ -80,7 +91,7 @@ public class BusScheduleMapper {
         .busType(busSchedule.getBusType().getBusType())
         .availableSeat(busSchedule.getAvailableSeat())
         .basePrice(busSchedule.getBasePrice())
-        .status(busSchedule.getBusScheduleStatus())
+        .status(status)
         .build();
     }
 }

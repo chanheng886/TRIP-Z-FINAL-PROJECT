@@ -209,13 +209,19 @@ class AdminScheduleListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isAvailable = schedule.status == BusScheduleStatus.Available;
-    final accentColor = isAvailable
-        ? AppColors.green
-        : (isDark ? const Color(0xFF8A8A8E) : const Color(0xFF9CA3AF));
+    final isExpired =
+        schedule.isExpired || schedule.status == BusScheduleStatus.Expired;
+    final isAvailable =
+        !isExpired && schedule.status == BusScheduleStatus.Available;
+    final accentColor = isExpired
+        ? const Color(0xFFEF4444)
+        : (isAvailable
+            ? AppColors.green
+            : (isDark ? const Color(0xFF8A8A8E) : const Color(0xFF9CA3AF)));
 
     final from = schedule.fromLocation.trDb;
     final to = schedule.toLocation.trDb;
+    final statusLabel = isExpired ? 'expired'.tr : schedule.status.name.trDb;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -223,7 +229,12 @@ class AdminScheduleListTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: cardBg,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: borderColor, width: 1),
+        border: Border.all(
+          color: isExpired
+              ? const Color(0xFFEF4444).withValues(alpha: 0.3)
+              : borderColor,
+          width: 1,
+        ),
       ),
       child: Row(
         children: [
@@ -236,7 +247,9 @@ class AdminScheduleListTile extends StatelessWidget {
             ),
             child: Center(
               child: FaIcon(
-                FontAwesomeIcons.calendarDays,
+                isExpired
+                    ? FontAwesomeIcons.calendarXmark
+                    : FontAwesomeIcons.calendarDays,
                 size: 13,
                 color: accentColor,
               ),
@@ -275,7 +288,7 @@ class AdminScheduleListTile extends StatelessWidget {
               borderRadius: BorderRadius.circular(6),
             ),
             child: Text(
-              schedule.status.name.trDb,
+              statusLabel,
               style: AppFonts.dmSans(
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
