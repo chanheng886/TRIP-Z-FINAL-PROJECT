@@ -198,7 +198,9 @@ class BookingConfirmationMobile extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 12),
-              ] else if (booking.paymentMethod.toLowerCase().contains('aba')) ...[
+              ] else if (booking.paymentMethod.toLowerCase().contains(
+                'aba',
+              )) ...[
                 SizedBox(
                   width: double.infinity,
                   height: 50,

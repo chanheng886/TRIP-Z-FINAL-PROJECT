@@ -220,10 +220,25 @@ class PaymentLauncherService {
     return 'TRIPZ|${bookingCode ?? "UNKNOWN"}|USD|${amount.toStringAsFixed(2)}';
   }
 
-  /// Launches ABA Mobile App
-  static Future<bool> launchAbaMobileApp() async {
+  /// Launches ABA Mobile App with optional PayWay deep link.
+  /// If [openStoreIfNotFound] is false, does NOT redirect to Play Store if app is missing.
+  static Future<bool> launchAbaMobileApp({String? deeplink, bool openStoreIfNotFound = false}) async {
     debugPrint('🚀 [PaymentLauncher] Launching ABA Mobile App...');
 
+    // Priority 1: If a specific ABA Payway deeplink was provided, try it first
+    if (deeplink != null && deeplink.isNotEmpty) {
+      try {
+        final uri = Uri.parse(deeplink);
+        if (await canLaunchUrl(uri)) {
+          final launched = await launchUrl(uri, mode: LaunchMode.externalNonBrowserApplication);
+          if (launched) return true;
+        }
+      } catch (e) {
+        debugPrint('⚠️ [PaymentLauncher] Deeplink launch error: $e');
+      }
+    }
+
+    // Priority 2: Native channel
     if (!kIsWeb && Platform.isAndroid) {
       try {
         final result = await _nativeChannel.invokeMethod<bool>('launchAba');
@@ -231,6 +246,7 @@ class PaymentLauncherService {
       } catch (_) {}
     }
 
+    // Priority 3: Known schemes
     final schemes = ['abamobilebank://', 'aba://', 'bakong://'];
     for (final scheme in schemes) {
       try {
@@ -242,15 +258,21 @@ class PaymentLauncherService {
       } catch (_) {}
     }
 
-    final fallbackUrl = (!kIsWeb && Platform.isIOS)
-        ? 'https://apps.apple.com/kh/app/aba-mobile-bank/$abaiOSAppId'
-        : 'https://play.google.com/store/apps/details?id=$abaAndroidPackage';
+    // Priority 4: Fallback to store only if explicitly requested
+    if (openStoreIfNotFound) {
+      final fallbackUrl = (!kIsWeb && Platform.isIOS)
+          ? 'https://apps.apple.com/kh/app/aba-mobile-bank/$abaiOSAppId'
+          : 'https://play.google.com/store/apps/details?id=$abaAndroidPackage';
 
-    try {
-      return await launchUrl(Uri.parse(fallbackUrl), mode: LaunchMode.externalApplication);
-    } catch (_) {
-      return false;
+      try {
+        return await launchUrl(Uri.parse(fallbackUrl), mode: LaunchMode.externalApplication);
+      } catch (_) {
+        return false;
+      }
     }
+
+    debugPrint('ℹ️ [PaymentLauncher] ABA Mobile app not installed on device.');
+    return false;
   }
 
   /// Launches PayPal

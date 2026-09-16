@@ -2,6 +2,7 @@ package com.tripz.backend.booking.models;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import com.tripz.backend.booking.enums.BookingStatus;
+import com.tripz.backend.booking.enums.PaymentStatus;
 import com.tripz.backend.user.models.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -44,4 +45,12 @@ public class Booking {
     @Builder.Default
     @Column(name = "status", nullable = false)
     private BookingStatus bookingStatus = BookingStatus.Confirmed;
+
+    /**
+     * Tracks whether payment was confirmed by the payment gateway.
+     * Default is PENDING — set to PAID when the ABA/Bakong callback succeeds.
+     */
+    @Builder.Default
+    @Column(name = "payment_status", nullable = false)
+    private PaymentStatus paymentStatus = PaymentStatus.PENDING;
 }

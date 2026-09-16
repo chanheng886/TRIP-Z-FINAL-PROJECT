@@ -56,7 +56,9 @@ public class SecurityConfig {
                     "/swagger-ui/**",
                     "/swagger-ui.html",
                     "/v3/api-docs/**",
-                    "/error"
+                    "/error",
+                    // ABA Payway payment endpoints (checkout, callback, return, cancel, check-transaction)
+                    "/payment/aba/**"
                 ).permitAll()
                 .anyRequest().authenticated())
             .exceptionHandling(ex -> ex

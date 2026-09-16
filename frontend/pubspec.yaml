@@ -50,6 +50,7 @@ dependencies:
   image_picker: ^1.2.3
   url_launcher: ^6.3.1
   khqr_sdk: ^3.0.0
+  webview_flutter: ^4.10.0
 
 dev_dependencies:
   flutter_test:

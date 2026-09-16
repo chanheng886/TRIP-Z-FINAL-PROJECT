@@ -1,11 +1,16 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:frontend/core/localization/language_controller.dart';
 import 'package:frontend/core/theme/app_colors.dart';
-import 'package:frontend/core/theme/app_fonts.dart';
 import 'package:frontend/features/home/data/bus_station_repository.dart';
-import 'package:frontend/features/home/view/widgets/bus_station_detail_bottom_sheet.dart';
+import 'package:frontend/features/home/view/widgets/map/map_city_filter_chips.dart';
+import 'package:frontend/features/home/view/widgets/map/map_controls.dart';
+import 'package:frontend/features/home/view/widgets/map/map_route_polyline_layer.dart';
+import 'package:frontend/features/home/view/widgets/map/map_search_bar.dart';
+import 'package:frontend/features/home/view/widgets/map/map_station_carousel.dart';
+import 'package:frontend/features/home/view/widgets/map/map_station_list_view.dart';
+import 'package:frontend/features/home/view/widgets/map/map_station_marker.dart';
+import 'package:frontend/features/home/view/widgets/map/map_user_marker.dart';
 import 'package:frontend/shared/model/bus_station.dart';
 import 'package:frontend/shared/service/road_routing_service.dart';
 import 'package:frontend/shared/service/user_location_service.dart';
@@ -43,6 +48,8 @@ class _BusStationsMapScreenState extends State<BusStationsMapScreen> {
 
   List<LatLng> _roadRoutePoints = [];
 
+  // ─── Lifecycle ─────────────────────────────────────────────────────────────
+
   @override
   void initState() {
     super.initState();
@@ -68,9 +75,7 @@ class _BusStationsMapScreenState extends State<BusStationsMapScreen> {
         if (pos != null && mounted) {
           final nearest = _userLocService.nearestStation.value;
           if (nearest != null) {
-            setState(() {
-              _selectedStation = nearest;
-            });
+            setState(() => _selectedStation = nearest);
             _updateRoadRoute();
           }
         }
@@ -78,20 +83,25 @@ class _BusStationsMapScreenState extends State<BusStationsMapScreen> {
     }
   }
 
-  void _updateRoadRoute() async {
+  @override
+  void dispose() {
+    _posWorker?.dispose();
+    _searchController.dispose();
+    _mapController.dispose();
+    super.dispose();
+  }
+
+  // ─── State Helpers ──────────────────────────────────────────────────────────
+
+  Future<void> _updateRoadRoute() async {
     if (_selectedStation == null) return;
     final userPos = _userLocService.userLatLng;
     final destPos = LatLng(
       _selectedStation!.latitude,
       _selectedStation!.longitude,
     );
-
     final result = await RoadRoutingService().getRoadRoute(userPos, destPos);
-    if (mounted) {
-      setState(() {
-        _roadRoutePoints = result.points;
-      });
-    }
+    if (mounted) setState(() => _roadRoutePoints = result.points);
   }
 
   void _filterStations() {
@@ -111,9 +121,7 @@ class _BusStationsMapScreenState extends State<BusStationsMapScreen> {
   }
 
   void _selectStation(BusStation station, {bool moveMap = true}) {
-    setState(() {
-      _selectedStation = station;
-    });
+    setState(() => _selectedStation = station);
     _updateRoadRoute();
     if (moveMap) {
       _mapController.move(LatLng(station.latitude, station.longitude), 15.5);
@@ -125,41 +133,33 @@ class _BusStationsMapScreenState extends State<BusStationsMapScreen> {
       _selectedCity = city;
       _filterStations();
     });
-
     if (_filteredStations.isNotEmpty) {
       _selectStation(_filteredStations.first);
-    } else if (city == 'Phnom Penh') {
-      _mapController.move(const LatLng(11.5564, 104.9282), 13.0);
-    } else if (city == 'Siem Reap') {
-      _mapController.move(const LatLng(13.3633, 103.8564), 13.0);
-    } else if (city == 'Sihanoukville') {
-      _mapController.move(const LatLng(10.6259, 103.5234), 13.0);
-    } else if (city == 'Battambang') {
-      _mapController.move(const LatLng(13.0957, 103.2022), 13.0);
-    } else if (city == 'Kampot') {
-      _mapController.move(const LatLng(10.6105, 104.1812), 13.0);
+    } else {
+      final cityPositions = {
+        'Phnom Penh':    LatLng(11.5564, 104.9282),
+        'Siem Reap':     LatLng(13.3633, 103.8564),
+        'Sihanoukville': LatLng(10.6259, 103.5234),
+        'Battambang':    LatLng(13.0957, 103.2022),
+        'Kampot':        LatLng(10.6105, 104.1812),
+      };
+      if (cityPositions.containsKey(city)) {
+        _mapController.move(cityPositions[city]!, 13.0);
+      }
     }
   }
 
-  @override
-  void dispose() {
-    _posWorker?.dispose();
-    _searchController.dispose();
-    _mapController.dispose();
-    super.dispose();
-  }
+  // ─── Build ──────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final scaffoldBg = isDarkMode ? AppColors.darkBg : const Color(0xFFF7F8FA);
-    final cardBg = isDarkMode ? AppColors.darkCardBackground : Colors.white;
-    final textPrimary = isDarkMode
-        ? AppColors.darkPrimaryText
-        : AppColors.lightPrimaryText;
-    final textSecondary = isDarkMode
-        ? const Color(0xFF94A3B8)
-        : const Color(0xFF64748B);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final scaffoldBg = isDark ? AppColors.darkBg : const Color(0xFFF7F8FA);
+    final cardBg = isDark ? AppColors.darkCardBackground : Colors.white;
+    final textPrimary =
+        isDark ? AppColors.darkPrimaryText : AppColors.lightPrimaryText;
+    final textSecondary =
+        isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
     final isKhmer = Get.find<LanguageController>().isKhmer;
 
     return Obx(() {
@@ -172,7 +172,7 @@ class _BusStationsMapScreenState extends State<BusStationsMapScreen> {
         backgroundColor: scaffoldBg,
         body: Stack(
           children: [
-            // 1. Real Interactive Map
+            // ── 1. Map + Layers ─────────────────────────────────────────────
             FlutterMap(
               mapController: _mapController,
               options: MapOptions(
@@ -183,143 +183,36 @@ class _BusStationsMapScreenState extends State<BusStationsMapScreen> {
                 interactionOptions: const InteractionOptions(
                   flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
                 ),
-                onTap: (_, _) {
-                  FocusScope.of(context).unfocus();
-                },
+                onTap: (_, __) => FocusScope.of(context).unfocus(),
               ),
               children: [
-                // Tile Layer
+                // Tile layer
                 TileLayer(
-                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  urlTemplate:
+                      'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                   userAgentPackageName: 'com.tripz.frontend',
                 ),
 
-                // Polyline Connecting User Location to Selected Station via Real Roads
+                // Road-route polyline
                 if (_selectedStation != null)
-                  PolylineLayer(
-                    polylines: [
-                      // Outer casing / glow for high contrast
-                      Polyline(
-                        points: _roadRoutePoints.isNotEmpty
-                            ? _roadRoutePoints
-                            : [userPos, selectedLatLng],
-                        color: const Color(0xFF1D4ED8).withValues(alpha: 0.35),
-                        strokeWidth: 7.0,
-                        strokeCap: StrokeCap.round,
-                        strokeJoin: StrokeJoin.round,
-                      ),
-                      // Core navigation road route
-                      Polyline(
-                        points: _roadRoutePoints.isNotEmpty
-                            ? _roadRoutePoints
-                            : [userPos, selectedLatLng],
-                        color: const Color(0xFF2563EB),
-                        strokeWidth: 4.5,
-                        strokeCap: StrokeCap.round,
-                        strokeJoin: StrokeJoin.round,
-                      ),
-                    ],
+                  MapRoutePolylineLayer(
+                    roadRoutePoints: _roadRoutePoints,
+                    userPos: userPos,
+                    destPos: selectedLatLng,
                   ),
 
-                // Markers Layer: User GPS + Bus Stations
+                // Markers: user + all stations
                 MarkerLayer(
                   markers: [
-                    // User Location Marker
-                    Marker(
-                      point: userPos,
-                      width: 40,
-                      height: 40,
-                      alignment: Alignment.center,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: const Color(
-                                0xFF2563EB,
-                              ).withValues(alpha: 0.25),
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          Container(
-                            width: 20,
-                            height: 20,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF2563EB),
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: Colors.white,
-                                width: 2.5,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.3),
-                                  blurRadius: 4,
-                                  offset: const Offset(0, 1),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    // Bus Station Markers
+                    MapUserMarker(point: userPos),
                     ..._filteredStations.map((station) {
                       final isSelected = _selectedStation?.id == station.id;
-                      return Marker(
-                        point: LatLng(station.latitude, station.longitude),
-                        width: isSelected ? 58 : 44,
-                        height: isSelected ? 58 : 44,
-                        alignment: Alignment.center,
-                        child: GestureDetector(
-                          onTap: () {
-                            _selectStation(station, moveMap: true);
-                            BusStationDetailBottomSheet.show(
-                              context,
-                              station: station,
-                              onSelectAsOrigin: (st) => Get.back(result: st),
-                            );
-                          },
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 250),
-                            padding: EdgeInsets.all(isSelected ? 6 : 4),
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? const Color(0xFF22C55E)
-                                  : Colors.white,
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: isSelected
-                                    ? Colors.white
-                                    : const Color(0xFF22C55E),
-                                width: 2.5,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: isSelected
-                                      ? const Color(
-                                          0xFF22C55E,
-                                        ).withValues(alpha: 0.5)
-                                      : Colors.black.withValues(alpha: 0.2),
-                                  blurRadius: isSelected ? 12 : 6,
-                                  offset: const Offset(0, 3),
-                                ),
-                              ],
-                            ),
-                            child: Center(
-                              child: FaIcon(
-                                FontAwesomeIcons.bus,
-                                size: isSelected ? 20 : 16,
-                                color: isSelected
-                                    ? Colors.white
-                                    : const Color(0xFF22C55E),
-                              ),
-                            ),
-                          ),
-                        ),
+                      return MapStationMarker(
+                        station: station,
+                        isSelected: isSelected,
+                        context: context,
+                        onSelectStation: () =>
+                            _selectStation(station, moveMap: true),
                       );
                     }),
                   ],
@@ -327,590 +220,79 @@ class _BusStationsMapScreenState extends State<BusStationsMapScreen> {
               ],
             ),
 
-            // 2. Top Header & Search Area
+            // ── 2. Top Search + City Filters ────────────────────────────────
             SafeArea(
               child: Padding(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 10,
-                ),
+                    horizontal: 16, vertical: 10),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Search Bar Row
-                    Row(
-                      children: [
-                        // Back Button
-                        GestureDetector(
-                          onTap: () => Get.back(),
-                          child: Container(
-                            width: 44,
-                            height: 44,
-                            decoration: BoxDecoration(
-                              color: cardBg,
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.1),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: Center(
-                              child: Icon(
-                                Icons.arrow_back_ios_new_rounded,
-                                size: 18,
-                                color: textPrimary,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-
-                        // Search Input Box
-                        Expanded(
-                          child: Container(
-                            height: 46,
-                            padding: const EdgeInsets.symmetric(horizontal: 14),
-                            decoration: BoxDecoration(
-                              color: cardBg,
-                              borderRadius: BorderRadius.circular(24),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.08),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.search_rounded,
-                                  color: Color(0xFF22C55E),
-                                  size: 20,
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: TextField(
-                                    controller: _searchController,
-                                    onChanged: (_) => _filterStations(),
-                                    style: AppFonts.dmSans(
-                                      fontSize: 14,
-                                      color: textPrimary,
-                                    ),
-                                    decoration: InputDecoration(
-                                      hintText: 'Search bus station or city...',
-                                      hintStyle: AppFonts.dmSans(
-                                        fontSize: 13,
-                                        color: textSecondary,
-                                      ),
-                                      border: InputBorder.none,
-                                      isDense: true,
-                                      contentPadding: EdgeInsets.zero,
-                                    ),
-                                  ),
-                                ),
-                                if (_searchController.text.isNotEmpty)
-                                  GestureDetector(
-                                    onTap: () {
-                                      _searchController.clear();
-                                      _filterStations();
-                                    },
-                                    child: const Icon(
-                                      Icons.close_rounded,
-                                      size: 18,
-                                      color: Colors.grey,
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-
-                        // List / Map View Toggle
-                        GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _showListView = !_showListView;
-                            });
-                          },
-                          child: Container(
-                            width: 44,
-                            height: 44,
-                            decoration: BoxDecoration(
-                              color: _showListView
-                                  ? const Color(0xFF22C55E)
-                                  : cardBg,
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.1),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: Center(
-                              child: Icon(
-                                _showListView
-                                    ? Icons.map_rounded
-                                    : Icons.list_rounded,
-                                size: 22,
-                                color: _showListView
-                                    ? Colors.white
-                                    : textPrimary,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+                    MapSearchBar(
+                      searchController: _searchController,
+                      onSearchChanged: _filterStations,
+                      showListView: _showListView,
+                      onToggleView: () =>
+                          setState(() => _showListView = !_showListView),
+                      cardBg: cardBg,
+                      textPrimary: textPrimary,
+                      textSecondary: textSecondary,
                     ),
                     const SizedBox(height: 10),
-
-                    // City Filter Chips
-                    SizedBox(
-                      height: 36,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: _cities.length,
-                        separatorBuilder: (_, _) => const SizedBox(width: 8),
-                        itemBuilder: (context, index) {
-                          final city = _cities[index];
-                          final isSelected = _selectedCity == city;
-                          return GestureDetector(
-                            onTap: () => _onCityChanged(city),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? const Color(0xFF22C55E)
-                                    : cardBg,
-                                borderRadius: BorderRadius.circular(20),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.06),
-                                    blurRadius: 6,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: Center(
-                                child: Text(
-                                  city,
-                                  style: AppFonts.dmSans(
-                                    fontSize: 12,
-                                    fontWeight: isSelected
-                                        ? FontWeight.bold
-                                        : FontWeight.w500,
-                                    color: isSelected
-                                        ? Colors.white
-                                        : textPrimary,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
+                    MapCityFilterChips(
+                      cities: _cities,
+                      selectedCity: _selectedCity,
+                      onCityChanged: _onCityChanged,
+                      cardBg: cardBg,
+                      textPrimary: textPrimary,
                     ),
                   ],
                 ),
               ),
             ),
 
-            // 3. Side Map Controls (Zoom In, Zoom Out, Recenter to GPS)
+            // ── 3. Map Zoom / GPS Controls ───────────────────────────────────
             Positioned(
               right: 16,
               bottom: 220,
-              child: Column(
-                children: [
-                  _buildMapButton(
-                    icon: Icons.add_rounded,
-                    onTap: () {
-                      _mapController.move(
-                        _mapController.camera.center,
-                        _mapController.camera.zoom + 1,
-                      );
-                    },
-                    cardBg: cardBg,
-                    iconColor: textPrimary,
-                  ),
-                  const SizedBox(height: 8),
-                  _buildMapButton(
-                    icon: Icons.remove_rounded,
-                    onTap: () {
-                      _mapController.move(
-                        _mapController.camera.center,
-                        _mapController.camera.zoom - 1,
-                      );
-                    },
-                    cardBg: cardBg,
-                    iconColor: textPrimary,
-                  ),
-                  const SizedBox(height: 8),
-                  // Recenter to User GPS
-                  _buildMapButton(
-                    icon: Icons.my_location_rounded,
-                    onTap: () async {
-                      await _userLocService.determinePosition();
-                      _mapController.move(_userLocService.userLatLng, 15.0);
-                    },
-                    cardBg: cardBg,
-                    iconColor: const Color(0xFF2563EB),
-                  ),
-                ],
+              child: MapControls(
+                mapController: _mapController,
+                userLocService: _userLocService,
+                cardBg: cardBg,
+                iconColor: textPrimary,
               ),
             ),
 
-            // 4. Bottom Station Carousel or Full List View
+            // ── 4. Bottom: List View or Carousel ────────────────────────────
             if (_showListView)
-              Positioned(
-                left: 16,
-                right: 16,
-                bottom: 24,
-                top: 150,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: cardBg,
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.15),
-                        blurRadius: 16,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              '${_filteredStations.length} Bus Stations',
-                              style: AppFonts.dmSans(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: textPrimary,
-                              ),
-                            ),
-                            Text(
-                              _selectedCity,
-                              style: AppFonts.dmSans(
-                                fontSize: 13,
-                                color: const Color(0xFF22C55E),
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const Divider(height: 1),
-                      Expanded(
-                        child: ListView.separated(
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          itemCount: _filteredStations.length,
-                          separatorBuilder: (_, _) => const Divider(height: 1),
-                          itemBuilder: (context, index) {
-                            final station = _filteredStations[index];
-                            final isSelected =
-                                _selectedStation?.id == station.id;
-                            final distanceKm = _userLocService
-                                .calculateDistanceToStationKm(station);
-
-                            return ListTile(
-                              leading: CircleAvatar(
-                                backgroundColor: isSelected
-                                    ? const Color(0xFF22C55E)
-                                    : const Color(0xFFDCFCE7),
-                                child: FaIcon(
-                                  FontAwesomeIcons.bus,
-                                  size: 16,
-                                  color: isSelected
-                                      ? Colors.white
-                                      : const Color(0xFF22C55E),
-                                ),
-                              ),
-                              title: Text(
-                                station.localizedName(isKhmer),
-                                style: AppFonts.dmSans(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: textPrimary,
-                                ),
-                              ),
-                              subtitle: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    station.localizedAddress(isKhmer),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: AppFonts.dmSans(
-                                      fontSize: 12,
-                                      color: textSecondary,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    '$distanceKm km away',
-                                    style: AppFonts.dmSans(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                      color: const Color(0xFF2563EB),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              trailing: TextButton(
-                                onPressed: () => Get.back(result: station),
-                                child: Text(
-                                  'Select',
-                                  style: AppFonts.dmSans(
-                                    fontWeight: FontWeight.bold,
-                                    color: const Color(0xFF22C55E),
-                                  ),
-                                ),
-                              ),
-                              onTap: () {
-                                setState(() {
-                                  _showListView = false;
-                                });
-                                _selectStation(station);
-                              },
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+              MapStationListView(
+                stations: _filteredStations,
+                selectedStation: _selectedStation,
+                selectedCity: _selectedCity,
+                isKhmer: isKhmer,
+                userLocService: _userLocService,
+                cardBg: cardBg,
+                textPrimary: textPrimary,
+                textSecondary: textSecondary,
+                onStationTap: (station) {
+                  setState(() => _showListView = false);
+                  _selectStation(station);
+                },
               )
             else if (_filteredStations.isNotEmpty)
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 24,
-                child: SizedBox(
-                  height: 185,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: _filteredStations.length,
-                    itemBuilder: (context, index) {
-                      final station = _filteredStations[index];
-                      final isSelected = _selectedStation?.id == station.id;
-                      final distanceKm = _userLocService
-                          .calculateDistanceToStationKm(station);
-
-                      return GestureDetector(
-                        onTap: () {
-                          _selectStation(station);
-                          BusStationDetailBottomSheet.show(
-                            context,
-                            station: station,
-                            onSelectAsOrigin: (st) => Get.back(result: st),
-                          );
-                        },
-                        child: Container(
-                          width: 310,
-                          margin: const EdgeInsets.only(right: 12),
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: cardBg,
-                            borderRadius: BorderRadius.circular(22),
-                            border: Border.all(
-                              color: isSelected
-                                  ? const Color(0xFF22C55E)
-                                  : Colors.transparent,
-                              width: 2,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: isSelected
-                                    ? const Color(
-                                        0xFF22C55E,
-                                      ).withValues(alpha: 0.25)
-                                    : Colors.black.withValues(alpha: 0.1),
-                                blurRadius: 12,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Container(
-                                    width: 40,
-                                    height: 40,
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFDCFCE7),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: const Center(
-                                      child: FaIcon(
-                                        FontAwesomeIcons.busSimple,
-                                        size: 18,
-                                        color: Color(0xFF22C55E),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          station.localizedName(isKhmer),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: AppFonts.dmSans(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.bold,
-                                            color: textPrimary,
-                                          ),
-                                        ),
-                                        Row(
-                                          children: [
-                                            Text(
-                                              station.city,
-                                              style: AppFonts.dmSans(
-                                                fontSize: 12,
-                                                color: const Color(0xFF22C55E),
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            ),
-                                            const SizedBox(width: 6),
-                                            Container(
-                                              width: 3,
-                                              height: 3,
-                                              decoration: BoxDecoration(
-                                                color: textSecondary,
-                                                shape: BoxShape.circle,
-                                              ),
-                                            ),
-                                            const SizedBox(width: 6),
-                                            Text(
-                                              '$distanceKm km away',
-                                              style: AppFonts.dmSans(
-                                                fontSize: 11,
-                                                fontWeight: FontWeight.bold,
-                                                color: const Color(0xFF2563EB),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                station.localizedAddress(isKhmer),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: AppFonts.dmSans(
-                                  fontSize: 12,
-                                  color: textSecondary,
-                                ),
-                              ),
-                              const Spacer(),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Row(
-                                    children: [
-                                      const Icon(
-                                        Icons.access_time_rounded,
-                                        size: 14,
-                                        color: Color(0xFF22C55E),
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        station.openingHours,
-                                        style: AppFonts.dmSans(
-                                          fontSize: 11,
-                                          color: textSecondary,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFF22C55E),
-                                      foregroundColor: Colors.white,
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 14,
-                                        vertical: 6,
-                                      ),
-                                      minimumSize: Size.zero,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(16),
-                                      ),
-                                      elevation: 0,
-                                    ),
-                                    onPressed: () => Get.back(result: station),
-                                    child: Text(
-                                      'Select',
-                                      style: AppFonts.dmSans(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
+              MapStationCarousel(
+                stations: _filteredStations,
+                selectedStation: _selectedStation,
+                isKhmer: isKhmer,
+                userLocService: _userLocService,
+                cardBg: cardBg,
+                textPrimary: textPrimary,
+                textSecondary: textSecondary,
+                onStationTap: _selectStation,
               ),
           ],
         ),
       );
     });
-  }
-
-  Widget _buildMapButton({
-    required IconData icon,
-    required VoidCallback onTap,
-    required Color cardBg,
-    required Color iconColor,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 42,
-        height: 42,
-        decoration: BoxDecoration(
-          color: cardBg,
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.12),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Center(child: Icon(icon, size: 20, color: iconColor)),
-      ),
-    );
   }
 }

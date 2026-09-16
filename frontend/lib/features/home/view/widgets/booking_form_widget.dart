@@ -7,7 +7,6 @@ import 'package:frontend/features/home/view/pages/payment_processing_screen.dart
 import 'package:frontend/features/home/viewmodel/booking_view_model.dart';
 import 'package:frontend/shared/model/booking_request.dart';
 import 'package:frontend/shared/model/passenger.dart';
-import 'package:frontend/shared/service/payment_launcher_service.dart';
 import 'package:get/get.dart';
 
 void showBookingFormSheet(
@@ -395,9 +394,9 @@ void showBookingFormSheet(
                         ),
                         const SizedBox(height: 8),
 
-                        // 2. ABA Bank
+                        // 2. ABA Payway
                         _buildPaymentTile(
-                          title: 'ABA Bank',
+                          title: 'ABA Payway',
                           subtitle: 'aba_desc'.tr,
                           icon: FontAwesomeIcons.buildingColumns,
                           accentColor: const Color(0xFF005A9C),
@@ -408,6 +407,9 @@ void showBookingFormSheet(
                           borderColor: borderColor,
                           primaryText: primaryText,
                           secondaryText: secondaryText,
+                          badgeText: 'Cards • ABA Mobile • KHQR',
+                          badgeBgColor: const Color(0xFF005A9C),
+                          badgeTextColor: Colors.white,
                           onTap: () => setModalState(() => selectedPayment = 'ABA Bank'),
                         ),
                         const SizedBox(height: 8),
@@ -529,13 +531,6 @@ void showBookingFormSheet(
                                         passengers: passengers,
                                       );
 
-                                      // Launch real ACLEDA Super App / banking app
-                                      PaymentLauncherService.launchPaymentMethod(
-                                        selectedPayment,
-                                        amount: totalAmount,
-                                        bookingCode: 'TRIPZ-$busScheduleId',
-                                      );
-
                                       // Close bottom sheet and navigate to Payment Processing Screen
                                       Navigator.of(context).pop();
 
@@ -572,7 +567,7 @@ void showBookingFormSheet(
                                     selectedPayment.toLowerCase().contains('acleda')
                                         ? 'Pay with ACLEDA • \$${totalAmount.toStringAsFixed(2)}'
                                         : (selectedPayment.toLowerCase().contains('aba')
-                                            ? 'Pay with ABA • \$${totalAmount.toStringAsFixed(2)}'
+                                            ? 'Pay with ABA Payway • \$${totalAmount.toStringAsFixed(2)}'
                                             : '${'proceed_to_payment'.tr} • \$${totalAmount.toStringAsFixed(2)}'),
                                     style: AppFonts.dmSans(
                                       fontSize: 15,

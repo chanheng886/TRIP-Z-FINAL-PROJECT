@@ -34,26 +34,12 @@ class BusSchedule {
 
   bool get isExpired {
     if (status == BusScheduleStatus.Expired) return true;
-    try {
-      final now = DateTime.now();
-      final depParts = departureTime.split(':');
-      final hour = int.parse(depParts[0]);
-      final minute = int.parse(depParts[1]);
-      final fullDeparture = DateTime(
-        travelDate.year,
-        travelDate.month,
-        travelDate.day,
-        hour,
-        minute,
-      );
-      return fullDeparture.isBefore(now);
-    } catch (_) {
-      final now = DateTime.now();
-      final today = DateTime(now.year, now.month, now.day);
-      final tripDate =
-          DateTime(travelDate.year, travelDate.month, travelDate.day);
-      return tripDate.isBefore(today);
-    }
+    // A schedule expires only when the travel DATE is strictly in the past.
+    // A schedule for today (even with a past departure time) is still valid.
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final tripDay = DateTime(travelDate.year, travelDate.month, travelDate.day);
+    return tripDay.isBefore(today);
   }
 
   BusSchedule({
@@ -80,31 +66,15 @@ class BusSchedule {
         : DateTime.now();
     final depTime = json['departureTime']?.toString() ?? '00:00:00';
 
-    // Auto-mark expired if schedule departure is in the past
+    // A schedule expires only when the travel DATE is strictly yesterday or older.
+    // Schedules for today remain Available regardless of departure time.
     BusScheduleStatus finalStatus = parsedStatus;
     if (finalStatus != BusScheduleStatus.Cancelled) {
-      try {
-        final now = DateTime.now();
-        final depParts = depTime.split(':');
-        final hour = int.parse(depParts[0]);
-        final minute = int.parse(depParts[1]);
-        final fullDeparture = DateTime(
-          tDate.year,
-          tDate.month,
-          tDate.day,
-          hour,
-          minute,
-        );
-        if (fullDeparture.isBefore(now)) {
-          finalStatus = BusScheduleStatus.Expired;
-        }
-      } catch (_) {
-        final now = DateTime.now();
-        final today = DateTime(now.year, now.month, now.day);
-        final tripDate = DateTime(tDate.year, tDate.month, tDate.day);
-        if (tripDate.isBefore(today)) {
-          finalStatus = BusScheduleStatus.Expired;
-        }
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final tripDay = DateTime(tDate.year, tDate.month, tDate.day);
+      if (tripDay.isBefore(today)) {
+        finalStatus = BusScheduleStatus.Expired;
       }
     }
 

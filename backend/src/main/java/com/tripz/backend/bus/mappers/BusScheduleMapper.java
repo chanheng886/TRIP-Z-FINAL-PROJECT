@@ -66,14 +66,13 @@ public class BusScheduleMapper {
     //✅ To Response
     public BusScheduleResponseDTO toResponse(BusSchedule busSchedule){
         com.tripz.backend.bus.enums.BusScheduleStatus status = busSchedule.getBusScheduleStatus();
-        if (busSchedule.getTravelDate() != null && busSchedule.getDepartureTime() != null) {
-            java.time.LocalDateTime departureDateTime = java.time.LocalDateTime.of(
-                busSchedule.getTravelDate(), 
-                busSchedule.getDepartureTime()
-            );
-            if (departureDateTime.isBefore(java.time.LocalDateTime.now()) && status != com.tripz.backend.bus.enums.BusScheduleStatus.Cancelled) {
-                status = com.tripz.backend.bus.enums.BusScheduleStatus.Expired;
-            }
+        // A schedule expires only when the travel DATE is strictly before today.
+        // Schedules for today remain Available regardless of departure time.
+        java.time.LocalDate today = java.time.LocalDate.now();
+        if (busSchedule.getTravelDate() != null
+                && busSchedule.getTravelDate().isBefore(today)
+                && status != com.tripz.backend.bus.enums.BusScheduleStatus.Cancelled) {
+            status = com.tripz.backend.bus.enums.BusScheduleStatus.Expired;
         }
 
         return BusScheduleResponseDTO.builder()
