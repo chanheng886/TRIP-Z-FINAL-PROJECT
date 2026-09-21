@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:frontend/shared/service/auth_service.dart';
 import 'package:frontend/shared/service/base_url.dart';
 import 'package:http/http.dart' as http;
@@ -79,6 +80,29 @@ class AdminDashboardService {
       response,
       fallback: "Failed to load bookings for this date!",
     );
+  }
+
+  Future<String?> uploadImage({
+    required List<int> bytes,
+    required String filename,
+    String folder = 'tripz/locations',
+  }) async {
+    final token = await AuthService().getToken();
+    final uri = Uri.parse('$baseUrl/upload/image?folder=$folder');
+    final request = http.MultipartRequest('POST', uri);
+    if (token != null) {
+      request.headers['Authorization'] = 'Bearer $token';
+    }
+    request.files.add(
+      http.MultipartFile.fromBytes('file', bytes, filename: filename),
+    );
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
+    final data = json.decode(response.body);
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return data['url'] as String?;
+    }
+    throw Exception(data['message'] ?? 'Failed to upload image');
   }
 
   Future<Map<String, dynamic>> createLocation({
@@ -195,8 +219,8 @@ class AdminDashboardService {
     http.Response response, {
     required String fallback,
   }) {
-    print('Status: ${response.statusCode}');
-    print('Body: ${response.body}');
+    debugPrint('Status: ${response.statusCode}');
+    debugPrint('Body: ${response.body}');
     if (response.statusCode == 200) {
       return json.decode(response.body);
     }
@@ -207,8 +231,8 @@ class AdminDashboardService {
     http.Response response, {
     required String fallback,
   }) {
-    print('Status: ${response.statusCode}');
-    print('Body: ${response.body}');
+    debugPrint('Status: ${response.statusCode}');
+    debugPrint('Body: ${response.body}');
     if (response.statusCode == 200 || response.statusCode == 201) {
       return json.decode(response.body);
     }

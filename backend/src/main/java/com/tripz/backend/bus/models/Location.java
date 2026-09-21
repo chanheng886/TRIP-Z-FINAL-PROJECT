@@ -22,6 +22,6 @@ public class Location {
     @Column(name = "location_name", nullable = false, unique = true)
     private String locationName;
 
-    @Column(name = "images_url", nullable = true)
+    @Column(name = "images_url", columnDefinition = "TEXT", nullable = true)
     private String imageUrl;
 }

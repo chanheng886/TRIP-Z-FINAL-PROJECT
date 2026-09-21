@@ -6,11 +6,11 @@ import lombok.Data;
 @Data
 public class LocationRequestDTO {
 
-    @NotBlank(message = "Please fields the location name")
-    @Size(max = 100, message = "Location name must be less than 100")
+    @NotBlank(message = "Please fill in the location name")
+    @Size(max = 100, message = "Location name must be less than 100 characters")
     private String locationName;
     
-    @NotBlank(message = "Please fields the location name")
-    @Size(max = 100, message = "Location name must be less than 100")
+    @NotBlank(message = "Please provide the image URL")
+    @Size(max = 1000, message = "Image URL must be less than 1000 characters")
     private String imageUrl;
 }

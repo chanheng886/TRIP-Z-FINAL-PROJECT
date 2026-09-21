@@ -20,6 +20,8 @@ import 'package:frontend/shared/model/booking_response.dart';
 import 'package:frontend/shared/model/bus_schedule.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'dart:typed_data';
+import 'package:image_picker/image_picker.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -62,6 +64,50 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   TimeOfDay? _departureTime;
   TimeOfDay? _arrivalTime;
   String _status = 'Available';
+
+  final ImagePicker _picker = ImagePicker();
+  Uint8List? _locationImageBytes;
+
+  Future<void> _pickAndUploadLocationImage() async {
+    try {
+      final XFile? file = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1920,
+        maxHeight: 1080,
+        imageQuality: 85,
+      );
+      if (file == null) return;
+
+      final bytes = await file.readAsBytes();
+      setState(() {
+        _locationImageBytes = bytes;
+      });
+
+      final url = await _vm.uploadImage(
+        bytes: bytes,
+        filename: file.name,
+        folder: 'tripz/locations',
+      );
+
+      if (!mounted) return;
+      if (url != null && url.isNotEmpty) {
+        setState(() {
+          _locationImageUrlController.text = url;
+        });
+        _showSnack('Image uploaded to Cloudinary successfully!', isError: false);
+      } else {
+        _showSnack(
+          _vm.errorMessage.value.isNotEmpty
+              ? _vm.errorMessage.value
+              : 'Failed to upload image to Cloudinary',
+          isError: true,
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      _showSnack('Error picking image: $e', isError: true);
+    }
+  }
 
   final List<AdminTabItem> _tabs = const [
     AdminTabItem(title: 'overview', icon: FontAwesomeIcons.chartPie),
@@ -213,6 +259,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     if (ok) {
       _locationNameController.clear();
       _locationImageUrlController.clear();
+      setState(() {
+        _locationImageBytes = null;
+      });
       _showSnack('location_added_success'.tr, isError: false);
       _vm.loadOptions();
     } else {
@@ -913,6 +962,263 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                     },
                   ),
                   const SizedBox(height: 16),
+                  Text(
+                    'Destination Photo',
+                    style: AppFonts.dmSans(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: secondaryText,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Obx(() {
+                    final isUploading = _vm.isUploadingImage.value;
+                    final hasImage = _locationImageBytes != null ||
+                        _locationImageUrlController.text.trim().isNotEmpty;
+
+                    if (hasImage) {
+                      return Container(
+                        height: 170,
+                        margin: const EdgeInsets.only(bottom: 12),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: AppColors.green.withValues(alpha: 0.4),
+                            width: 1.5,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.08),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              if (_locationImageBytes != null)
+                                Image.memory(
+                                  _locationImageBytes!,
+                                  fit: BoxFit.cover,
+                                )
+                              else
+                                Image.network(
+                                  _locationImageUrlController.text.trim(),
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      Container(
+                                    color: isDark
+                                        ? AppColors.darkSurface
+                                        : const Color(0xFFF1F5F9),
+                                    child: const Center(
+                                      child: FaIcon(
+                                        FontAwesomeIcons.triangleExclamation,
+                                        color: Colors.orange,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              if (isUploading)
+                                Container(
+                                  color: Colors.black54,
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      const CircularProgressIndicator(
+                                        color: AppColors.green,
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Text(
+                                        'Uploading to Cloudinary...',
+                                        style: AppFonts.dmSans(
+                                          color: Colors.white,
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              Positioned(
+                                top: 10,
+                                right: 10,
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    if (!isUploading &&
+                                        _locationImageUrlController.text
+                                            .trim()
+                                            .isNotEmpty)
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 10,
+                                          vertical: 5,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Colors.black
+                                              .withValues(alpha: 0.7),
+                                          borderRadius:
+                                              BorderRadius.circular(20),
+                                          border: Border.all(
+                                            color: AppColors.green,
+                                            width: 1,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            const FaIcon(
+                                              FontAwesomeIcons.circleCheck,
+                                              color: AppColors.green,
+                                              size: 11,
+                                            ),
+                                            const SizedBox(width: 5),
+                                            Text(
+                                              'Cloudinary Ready',
+                                              style: AppFonts.dmSans(
+                                                color: Colors.white,
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    const SizedBox(width: 8),
+                                    InkWell(
+                                      onTap: isUploading
+                                          ? null
+                                          : _pickAndUploadLocationImage,
+                                      borderRadius: BorderRadius.circular(20),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 10,
+                                          vertical: 6,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Colors.black
+                                              .withValues(alpha: 0.75),
+                                          borderRadius:
+                                              BorderRadius.circular(20),
+                                          border: Border.all(
+                                            color: Colors.white24,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            const FaIcon(
+                                              FontAwesomeIcons.penToSquare,
+                                              color: Colors.white,
+                                              size: 11,
+                                            ),
+                                            const SizedBox(width: 5),
+                                            Text(
+                                              'Change',
+                                              style: AppFonts.dmSans(
+                                                color: Colors.white,
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    InkWell(
+                                      onTap: isUploading
+                                          ? null
+                                          : () {
+                                              setState(() {
+                                                _locationImageBytes = null;
+                                                _locationImageUrlController
+                                                    .clear();
+                                              });
+                                            },
+                                      borderRadius: BorderRadius.circular(20),
+                                      child: Container(
+                                        padding: const EdgeInsets.all(7),
+                                        decoration: BoxDecoration(
+                                          color: Colors.red
+                                              .withValues(alpha: 0.8),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const FaIcon(
+                                          FontAwesomeIcons.xmark,
+                                          color: Colors.white,
+                                          size: 11,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }
+
+                    return InkWell(
+                      onTap: isUploading ? null : _pickAndUploadLocationImage,
+                      borderRadius: BorderRadius.circular(16),
+                      child: Container(
+                        height: 130,
+                        margin: const EdgeInsets.only(bottom: 12),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? const Color(0xFF1A1C23)
+                              : const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: borderColor,
+                            width: 1.5,
+                          ),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                color: AppColors.green.withValues(alpha: 0.12),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Center(
+                                child: FaIcon(
+                                  FontAwesomeIcons.cloudArrowUp,
+                                  color: AppColors.green,
+                                  size: 18,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              'Upload image from computer',
+                              style: AppFonts.dmSans(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: primaryText,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'JPG, PNG, or WebP (Saved to Cloudinary)',
+                              style: AppFonts.dmSans(
+                                fontSize: 11,
+                                color: secondaryText,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }),
                   TextFormField(
                     controller: _locationImageUrlController,
                     textInputAction: TextInputAction.done,
@@ -959,19 +1265,34 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                 ),
                 child: Row(
                   children: [
-                    Container(
-                      width: 34,
-                      height: 34,
-                      decoration: BoxDecoration(
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        width: 38,
+                        height: 38,
                         color: AppColors.green.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Center(
-                        child: FaIcon(
-                          FontAwesomeIcons.locationPin,
-                          size: 13,
-                          color: AppColors.green,
-                        ),
+                        child: (loc.imageUrl != null && loc.imageUrl!.isNotEmpty)
+                            ? Image.network(
+                                loc.imageUrl!,
+                                width: 38,
+                                height: 38,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    const Center(
+                                  child: FaIcon(
+                                    FontAwesomeIcons.locationPin,
+                                    size: 13,
+                                    color: AppColors.green,
+                                  ),
+                                ),
+                              )
+                            : const Center(
+                                child: FaIcon(
+                                  FontAwesomeIcons.locationPin,
+                                  size: 13,
+                                  color: AppColors.green,
+                                ),
+                              ),
                       ),
                     ),
                     const SizedBox(width: 12),

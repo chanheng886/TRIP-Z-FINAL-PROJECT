@@ -65,6 +65,18 @@ class AdminDashboardRepository {
         .toList();
   }
 
+  Future<String?> uploadImage({
+    required List<int> bytes,
+    required String filename,
+    String folder = 'tripz/locations',
+  }) {
+    return service.uploadImage(
+      bytes: bytes,
+      filename: filename,
+      folder: folder,
+    );
+  }
+
   Future<Map<String, dynamic>> createLocation({
     required String locationName,
     required String imageUrl,

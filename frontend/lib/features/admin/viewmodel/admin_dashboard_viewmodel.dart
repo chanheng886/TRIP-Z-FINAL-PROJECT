@@ -94,6 +94,30 @@ class AdminDashboardViewmodel extends GetxController {
     }
   }
 
+  final RxBool isUploadingImage = false.obs;
+
+  Future<String?> uploadImage({
+    required List<int> bytes,
+    required String filename,
+    String folder = 'tripz/locations',
+  }) async {
+    isUploadingImage.value = true;
+    errorMessage.value = '';
+    try {
+      final url = await repository.uploadImage(
+        bytes: bytes,
+        filename: filename,
+        folder: folder,
+      );
+      return url;
+    } catch (e) {
+      errorMessage.value = e.toString().replaceFirst('Exception: ', '');
+      return null;
+    } finally {
+      isUploadingImage.value = false;
+    }
+  }
+
   Future<bool> createLocation({
     required String locationName,
     required String imageUrl,
