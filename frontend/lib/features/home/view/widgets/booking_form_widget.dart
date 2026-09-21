@@ -4,9 +4,11 @@ import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_fonts.dart';
 import 'package:frontend/features/auth/viewmodel/auth_viewmodel.dart';
 import 'package:frontend/features/home/view/pages/payment_processing_screen.dart';
+import 'package:frontend/features/home/view/pages/ticket_screen.dart';
 import 'package:frontend/features/home/viewmodel/booking_view_model.dart';
 import 'package:frontend/shared/model/booking_request.dart';
 import 'package:frontend/shared/model/passenger.dart';
+import 'package:frontend/shared/widgets/auth_required_sheet.dart';
 import 'package:get/get.dart';
 
 void showBookingFormSheet(
@@ -20,13 +22,32 @@ void showBookingFormSheet(
   String? companyName,
 }) {
   final authVM = Get.find<AuthViewmodel>();
+  if (!authVM.isLoggedIn || authVM.currentUser?.id == null) {
+    showAuthRequiredSheet(
+      context,
+      onSuccess: () {
+        showBookingFormSheet(
+          context,
+          controller: controller,
+          busScheduleId: busScheduleId,
+          basePrice: basePrice,
+          fromLocation: fromLocation,
+          toLocation: toLocation,
+          busType: busType,
+          companyName: companyName,
+        );
+      },
+    );
+    return;
+  }
+
   final user = authVM.currentUser;
 
   final nameController = TextEditingController(text: user?.username ?? '');
   final phoneController = TextEditingController(text: user?.phone ?? '');
   final emailController = TextEditingController(text: user?.email ?? '');
   String selectedGender = (user?.gender.isNotEmpty == true) ? user!.gender : 'Male';
-  String selectedPayment = 'ACLEDA Bank';
+  String selectedPayment = 'Pay at Station';
 
   final totalAmount = controller.selectedSeats.length * basePrice;
 
@@ -373,13 +394,13 @@ void showBookingFormSheet(
                         _buildFieldHeader('payment_method'.tr, primaryText),
                         const SizedBox(height: 10),
 
-                        // 1. ACLEDA Bank (Top / Recommended)
+                        // 1. Pay at Station (Top / Default / Recommended)
                         _buildPaymentTile(
-                          title: 'ACLEDA Bank',
-                          subtitle: 'acleda_desc'.tr,
-                          icon: FontAwesomeIcons.buildingColumns,
-                          accentColor: const Color(0xFF0F3B66),
-                          value: 'ACLEDA Bank',
+                          title: 'pay_at_station'.tr,
+                          subtitle: 'pay_at_station_desc'.tr,
+                          icon: FontAwesomeIcons.moneyBillWave,
+                          accentColor: AppColors.green,
+                          value: 'Pay at Station',
                           selectedValue: selectedPayment,
                           isDark: isDarkMode,
                           cardBg: cardBg,
@@ -388,9 +409,9 @@ void showBookingFormSheet(
                           secondaryText: secondaryText,
                           isFeatured: true,
                           badgeText: 'recommended'.tr,
-                          badgeBgColor: const Color(0xFFD4AF37),
-                          badgeTextColor: const Color(0xFF1E293B),
-                          onTap: () => setModalState(() => selectedPayment = 'ACLEDA Bank'),
+                          badgeBgColor: AppColors.green,
+                          badgeTextColor: Colors.white,
+                          onTap: () => setModalState(() => selectedPayment = 'Pay at Station'),
                         ),
                         const SizedBox(height: 8),
 
@@ -407,10 +428,27 @@ void showBookingFormSheet(
                           borderColor: borderColor,
                           primaryText: primaryText,
                           secondaryText: secondaryText,
-                          badgeText: 'Cards • ABA Mobile • KHQR',
-                          badgeBgColor: const Color(0xFF005A9C),
-                          badgeTextColor: Colors.white,
                           onTap: () => setModalState(() => selectedPayment = 'ABA Bank'),
+                        ),
+                        const SizedBox(height: 8),
+
+                        // 2. ACLEDA Bank
+                        _buildPaymentTile(
+                          title: 'ACLEDA Bank',
+                          subtitle: 'acleda_desc'.tr,
+                          icon: FontAwesomeIcons.buildingColumns,
+                          accentColor: const Color(0xFF0F3B66),
+                          value: 'ACLEDA Bank',
+                          selectedValue: selectedPayment,
+                          isDark: isDarkMode,
+                          cardBg: cardBg,
+                          borderColor: borderColor,
+                          primaryText: primaryText,
+                          secondaryText: secondaryText,
+                          badgeText: 'KHQR • Super App',
+                          badgeBgColor: const Color(0xFFD4AF37),
+                          badgeTextColor: const Color(0xFF1E293B),
+                          onTap: () => setModalState(() => selectedPayment = 'ACLEDA Bank'),
                         ),
                         const SizedBox(height: 8),
 
@@ -531,58 +569,109 @@ void showBookingFormSheet(
                                         passengers: passengers,
                                       );
 
-                                      // Close bottom sheet and navigate to Payment Processing Screen
-                                      Navigator.of(context).pop();
+                                      if (selectedPayment == 'Pay at Station' ||
+                                          selectedPayment.toLowerCase().contains('station') ||
+                                          selectedPayment.toLowerCase().contains('cash')) {
+                                        // Direct Booking Submission -> Route directly to E-Ticket!
+                                        final success = await controller.submitBooking(request);
+                                        if (success && controller.bookingResult.value != null) {
+                                          if (context.mounted) {
+                                            Navigator.of(context).pop();
+                                          }
+                                          Get.to(
+                                            () => TicketScreen(
+                                              booking: controller.bookingResult.value!,
+                                            ),
+                                          );
+                                        } else {
+                                          if (context.mounted) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(
+                                                backgroundColor: const Color(0xFFEF4444),
+                                                behavior: SnackBarBehavior.floating,
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius: BorderRadius.circular(12),
+                                                ),
+                                                content: Text(
+                                                  controller.submitError.value.isNotEmpty
+                                                      ? controller.submitError.value.replaceFirst('Exception: ', '')
+                                                      : 'Failed to create booking. Please try again.',
+                                                  style: AppFonts.dmSans(
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                              ),
+                                            );
+                                          }
+                                        }
+                                      } else {
+                                        // Close bottom sheet and navigate to Payment Processing Screen
+                                        Navigator.of(context).pop();
 
-                                      Get.to(
-                                        () => PaymentProcessingScreen(
-                                          controller: controller,
-                                          request: request,
-                                          fromLocation: fromLocation,
-                                          toLocation: toLocation,
-                                          busType: busType,
-                                          companyName: companyName,
-                                          totalAmount: totalAmount,
-                                        ),
-                                      );
+                                        Get.to(
+                                          () => PaymentProcessingScreen(
+                                            controller: controller,
+                                            request: request,
+                                            fromLocation: fromLocation,
+                                            toLocation: toLocation,
+                                            busType: busType,
+                                            companyName: companyName,
+                                            totalAmount: totalAmount,
+                                          ),
+                                        );
+                                      }
                                     },
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  FaIcon(
-                                    selectedPayment.toLowerCase().contains('acleda')
-                                        ? FontAwesomeIcons.buildingColumns
-                                        : (selectedPayment.toLowerCase().contains('aba')
-                                            ? FontAwesomeIcons.buildingColumns
-                                            : (selectedPayment.toLowerCase().contains('paypal')
-                                                ? FontAwesomeIcons.paypal
-                                                : FontAwesomeIcons.ccMastercard)),
-                                    size: 15,
-                                    color: selectedPayment.toLowerCase().contains('acleda')
-                                        ? const Color(0xFFFFDF79)
-                                        : Colors.white,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    selectedPayment.toLowerCase().contains('acleda')
-                                        ? 'Pay with ACLEDA • \$${totalAmount.toStringAsFixed(2)}'
-                                        : (selectedPayment.toLowerCase().contains('aba')
-                                            ? 'Pay with ABA Payway • \$${totalAmount.toStringAsFixed(2)}'
-                                            : '${'proceed_to_payment'.tr} • \$${totalAmount.toStringAsFixed(2)}'),
-                                    style: AppFonts.dmSans(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
+                              child: isSubmitting
+                                  ? const SizedBox(
+                                      width: 22,
+                                      height: 22,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2.5,
+                                      ),
+                                    )
+                                  : Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        FaIcon(
+                                          selectedPayment == 'Pay at Station'
+                                              ? FontAwesomeIcons.ticket
+                                              : (selectedPayment.toLowerCase().contains('acleda')
+                                                  ? FontAwesomeIcons.buildingColumns
+                                                  : (selectedPayment.toLowerCase().contains('aba')
+                                                      ? FontAwesomeIcons.buildingColumns
+                                                      : (selectedPayment.toLowerCase().contains('paypal')
+                                                          ? FontAwesomeIcons.paypal
+                                                          : FontAwesomeIcons.ccMastercard))),
+                                          size: 15,
+                                          color: selectedPayment.toLowerCase().contains('acleda')
+                                              ? const Color(0xFFFFDF79)
+                                              : Colors.white,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          selectedPayment == 'Pay at Station'
+                                              ? '${'confirm_book_ticket'.tr} • \$${totalAmount.toStringAsFixed(2)}'
+                                              : (selectedPayment.toLowerCase().contains('acleda')
+                                                  ? 'Pay with ACLEDA • \$${totalAmount.toStringAsFixed(2)}'
+                                                  : (selectedPayment.toLowerCase().contains('aba')
+                                                      ? 'Pay with ABA Payway • \$${totalAmount.toStringAsFixed(2)}'
+                                                      : '${'proceed_to_payment'.tr} • \$${totalAmount.toStringAsFixed(2)}')),
+                                          style: AppFonts.dmSans(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        const Icon(
+                                          Icons.arrow_forward_rounded,
+                                          size: 16,
+                                          color: Colors.white,
+                                        ),
+                                      ],
                                     ),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  const Icon(
-                                    Icons.arrow_forward_rounded,
-                                    size: 16,
-                                    color: Colors.white,
-                                  ),
-                                ],
-                              ),
                             );
                           }),
                         ),
@@ -876,13 +965,18 @@ Widget _buildPaymentInfoPill(String selectedPayment, bool isDark) {
   Color iconColor = AppColors.green;
 
   switch (selectedPayment) {
+    case 'Pay at Station':
+      infoText = 'pay_at_station_notice'.tr;
+      infoIcon = Icons.storefront_rounded;
+      iconColor = AppColors.green;
+      break;
+    case 'ABA Bank':
+      infoText = 'Scan ABA KHQR, pay in ABA Mobile, or use Credit/Debit Cards via ABA Payway.';
+      iconColor = const Color(0xFF005A9C);
+      break;
     case 'ACLEDA Bank':
       infoText = 'Scan KHQR or pay directly with ACLEDA Mobile app upon confirmation.';
       iconColor = const Color(0xFFD4AF37);
-      break;
-    case 'ABA Bank':
-      infoText = 'Scan KHQR or pay directly with ABA Mobile (ABA PAY).';
-      iconColor = const Color(0xFF005A9C);
       break;
     case 'PayPal':
       infoText = 'Pay securely with your PayPal account or linked cards.';

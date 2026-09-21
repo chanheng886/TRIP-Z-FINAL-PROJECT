@@ -6,12 +6,14 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.tripz.backend.booking.dtos.RequestDTO.BookingRequestDTO;
 import com.tripz.backend.booking.dtos.RequestDTO.CreateBusBookingRequestDTO;
 import com.tripz.backend.booking.dtos.RequestDTO.PassengerRequestDTO;
 import com.tripz.backend.booking.dtos.ResponseDTO.BookingResponseDTO;
 import com.tripz.backend.booking.enums.BookingStatus;
+import com.tripz.backend.booking.enums.PaymentStatus;
 import com.tripz.backend.booking.mapper.BookingMapper;
 import com.tripz.backend.booking.models.Booking;
 import com.tripz.backend.booking.repositories.BookingRepository;
@@ -21,7 +23,6 @@ import com.tripz.backend.bus.repositories.BusBookingRepository;
 import com.tripz.backend.bus.repositories.BusScheduleRepository;
 import com.tripz.backend.user.repositories.UserRepository;
 
-import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -87,6 +88,13 @@ public class BookingService {
                 .orElseThrow(() -> new RuntimeException("Booking with id: " + id + " Not Found!"));
 
         booking.setBookingStatus(status);
+        if (status == BookingStatus.Paid || status == BookingStatus.Confirmed) {
+            booking.setPaymentStatus(PaymentStatus.PAID);
+        } else if (status == BookingStatus.Cancelled) {
+            booking.setPaymentStatus(PaymentStatus.FAILED);
+        } else if (status == BookingStatus.Pending) {
+            booking.setPaymentStatus(PaymentStatus.PENDING);
+        }
         Booking saved = bookingRepository.save(booking);
         return bookingMapper.toResponse(saved);
     }
@@ -105,12 +113,18 @@ public class BookingService {
     @Transactional
     public BookingResponseDTO createBooking(CreateBusBookingRequestDTO dto) {
         // 1. Convert DTO → Booking entity
+        String method = dto.getPaymentMethod();
+        if (method == null || method.isBlank()) {
+            method = "Pay at Station";
+        }
+
         Booking booking = Booking.builder()
                 .user(userRepository.findById(dto.getCustomerId())
                         .orElseThrow(() -> new RuntimeException("Customer not found")))
                 .bookingDate(LocalDate.now())
-                .paymentMethod(dto.getPaymentMethod())
-                .bookingStatus(BookingStatus.Confirmed)
+                .paymentMethod(method)
+                .bookingStatus(BookingStatus.Pending)
+                .paymentStatus(PaymentStatus.PENDING)
                 .totalAmount(BigDecimal.ZERO)
                 .build();
 

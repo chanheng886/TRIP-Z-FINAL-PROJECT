@@ -22,7 +22,13 @@ class ProfileViewModel extends GetxController {
 
   User? get currentUser => _authVM.currentUser;
   bool get isAdmin => currentUser?.role == UserRole.Admin;
-  bool get isDarkMode => _themeController.themeMode.value == ThemeMode.dark;
+  bool get isDarkMode {
+    final tm = _themeController.themeMode.value;
+    if (tm == ThemeMode.system) {
+      return Get.isPlatformDarkMode;
+    }
+    return tm == ThemeMode.dark;
+  }
   LanguageModel get currentLanguage => _languageController.currentLanguage;
   Locale get currentLocale => _languageController.locale.value;
 

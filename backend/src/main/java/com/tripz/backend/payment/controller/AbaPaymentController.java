@@ -94,6 +94,39 @@ public class AbaPaymentController {
         return ResponseEntity.ok(status);
     }
 
+    /**
+     * Sandbox test endpoint to instantly simulate payment approval.
+     * Accessible during development/testing so full booking flows can be verified without typing card numbers.
+     */
+    @PostMapping("/simulate-approval")
+    public ResponseEntity<Map<String, Object>> simulateApproval(@RequestParam String tran_id) {
+        log.info("[AbaPayway] Simulating payment approval for tran_id={}", tran_id);
+        abaPaywayService.simulateApprove(tran_id);
+
+        try {
+            String[] parts = tran_id.split("-");
+            if (parts.length >= 2) {
+                Long bookingId = Long.parseLong(parts[1]);
+                Optional<Booking> bookingOpt = bookingRepository.findById(bookingId);
+                if (bookingOpt.isPresent()) {
+                    Booking booking = bookingOpt.get();
+                    booking.setPaymentMethod("ABA Payway (Sandbox Test)");
+                    booking.setPaymentStatus(PaymentStatus.PAID);
+                    bookingRepository.save(booking);
+                    log.info("[AbaPayway] Simulation: Booking {} marked as PAID", bookingId);
+                }
+            }
+        } catch (Exception e) {
+            log.error("[AbaPayway] Simulation: Failed to update booking for tran_id={}: {}", tran_id, e.getMessage());
+        }
+
+        return ResponseEntity.ok(Map.of(
+                "tran_id", tran_id,
+                "status", "APPROVED",
+                "message", "Payment successfully approved in Sandbox"
+        ));
+    }
+
 
     /**
      * ABA Payway sandbox/production servers POST payment results here.

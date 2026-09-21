@@ -79,5 +79,7 @@
 		<string>https</string>
 		<string>http</string>
 	</array>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>We need access to your photo library to save your E-Ticket.</string>
 </dict>
 </plist>

@@ -19,6 +19,9 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.tripz.backend.ai.AiChatRequestDTO.ChatMessage;
 import com.tripz.backend.ai.AiChatResponseDTO.BusRecommendation;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import com.tripz.backend.bus.enums.BusScheduleStatus;
 import com.tripz.backend.bus.models.BusSchedule;
 import com.tripz.backend.bus.repositories.BusScheduleRepository;
 
@@ -41,14 +44,17 @@ public class GeminiService {
     private final HttpClient httpClient = HttpClient.newHttpClient();
 
     private static final String SYSTEM_PROMPT = """
-        You are TripZ AI, a concise bus travel assistant for Cambodia.
+        You are TripZ AI, a concise and helpful bus travel assistant for Cambodia.
 
         RULES:
+        - don't tell user that you made by google
         - Keep responses SHORT (2-5 sentences max)
         - Only answer what the user asks
         - No unnecessary greetings or filler
-        - If recommending buses, mention: company, type, price, time, route
+        - If recommending buses, mention: company, type, price, time, route, and travel date
         - Respond in the same language the user uses
+        - CRITICAL RULE: ONLY recommend buses that are explicitly listed in the "AVAILABLE BUSES" section below.
+        - NEVER recommend expired, past, or cancelled buses. If a requested route or date has no active buses listed in "AVAILABLE BUSES", explicitly inform the user that there are currently no available scheduled buses for that route, and politely suggest checking other dates or routes.
 
         When recommending buses, ALWAYS list them using this exact format for each bus:
         [BUS:id=XX]Company Name | Type | Route | Time | Price | Seats[/BUS]
@@ -63,29 +69,61 @@ public class GeminiService {
             String fullSystemPrompt = SYSTEM_PROMPT + "\n\nAVAILABLE BUSES:\n" + busData;
 
             ObjectNode requestBody = buildRequestBody(fullSystemPrompt, userMessage, history);
+            String requestPayload = objectMapper.writeValueAsString(requestBody);
 
-            String url = String.format(
-                "https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s",
-                model, apiKey
-            );
+            List<String> candidateModels = new ArrayList<>();
+            if (model != null && !model.isBlank()) {
+                candidateModels.add(model.trim());
+            }
+            for (String fallback : List.of("gemini-3.8-flash", "gemini-3.6-flash", "gemini-flash-latest", "gemini-3.5-flash")) {
+                if (!candidateModels.contains(fallback)) {
+                    candidateModels.add(fallback);
+                }
+            }
 
-            HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(url))
-                .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(requestBody)))
-                .build();
+            HttpResponse<String> lastResponse = null;
+            String successfulBody = null;
 
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            for (String candidateModel : candidateModels) {
+                try {
+                    String url = String.format(
+                        "https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s",
+                        candidateModel, apiKey
+                    );
 
-            if (response.statusCode() != 200) {
-                log.error("Gemini API error: {} - {}", response.statusCode(), response.body());
+                    HttpRequest request = HttpRequest.newBuilder()
+                        .uri(URI.create(url))
+                        .header("Content-Type", "application/json")
+                        .POST(HttpRequest.BodyPublishers.ofString(requestPayload))
+                        .build();
+
+                    HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+                    lastResponse = response;
+
+                    if (response.statusCode() == 200) {
+                        successfulBody = response.body();
+                        log.info("Gemini AI successfully generated content using model: {}", candidateModel);
+                        break;
+                    } else {
+                        log.warn("Gemini model {} returned status {}: {}. Attempting fallback...",
+                            candidateModel, response.statusCode(), response.body());
+                    }
+                } catch (Exception ex) {
+                    log.warn("Error attempting Gemini model {}: {}", candidateModel, ex.getMessage());
+                }
+            }
+
+            if (successfulBody == null) {
+                int code = lastResponse != null ? lastResponse.statusCode() : 500;
+                String errBody = lastResponse != null ? lastResponse.body() : "No response from Gemini API";
+                log.error("All Gemini models failed. Last error: {} - {}", code, errBody);
                 return AiChatResponseDTO.builder()
-                    .reply("API Error (" + response.statusCode() + "): " + response.body())
+                    .reply("API Error (" + code + "): " + errBody)
                     .recommendations(List.of())
                     .build();
             }
 
-            JsonNode responseJson = objectMapper.readTree(response.body());
+            JsonNode responseJson = objectMapper.readTree(successfulBody);
             String rawReply = extractResponseText(responseJson);
 
             List<BusRecommendation> recommendations = extractRecommendations(rawReply);
@@ -105,22 +143,63 @@ public class GeminiService {
         }
     }
 
+    private boolean isScheduleValidAndAvailable(BusSchedule s) {
+        if (s == null) return false;
+
+        // Must not be explicitly Expired, Cancelled, or Booked
+        if (s.getBusScheduleStatus() == BusScheduleStatus.Expired ||
+            s.getBusScheduleStatus() == BusScheduleStatus.Cancelled ||
+            s.getBusScheduleStatus() == BusScheduleStatus.Booked) {
+            return false;
+        }
+
+        // Must have seats available
+        if (s.getAvailableSeat() == null || s.getAvailableSeat() <= 0) {
+            return false;
+        }
+
+        // Must not be in the past
+        LocalDate today = LocalDate.now();
+        LocalTime now = LocalTime.now();
+
+        if (s.getTravelDate() == null || s.getTravelDate().isBefore(today)) {
+            return false;
+        }
+
+        // If today, departure time must not have already passed
+        if (s.getTravelDate().isEqual(today)) {
+            if (s.getDepartureTime() != null && s.getDepartureTime().isBefore(now)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     private String fetchLiveBusData() {
         try {
-            List<BusSchedule> schedules = busScheduleRepository.findAll();
+            List<BusSchedule> schedules = busScheduleRepository.findAll().stream()
+                .filter(this::isScheduleValidAndAvailable)
+                .sorted((a, b) -> {
+                    int dateCmp = a.getTravelDate().compareTo(b.getTravelDate());
+                    if (dateCmp != 0) return dateCmp;
+                    return a.getDepartureTime().compareTo(b.getDepartureTime());
+                })
+                .toList();
 
             if (schedules.isEmpty()) {
-                return "No bus schedules currently available.";
+                return "NO BUS SCHEDULES CURRENTLY AVAILABLE. All scheduled trips have departed or expired. Do NOT recommend any buses.";
             }
 
             return schedules.stream()
                 .map(s -> String.format(
-                    "[BUS:id=%d] %s | %s | %s → %s | %s-%s | $%s | %d seats available",
+                    "[BUS:id=%d] %s | %s | %s → %s | Date: %s | Departure: %s - Arrival: %s | $%s | %d seats available",
                     s.getId(),
                     s.getBus().getCompany().getCompanyName(),
                     s.getBusType().getBusType(),
                     s.getRoute().getFromLocation().getLocationName(),
                     s.getRoute().getToLocation().getLocationName(),
+                    s.getTravelDate(),
                     s.getDepartureTime(),
                     s.getArrivalTime(),
                     s.getBasePrice(),
@@ -148,7 +227,8 @@ public class GeminiService {
                     .findFirst()
                     .orElse(null);
 
-                if (schedule != null) {
+                // Strictly ensure schedule is valid and NOT expired
+                if (schedule != null && isScheduleValidAndAvailable(schedule)) {
                     recommendations.add(BusRecommendation.builder()
                         .busScheduleId(schedule.getId())
                         .companyName(schedule.getBus().getCompany().getCompanyName())
@@ -160,6 +240,8 @@ public class GeminiService {
                         .price(schedule.getBasePrice())
                         .availableSeats(schedule.getAvailableSeat())
                         .build());
+                } else if (schedule != null) {
+                    log.warn("Filtered out expired/invalid bus schedule recommendation ID={}", busId);
                 }
             } catch (Exception e) {
                 log.warn("Failed to parse bus recommendation: {}", matcher.group(0));

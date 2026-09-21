@@ -1,15 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:frontend/app/main_app.dart';
-import 'package:frontend/core/localization/language_controller.dart';
-import 'package:frontend/core/theme/app_fonts.dart';
 import 'package:frontend/core/theme/app_colors.dart';
+import 'package:frontend/core/theme/app_fonts.dart';
 import 'package:frontend/features/auth/view/register_screen.dart';
 import 'package:frontend/features/auth/viewmodel/auth_viewmodel.dart';
+import 'package:frontend/features/auth/widgets/auth_button.dart';
+import 'package:frontend/features/auth/widgets/auth_footer_link.dart';
+import 'package:frontend/features/auth/widgets/auth_header_art.dart';
+import 'package:frontend/features/auth/widgets/auth_remember_row.dart';
+import 'package:frontend/features/auth/widgets/auth_text_field.dart';
+import 'package:frontend/features/auth/widgets/auth_top_nav_bar.dart';
+import 'package:frontend/features/auth/widgets/social_login_buttons.dart';
 import 'package:get/get.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  final VoidCallback? onLoginSuccess;
+  const LoginScreen({super.key, this.onLoginSuccess});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -20,6 +27,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _rememberMe = true;
 
   @override
   void dispose() {
@@ -39,10 +47,16 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!mounted) return;
 
     if (success) {
-      Get.offAll(() => const MainApp());
+      if (widget.onLoginSuccess != null) {
+        Get.back();
+        widget.onLoginSuccess!();
+      } else {
+        Get.offAll(() => const MainApp());
+      }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
+          backgroundColor: AppColors.lightAlertText,
           content: Text(
             authVM.errorMessage.value.isEmpty
                 ? 'login_failed'.tr
@@ -57,141 +71,81 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final background = Theme.of(context).scaffoldBackgroundColor;
-    final inputFieldColor =
-        isDarkMode ? AppColors.darkInputField : AppColors.lightInputField;
-    final primaryText =
-        isDarkMode ? AppColors.darkPrimaryText : AppColors.lightPrimaryText;
-    final secondaryText =
-        isDarkMode ? AppColors.darkSecondaryText : AppColors.lightSecondaryText;
-    final languageController = Get.find<LanguageController>();
+    final cardBg = isDarkMode ? AppColors.darkSurface : Colors.white;
+    final primaryTextColor = isDarkMode
+        ? AppColors.darkPrimaryText
+        : const Color(0xFF1E293B);
 
     return Scaffold(
-      backgroundColor: background,
-      body: SafeArea(
-        child: Stack(
+      backgroundColor: cardBg,
+      body: SingleChildScrollView(
+        physics: const ClampingScrollPhysics(),
+        child: Column(
           children: [
-            // Language selector button in top right
-            Positioned(
-              top: 12,
-              right: 16,
-              child: Obx(() {
-                final currentLang = languageController.currentLanguage;
-                return InkWell(
-                  borderRadius: BorderRadius.circular(20),
-                  onTap: () {
-                    if (languageController.isKhmer) {
-                      languageController.changeLanguage('en', 'US');
-                    } else {
-                      languageController.changeLanguage('km', 'KH');
-                    }
-                  },
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: isDarkMode
-                          ? const Color(0xFF1E222B)
-                          : const Color(0xFFE8F8F0),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: AppColors.primary.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(currentLang.flag, style: const TextStyle(fontSize: 14)),
-                        const SizedBox(width: 6),
-                        Text(
-                          currentLang.nativeName,
-                          style: AppFonts.dmSans(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }),
+            // ────────────────── TOP CURVED BRAND HEADER ──────────────────
+            Stack(
+              children: [
+                AuthHeaderArt(
+                  isRegister: false,
+                  isDarkMode: isDarkMode,
+                  height: 250,
+                ),
+                const AuthTopNavBar(),
+              ],
             ),
-            Center(
-              child: SingleChildScrollView(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 420),
-                  child: Form(
-                    key: _formKey,
-                    child: Obx(() {
-                      final _ = languageController.locale.value;
-                      return Column(
+
+            // ────────────── WHITE / DARK ROUNDED FORM CARD ──────────────
+            Transform.translate(
+              offset: const Offset(0, -28),
+              child: Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: cardBg,
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(34),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(
+                        alpha: isDarkMode ? 0.4 : 0.08,
+                      ),
+                      blurRadius: 18,
+                      offset: const Offset(0, -6),
+                    ),
+                  ],
+                ),
+                padding: const EdgeInsets.fromLTRB(28, 28, 28, 36),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 420),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          const SizedBox(height: 20),
-                          // Logo
-                          Center(
-                            child: Container(
-                              width: 80,
-                              height: 80,
-                              decoration: const BoxDecoration(
-                                color: AppColors.primary,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Center(
-                                child: FaIcon(
-                                  FontAwesomeIcons.bus,
-                                  color: Colors.white,
-                                  size: 34,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 20),
+                          // 1. Title
                           Text(
-                            'TRIP-Z',
+                            'login_to_your_account'.tr,
                             textAlign: TextAlign.center,
                             style: AppFonts.dmSans(
-                              fontSize: 30,
+                              fontSize: 22,
                               fontWeight: FontWeight.bold,
-                              color: primaryText,
+                              color: primaryTextColor,
+                              letterSpacing: -0.3,
                             ),
                           ),
-                          const SizedBox(height: 6),
-                          Text(
-                            'login_subtitle'.tr,
-                            textAlign: TextAlign.center,
-                            style: AppFonts.dmSans(
-                              fontSize: 14,
-                              color: secondaryText,
-                            ),
-                          ),
-                          const SizedBox(height: 32),
-                          // Username
-                          TextFormField(
+                          const SizedBox(height: 18),
+
+                          // 2. Social Login Icons Row & "or use your email account"
+                          SocialLoginButtons(isDarkMode: isDarkMode),
+                          const SizedBox(height: 24),
+
+                          // 3. Username / Email Input Field
+                          AuthTextField(
                             controller: _usernameController,
-                            decoration: InputDecoration(
-                              filled: true,
-                              fillColor: inputFieldColor,
-                              labelText: 'username'.tr,
-                              hintText: 'enter_username'.tr,
-                              labelStyle:
-                                  AppFonts.dmSans(color: secondaryText),
-                              prefixIcon: const Padding(
-                                padding: EdgeInsets.only(left: 14, top: 12),
-                                child: FaIcon(
-                                  FontAwesomeIcons.user,
-                                  color: AppColors.primary,
-                                  size: 18,
-                                ),
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(14),
-                                borderSide: BorderSide.none,
-                              ),
-                            ),
+                            label: 'Email or username',
+                            hint: 'name@ | username',
+                            isDarkMode: isDarkMode,
                             validator: (value) {
                               if (value == null || value.trim().isEmpty) {
                                 return 'username_required'.tr;
@@ -200,42 +154,29 @@ class _LoginScreenState extends State<LoginScreen> {
                             },
                           ),
                           const SizedBox(height: 16),
-                          // Password
-                          TextFormField(
+
+                          // 4. Password Input Field
+                          AuthTextField(
                             controller: _passwordController,
+                            label: 'password'.tr,
+                            hint: '••••••••',
+                            isDarkMode: isDarkMode,
                             obscureText: _obscurePassword,
-                            decoration: InputDecoration(
-                              filled: true,
-                              fillColor: inputFieldColor,
-                              labelText: 'password'.tr,
-                              hintText: 'enter_password'.tr,
-                              labelStyle:
-                                  AppFonts.dmSans(color: secondaryText),
-                              prefixIcon: const Padding(
-                                padding: EdgeInsets.only(left: 14, top: 12),
-                                child: FaIcon(
-                                  FontAwesomeIcons.lock,
-                                  color: AppColors.primary,
-                                  size: 18,
-                                ),
-                              ),
-                              suffixIcon: IconButton(
-                                onPressed: () {
-                                  setState(() {
-                                    _obscurePassword = !_obscurePassword;
-                                  });
-                                },
-                                icon: FaIcon(
-                                  _obscurePassword
-                                      ? FontAwesomeIcons.eye
-                                      : FontAwesomeIcons.eyeSlash,
-                                  color: secondaryText,
-                                  size: 18,
-                                ),
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(14),
-                                borderSide: BorderSide.none,
+                            suffixIcon: IconButton(
+                              splashRadius: 20,
+                              onPressed: () {
+                                setState(() {
+                                  _obscurePassword = !_obscurePassword;
+                                });
+                              },
+                              icon: FaIcon(
+                                _obscurePassword
+                                    ? FontAwesomeIcons.eye
+                                    : FontAwesomeIcons.eyeSlash,
+                                color: isDarkMode
+                                    ? const Color(0xFF94A3B8)
+                                    : const Color(0xFF64748B),
+                                size: 16,
                               ),
                             ),
                             validator: (value) {
@@ -245,67 +186,45 @@ class _LoginScreenState extends State<LoginScreen> {
                               return null;
                             },
                           ),
-                          const SizedBox(height: 28),
-                          // Login Button
-                          SizedBox(
-                            height: 52,
-                            child: Obx(() {
-                              final authVM = Get.find<AuthViewmodel>();
-                              return ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.primary,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(14),
-                                  ),
-                                ),
-                                onPressed: authVM.isLoading.value
-                                    ? null
-                                    : () => _handleLogin(authVM),
-                                child: authVM.isLoading.value
-                                    ? const CircularProgressIndicator(
-                                        color: Colors.white,
-                                        strokeWidth: 2.5,
-                                      )
-                                    : Text(
-                                        'sign_in'.tr,
-                                        style: AppFonts.dmSans(
-                                          fontSize: 17,
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                              );
-                            }),
+                          const SizedBox(height: 10),
+
+                          // 5. Options Row: Remember Me & Forgot Password
+                          AuthRememberRow(
+                            rememberMe: _rememberMe,
+                            onRememberMeChanged: (val) {
+                              setState(() => _rememberMe = val);
+                            },
+                            isDarkMode: isDarkMode,
                           ),
-                          const SizedBox(height: 18),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Flexible(
-                                child: Text(
-                                  'dont_have_account'.tr,
-                                  textAlign: TextAlign.center,
-                                  style:
-                                      AppFonts.dmSans(color: secondaryText),
+                          const SizedBox(height: 24),
+
+                          // 6. Pill LOGIN Action Button
+                          Obx(() {
+                            final authVM = Get.find<AuthViewmodel>();
+                            return AuthButton(
+                              text: 'LOGIN',
+                              isLoading: authVM.isLoading.value,
+                              onPressed: () => _handleLogin(authVM),
+                            );
+                          }),
+                          const SizedBox(height: 24),
+
+                          // 7. Footer: Don't have an account? Register here
+                          AuthFooterLink(
+                            promptText: 'dont_have_account_q'.tr,
+                            actionText: 'register_here'.tr,
+                            isDarkMode: isDarkMode,
+                            onTap: () {
+                              Get.off(
+                                () => RegisterScreen(
+                                  onRegisterSuccess: widget.onLoginSuccess,
                                 ),
-                              ),
-                              TextButton(
-                                onPressed: () {
-                                  Get.off(() => const RegisterScreen());
-                                },
-                                child: Text(
-                                  'register'.tr,
-                                  style: AppFonts.dmSans(
-                                    color: AppColors.primary,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ],
+                              );
+                            },
                           ),
                         ],
-                      );
-                    }),
+                      ),
+                    ),
                   ),
                 ),
               ),

@@ -633,10 +633,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         .where((s) => s.status == BusScheduleStatus.Booked)
         .length;
     final confirmedBookings = _vm.bookings
-        .where((b) => b.bookingStatus == BookingStatus.Confirmed)
+        .where((b) => b.bookingStatus == BookingStatus.Confirmed || b.bookingStatus == BookingStatus.Paid)
         .length;
     final totalRevenue = _vm.bookings
-        .where((b) => b.bookingStatus == BookingStatus.Confirmed)
+        .where((b) => b.bookingStatus == BookingStatus.Confirmed || b.bookingStatus == BookingStatus.Paid)
         .fold<double>(0.0, (sum, b) => sum + b.totalAmount);
 
     final summaryCards = [
@@ -2089,6 +2089,88 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                 primaryText: primaryText,
                 secondaryText: secondaryText,
                 borderColor: borderColor,
+                onMarkPaid: () async {
+                  final confirmed = await showDialog<bool>(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      backgroundColor: cardBackground,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      title: Text(
+                        '${'confirm_booking'.tr}?',
+                        style: AppFonts.dmSans(
+                          fontWeight: FontWeight.bold,
+                          color: primaryText,
+                        ),
+                      ),
+                      content: Text(
+                        'Confirm that passenger "${booking.username}" has paid \$${booking.totalAmount.toStringAsFixed(2)} at the station counter.',
+                        style: AppFonts.dmSans(
+                          color: secondaryText,
+                          fontSize: 13,
+                        ),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(ctx).pop(false),
+                          child: Text(
+                            'cancel'.tr,
+                            style: AppFonts.dmSans(color: secondaryText),
+                          ),
+                        ),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.green,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          onPressed: () => Navigator.of(ctx).pop(true),
+                          child: Text(
+                            'confirm'.tr,
+                            style: AppFonts.dmSans(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+
+                  if (confirmed == true) {
+                    final ok = await _vm.updateBookingStatus(
+                      bookingId: booking.id,
+                      status: 'Paid',
+                    );
+                    if (ok) {
+                      _showSnack(
+                        'Booking #${booking.id} confirmed and marked as Paid!',
+                        isError: false,
+                      );
+                    } else {
+                      _showSnack(
+                        _vm.errorMessage.value.isNotEmpty
+                            ? _vm.errorMessage.value
+                            : 'Failed to update booking status',
+                        isError: true,
+                      );
+                    }
+                  }
+                },
+                onCancel: () async {
+                  final ok = await _vm.updateBookingStatus(
+                    bookingId: booking.id,
+                    status: 'Cancelled',
+                  );
+                  if (ok) {
+                    _showSnack(
+                      'Booking #${booking.id} marked as Cancelled',
+                      isError: false,
+                    );
+                  }
+                },
               ),
             ),
         ],

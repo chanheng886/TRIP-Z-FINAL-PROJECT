@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart' show debugPrint;
+import 'package:flutter/foundation.dart' show debugPrint, kIsWeb;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -10,8 +10,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// ABA Payway checkout HTML form that the Flutter WebView will load.
 class AbaPaywayService {
   static String get _baseUrl {
-    final ip = dotenv.env['IP_ADDRESS'] ?? 'localhost';
-    return 'http://$ip:8080';
+    if (kIsWeb) return 'http://localhost:8080';
+    final ip = dotenv.env['IP_ADDRESS']?.trim();
+    if (ip != null && ip.isNotEmpty) return 'http://$ip:8080';
+    return 'http://172.16.104.29:8080';
   }
 
   /// Reads the JWT token from SharedPreferences (same key used by AuthService).
@@ -110,6 +112,18 @@ class AbaPaywayService {
         paymentStatusCode: -1,
         message: e.toString(),
       );
+    }
+  }
+
+  /// Triggers a test approval on the backend for sandbox testing.
+  static Future<bool> simulatePaymentApproval(String tranId) async {
+    try {
+      final uri = Uri.parse('$_baseUrl/payment/aba/simulate-approval?tran_id=$tranId');
+      final response = await http.post(uri).timeout(const Duration(seconds: 10));
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint('[AbaPayway] simulatePaymentApproval failed: $e');
+      return false;
     }
   }
 

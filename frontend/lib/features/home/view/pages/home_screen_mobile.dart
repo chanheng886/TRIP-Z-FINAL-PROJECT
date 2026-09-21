@@ -1,7 +1,5 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_remix/flutter_remix.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:frontend/core/localization/language_controller.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_fonts.dart';
@@ -367,8 +365,8 @@ class _HomeScreenMobileState extends State<HomeScreenMobile> {
                       onStationSelected: _handleStationSelected,
                     ),
 
-                    // Space for floating button / bottom navigation padding
-                    const SizedBox(height: 80),
+                    // Space for floating overlay bottom navigation bar
+                    const SizedBox(height: 110),
                   ],
                 );
               }),

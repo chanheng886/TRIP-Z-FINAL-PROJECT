@@ -1,0 +1,38 @@
+services:
+  app:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: tripz-backend
+    ports:
+      - "8080:8080"
+    env_file:
+      - ./backend/.env
+    environment:
+      # Overrides localhost in .env so backend talks to the docker container
+      DB_URL: jdbc:postgresql://postgres-db:5432/bus_booking
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  postgres-db:
+    image: postgres:16-alpine
+    container_name: postgres-db
+    environment:
+      POSTGRES_DB: bus_booking
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-1234}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  pgdata:

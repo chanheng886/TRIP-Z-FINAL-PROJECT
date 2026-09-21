@@ -49,7 +49,7 @@ public class SecurityConfig {
             .formLogin(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/v1/auth/admin/**").hasRole("ADMIN")
-                .requestMatchers(org.springframework.http.HttpMethod.PATCH, "/api/v1/booking/**").hasRole("ADMIN")
+                .requestMatchers(org.springframework.http.HttpMethod.PATCH, "/api/v1/booking/**").authenticated()
                 .requestMatchers(
                     "/api/v1/auth/**",
                     "/api/v1/ai/**",
@@ -59,6 +59,14 @@ public class SecurityConfig {
                     "/error",
                     // ABA Payway payment endpoints (checkout, callback, return, cancel, check-transaction)
                     "/payment/aba/**"
+                ).permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.GET,
+                    "/api/v1/bus-locations/**",
+                    "/api/v1/bus-schedules/**",
+                    "/api/v1/bus-route/**",
+                    "/api/v1/buses/**",
+                    "/api/v1/bus-company/**",
+                    "/api/v1/bus-type/**"
                 ).permitAll()
                 .anyRequest().authenticated())
             .exceptionHandling(ex -> ex

@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:frontend/core/localization/language_controller.dart';
-import 'package:frontend/core/theme/app_fonts.dart';
 import 'package:frontend/features/ai/view/ai_chat_floating_button.dart';
 import 'package:frontend/features/contact/view/contact_screen.dart';
 import 'package:frontend/features/history/view/history_screen.dart';
 import 'package:frontend/features/home/view/pages/home_screen.dart';
 import 'package:frontend/features/profile/view/profile_screen.dart';
 import 'package:get/get.dart';
+
+import 'package:frontend/shared/widgets/floating_pill_nav_bar.dart';
 
 class MainApp extends StatefulWidget {
   const MainApp({super.key});
@@ -33,51 +34,38 @@ class _MainAppState extends State<MainApp> {
 
   @override
   Widget build(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final languageController = Get.find<LanguageController>();
 
     return Scaffold(
-      body: Stack(
-        children: [_screens[_selectIndex], const AiChatFloatingButton()],
-      ),
+      extendBody: true,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: _screens[_selectIndex],
       bottomNavigationBar: Obx(() {
         // Access locale to ensure reactivity when language switches
         final _ = languageController.locale.value;
-        return BottomNavigationBar(
+        return FloatingPillNavBar(
           currentIndex: _selectIndex,
           onTap: _onItemTapped,
-          selectedItemColor: const Color(0xff4FD18B),
-          unselectedItemColor: isDarkMode
-              ? const Color(0xFF94A3B8)
-              : const Color(0xff64748B),
-          selectedLabelStyle: AppFonts.dmSans(fontSize: 12),
-          unselectedLabelStyle: AppFonts.dmSans(fontSize: 10),
-          backgroundColor: isDarkMode ? const Color(0xFF1E222B) : Colors.white,
-          elevation: 8,
-          iconSize: 23,
-          type: BottomNavigationBarType.fixed,
+          trailing: const AiChatButton(),
           items: [
-            BottomNavigationBarItem(
-              icon: const FaIcon(FontAwesomeIcons.houseChimney),
-              activeIcon: const FaIcon(FontAwesomeIcons.houseChimney, size: 28),
+            PillNavItem(
+              icon: FontAwesomeIcons.houseChimney,
+              activeIcon: FontAwesomeIcons.houseChimney,
               label: 'nav_home'.tr,
             ),
-            BottomNavigationBarItem(
-              icon: const FaIcon(FontAwesomeIcons.ticket),
-              activeIcon: const FaIcon(FontAwesomeIcons.ticket, size: 28),
+            PillNavItem(
+              icon: FontAwesomeIcons.ticket,
+              activeIcon: FontAwesomeIcons.ticket,
               label: 'nav_history'.tr,
             ),
-            BottomNavigationBarItem(
-              icon: const FaIcon(FontAwesomeIcons.phone),
-              activeIcon: const FaIcon(FontAwesomeIcons.phone, size: 28),
+            PillNavItem(
+              icon: FontAwesomeIcons.phone,
+              activeIcon: FontAwesomeIcons.phone,
               label: 'nav_contact'.tr,
             ),
-            BottomNavigationBarItem(
-              icon: const FaIcon(FontAwesomeIcons.solidCircleUser),
-              activeIcon: const FaIcon(
-                FontAwesomeIcons.solidCircleUser,
-                size: 28,
-              ),
+            PillNavItem(
+              icon: FontAwesomeIcons.solidCircleUser,
+              activeIcon: FontAwesomeIcons.solidCircleUser,
               label: 'nav_me'.tr,
             ),
           ],

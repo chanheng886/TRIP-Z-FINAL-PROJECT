@@ -308,6 +308,8 @@ class AdminBookingCard extends StatelessWidget {
   final Color primaryText;
   final Color secondaryText;
   final Color borderColor;
+  final VoidCallback? onMarkPaid;
+  final VoidCallback? onCancel;
 
   const AdminBookingCard({
     super.key,
@@ -316,18 +318,22 @@ class AdminBookingCard extends StatelessWidget {
     required this.primaryText,
     required this.secondaryText,
     required this.borderColor,
+    this.onMarkPaid,
+    this.onCancel,
   });
 
   @override
   Widget build(BuildContext context) {
     final statusColor = switch (booking.bookingStatus) {
       BookingStatus.Pending => const Color(0xFFF59E0B),
+      BookingStatus.Paid => AppColors.green,
       BookingStatus.Confirmed => AppColors.green,
       BookingStatus.Cancelled => const Color(0xFFEF4444),
     };
 
     final statusLabel = switch (booking.bookingStatus) {
       BookingStatus.Pending => 'status_pending'.tr,
+      BookingStatus.Paid => 'status_paid'.tr,
       BookingStatus.Confirmed => 'status_confirmed'.tr,
       BookingStatus.Cancelled => 'status_cancelled'.tr,
     };
@@ -479,6 +485,87 @@ class AdminBookingCard extends StatelessWidget {
             DateFormat('MMM dd, yyyy • hh:mm a').format(booking.bookingDate),
             style: AppFonts.dmSans(fontSize: 11, color: secondaryText),
           ),
+          if (booking.bookingStatus == BookingStatus.Pending) ...[
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.green,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: onMarkPaid,
+                    icon: const FaIcon(FontAwesomeIcons.check, size: 12, color: Colors.white),
+                    label: Text(
+                      'mark_as_paid'.tr,
+                      style: AppFonts.dmSans(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+                if (onCancel != null) ...[
+                  const SizedBox(width: 8),
+                  OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFFEF4444),
+                      side: const BorderSide(color: Color(0xFFEF4444), width: 1.2),
+                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: onCancel,
+                    icon: const FaIcon(FontAwesomeIcons.xmark, size: 12, color: Color(0xFFEF4444)),
+                    label: Text(
+                      'cancel'.tr,
+                      style: AppFonts.dmSans(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFFEF4444),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ] else if (booking.bookingStatus == BookingStatus.Paid || booking.bookingStatus == BookingStatus.Confirmed) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppColors.green.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: AppColors.green.withValues(alpha: 0.25),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const FaIcon(FontAwesomeIcons.circleCheck, size: 12, color: AppColors.green),
+                  const SizedBox(width: 6),
+                  Text(
+                    'paid_badge'.tr,
+                    style: AppFonts.dmSans(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.green,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );

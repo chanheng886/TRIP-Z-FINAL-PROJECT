@@ -29,6 +29,7 @@ class AccountInfoGroup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isGuest = user == null;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -46,7 +47,9 @@ class AccountInfoGroup extends StatelessWidget {
               icon: FontAwesomeIcons.solidUser,
               iconColor: AppColors.green,
               title: 'username'.tr,
-              value: user?.username.isNotEmpty == true ? user!.username : 'User',
+              value: isGuest
+                  ? 'guest_user'.tr
+                  : (user!.username.isNotEmpty ? user!.username : 'User'),
               primaryText: primaryText,
               secondaryText: secondaryText,
               isDark: isDark,
@@ -58,10 +61,10 @@ class AccountInfoGroup extends StatelessWidget {
               icon: FontAwesomeIcons.solidEnvelope,
               iconColor: const Color(0xFF3B82F6),
               title: 'Email',
-              value: user?.email.isNotEmpty == true
-                  ? user!.email
-                  : 'No email provided',
-              badge: 'verified'.tr,
+              value: isGuest
+                  ? 'guest_user_desc'.tr
+                  : (user!.email.isNotEmpty ? user!.email : 'No email provided'),
+              badge: isGuest ? null : 'verified'.tr,
               badgeColor: AppColors.green,
               primaryText: primaryText,
               secondaryText: secondaryText,
@@ -74,9 +77,9 @@ class AccountInfoGroup extends StatelessWidget {
               icon: FontAwesomeIcons.phone,
               iconColor: const Color(0xFF10B981),
               title: 'Phone',
-              value: user?.phone.isNotEmpty == true
-                  ? user!.phone
-                  : 'No phone number',
+              value: isGuest
+                  ? 'Not provided'
+                  : (user!.phone.isNotEmpty ? user!.phone : 'No phone number'),
               primaryText: primaryText,
               secondaryText: secondaryText,
               isDark: isDark,
@@ -101,11 +104,17 @@ class AccountInfoGroup extends StatelessWidget {
             // Role
             ProfileInfoTile(
               icon: FontAwesomeIcons.shieldHalved,
-              iconColor: isAdmin ? const Color(0xFFF59E0B) : AppColors.green,
+              iconColor: isAdmin
+                  ? const Color(0xFFF59E0B)
+                  : (isGuest ? const Color(0xFF94A3B8) : AppColors.green),
               title: 'role'.tr,
-              value: isAdmin ? 'administrator'.tr : 'passenger_member'.tr,
-              badge: isAdmin ? 'ADMIN' : 'VIP',
-              badgeColor: isAdmin ? const Color(0xFFF59E0B) : AppColors.green,
+              value: isGuest
+                  ? 'guest_user'.tr
+                  : (isAdmin ? 'administrator'.tr : 'passenger_member'.tr),
+              badge: isGuest ? 'GUEST' : (isAdmin ? 'ADMIN' : 'VIP'),
+              badgeColor: isGuest
+                  ? const Color(0xFF64748B)
+                  : (isAdmin ? const Color(0xFFF59E0B) : AppColors.green),
               primaryText: primaryText,
               secondaryText: secondaryText,
               isDark: isDark,

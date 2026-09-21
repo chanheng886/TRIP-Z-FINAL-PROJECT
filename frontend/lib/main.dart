@@ -6,7 +6,6 @@ import 'package:frontend/core/localization/app_translations.dart';
 import 'package:frontend/core/localization/language_controller.dart';
 import 'package:frontend/core/theme/app_theme.dart';
 import 'package:frontend/core/theme/theme_controller.dart';
-import 'package:frontend/features/auth/view/login_screen.dart';
 import 'package:frontend/features/auth/repository/auth_repository.dart';
 import 'package:frontend/features/auth/viewmodel/auth_viewmodel.dart';
 import 'package:frontend/shared/service/auth_service.dart';
@@ -62,7 +61,8 @@ class AuthGate extends StatelessWidget {
       if (authVM.isCheckingSession.value) {
         return const SplashScreen();
       }
-      return authVM.isLoggedIn ? const MainApp() : const LoginScreen();
+      // Allow users to freely browse trips, routes, stations without being forced to login or register first.
+      return const MainApp();
     });
   }
 }

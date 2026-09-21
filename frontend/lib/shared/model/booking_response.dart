@@ -1,11 +1,12 @@
 enum BookingStatus {
   Pending,
   Confirmed,
-  Cancelled;
+  Cancelled,
+  Paid;
 
   static BookingStatus fromString(String value) {
     return BookingStatus.values.firstWhere(
-      (e) => e.name == value,
+      (e) => e.name.toLowerCase() == value.trim().toLowerCase(),
       orElse: () => BookingStatus.Pending,
     );
   }

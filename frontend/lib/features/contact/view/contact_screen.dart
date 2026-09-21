@@ -4,7 +4,6 @@ import 'package:frontend/core/localization/language_controller.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_fonts.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class ContactScreen extends StatelessWidget {
   const ContactScreen({super.key});
@@ -15,8 +14,6 @@ class ContactScreen extends StatelessWidget {
     final background = Theme.of(context).scaffoldBackgroundColor;
     final primaryText =
         isDarkMode ? AppColors.darkPrimaryText : AppColors.lightPrimaryText;
-    final secondaryText =
-        isDarkMode ? AppColors.darkSecondaryText : AppColors.lightSecondaryText;
     final cardColor = isDarkMode ? const Color(0xFF1E222B) : Colors.white;
     final languageController = Get.find<LanguageController>();
 
@@ -140,6 +137,7 @@ class ContactScreen extends StatelessWidget {
                 subtitle: 'office_hours_val'.tr,
                 isDarkMode: isDarkMode,
               ),
+              const SizedBox(height: 100),
             ],
           ),
         );

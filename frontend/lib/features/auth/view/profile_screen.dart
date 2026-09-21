@@ -60,30 +60,33 @@ class ProfileScreen extends StatelessWidget {
           );
         }),
         actions: [
-          // Edit Profile action button
-          Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(12),
-              onTap: () => Get.to(() => const EditProfileScreen()),
-              child: Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: cardBg,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: borderColor, width: 1),
-                ),
-                child: Center(
-                  child: FaIcon(
-                    FontAwesomeIcons.penToSquare,
-                    size: 13,
-                    color: primaryText,
+          // Edit Profile action button (only when logged in)
+          Obx(() {
+            if (viewModel.currentUser == null) return const SizedBox.shrink();
+            return Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: () => Get.to(() => const EditProfileScreen()),
+                child: Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: cardBg,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: borderColor, width: 1),
+                  ),
+                  child: Center(
+                    child: FaIcon(
+                      FontAwesomeIcons.penToSquare,
+                      size: 13,
+                      color: primaryText,
+                    ),
                   ),
                 ),
               ),
-            ),
-          ),
+            );
+          }),
           // Language switcher pill in app bar
           Obx(() {
             final currentLang = languageController.currentLanguage;
@@ -206,7 +209,7 @@ class ProfileScreen extends StatelessWidget {
 
               // 7. Logout Button
               ProfileLogoutButton(viewModel: viewModel, isDark: isDark),
-              const SizedBox(height: 36),
+              const SizedBox(height: 100),
             ],
           ),
         );

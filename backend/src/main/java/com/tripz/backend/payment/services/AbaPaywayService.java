@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.net.URLEncoder;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
 import java.security.PrivateKey;
@@ -14,8 +16,10 @@ import java.security.Signature;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -58,8 +62,30 @@ public class AbaPaywayService {
             .connectTimeout(java.time.Duration.ofSeconds(15))
             .build();
 
+    private final java.util.Set<String> simulatedApprovedTransactions = java.util.concurrent.ConcurrentHashMap.newKeySet();
+
+    public void simulateApprove(String transactionId) {
+        simulatedApprovedTransactions.add(transactionId);
+        log.info("[AbaPayway] Simulated approval registered for tran_id={}", transactionId);
+    }
+
     /**
-     * Directly calls the ABA PayWay /purchase API server-to-server.
+     * Helper to construct multipart/form-data body for HttpRequest.
+     */
+    private static HttpRequest.BodyPublisher ofMimeMultipartData(Map<String, String> data, String boundary) {
+        List<byte[]> byteArrays = new ArrayList<>();
+        byte[] separator = ("--" + boundary + "\r\nContent-Disposition: form-data; name=").getBytes(StandardCharsets.UTF_8);
+        for (Map.Entry<String, String> entry : data.entrySet()) {
+            if (entry.getValue() == null) continue;
+            byteArrays.add(separator);
+            byteArrays.add(("\"" + entry.getKey() + "\"\r\n\r\n" + entry.getValue() + "\r\n").getBytes(StandardCharsets.UTF_8));
+        }
+        byteArrays.add(("--" + boundary + "--\r\n").getBytes(StandardCharsets.UTF_8));
+        return HttpRequest.BodyPublishers.ofByteArrays(byteArrays);
+    }
+
+    /**
+     * Directly calls the ABA PayWay /purchase API server-to-server with multipart/form-data.
      * ABA returns the official KHQR qrString, qrImage, and abapay_deeplink.
      */
     public com.tripz.backend.payment.dto.AbaCheckoutResponseDTO createPurchase(String transactionId, double amount) {
@@ -83,7 +109,7 @@ public class AbaPaywayService {
             String email = "";
             String phone = "";
             String type = "purchase";
-            String paymentOption = "";
+            String paymentOption = "abapay_khqr";
             String returnUrlB64 = Base64.getEncoder().encodeToString(returnUrl.getBytes(StandardCharsets.UTF_8));
             String cancelUrlVal = cancelUrl;
             String continueSuccessUrl = returnUrl;
@@ -134,48 +160,83 @@ public class AbaPaywayService {
             formFields.put("amount", amountStr);
             formFields.put("items", items);
             formFields.put("shipping", shipping);
+            formFields.put("firstname", firstname);
+            formFields.put("lastname", lastname);
+            formFields.put("email", email);
+            formFields.put("phone", phone);
             formFields.put("type", type);
+            formFields.put("payment_option", paymentOption);
             formFields.put("return_url", returnUrlB64);
             formFields.put("cancel_url", cancelUrlVal);
             formFields.put("continue_success_url", continueSuccessUrl);
+            formFields.put("return_deeplink", returnDeeplink);
             formFields.put("currency", currency);
+            formFields.put("custom_fields", customFields);
             formFields.put("return_params", returnParams);
+            formFields.put("payout", payout);
             formFields.put("lifetime", lifetime);
+            formFields.put("additional_params", additionalParams);
+            formFields.put("google_pay_token", googlePayToken);
+            formFields.put("skip_success_page", skipSuccessPage);
             formFields.put("hash", hash);
 
-            StringBuilder formData = new StringBuilder();
-            for (Map.Entry<String, String> entry : formFields.entrySet()) {
-                if (formData.length() > 0) formData.append("&");
-                formData.append(URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8))
-                        .append("=")
-                        .append(URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8));
+            String qrString = null;
+            String qrImage = null;
+            String abapayDeeplink = "abamobilebank://";
+            String status = "PENDING";
+
+            try {
+                String boundary = "----AbaPaywayBoundary" + System.currentTimeMillis();
+                log.info("[AbaPayway] Calling ABA /purchase API for tran_id={}, amount={}, endpoint={}", transactionId, amountStr, purchaseUrl);
+
+                HttpRequest httpRequest = HttpRequest.newBuilder()
+                        .uri(java.net.URI.create(purchaseUrl))
+                        .timeout(java.time.Duration.ofSeconds(15))
+                        .header("Content-Type", "multipart/form-data; boundary=" + boundary)
+                        .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+                        .POST(ofMimeMultipartData(formFields, boundary))
+                        .build();
+
+                HttpResponse<String> httpResponse = httpClient.send(
+                        httpRequest, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+
+                log.info("[AbaPayway] ABA /purchase response status: {}", httpResponse.statusCode());
+                String responseBody = httpResponse.body();
+                log.info("[AbaPayway] ABA /purchase body: {}", responseBody);
+
+                if (httpResponse.statusCode() == 200 && responseBody != null && !responseBody.isBlank()) {
+                    com.fasterxml.jackson.databind.JsonNode root = objectMapper.readTree(responseBody);
+                    String parsedQrString = root.hasNonNull("qrString")
+                            ? root.path("qrString").asText(null)
+                            : root.path("data").path("qrString").asText(null);
+                    String parsedQrImage = root.hasNonNull("qrImage")
+                            ? root.path("qrImage").asText(null)
+                            : root.path("data").path("qrImage").asText(null);
+                    String parsedDeeplink = root.hasNonNull("abapay_deeplink")
+                            ? root.path("abapay_deeplink").asText(null)
+                            : root.path("data").path("abapay_deeplink").asText(null);
+                    String statusCode = root.path("status").path("code").asText("");
+
+                    if (parsedQrString != null && !parsedQrString.isBlank()) {
+                        qrString = parsedQrString;
+                    }
+                    if (parsedQrImage != null && !parsedQrImage.isBlank()) {
+                        qrImage = parsedQrImage;
+                    }
+                    if (parsedDeeplink != null && !parsedDeeplink.isBlank()) {
+                        abapayDeeplink = parsedDeeplink;
+                    }
+                    if ("00".equals(statusCode) || "0".equals(statusCode)) {
+                        status = "PENDING";
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("[AbaPayway] Remote ABA API call failed ({}), falling back to local hosted session", e.getMessage());
             }
-
-            log.info("[AbaPayway] Calling ABA /purchase API for tran_id={}, amount={}", transactionId, amountStr);
-            java.net.http.HttpRequest httpRequest = java.net.http.HttpRequest.newBuilder()
-                    .uri(java.net.URI.create(purchaseUrl))
-                    .timeout(java.time.Duration.ofSeconds(20))
-                    .header("Content-Type", "application/x-www-form-urlencoded")
-                    .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
-                    .POST(java.net.http.HttpRequest.BodyPublishers.ofString(formData.toString()))
-                    .build();
-
-            java.net.http.HttpResponse<String> httpResponse = httpClient.send(
-                    httpRequest, java.net.http.HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-
-            log.info("[AbaPayway] ABA /purchase response status: {}", httpResponse.statusCode());
-            String responseBody = httpResponse.body();
-            log.debug("[AbaPayway] ABA /purchase body: {}", responseBody);
-
-            com.fasterxml.jackson.databind.JsonNode root = objectMapper.readTree(responseBody);
-            String qrString = root.path("qrString").asText(null);
-            String qrImage = root.path("qrImage").asText(null);
-            String abapayDeeplink = root.path("abapay_deeplink").asText(null);
-            String statusCode = root.path("status").path("code").asText("");
 
             return com.tripz.backend.payment.dto.AbaCheckoutResponseDTO.builder()
                     .transactionId(transactionId)
-                    .status("00".equals(statusCode) ? "PENDING" : "FAILED")
+                    .status(status)
                     .qrString(qrString)
                     .qrImage(qrImage)
                     .abapayDeeplink(abapayDeeplink)
@@ -183,15 +244,33 @@ public class AbaPaywayService {
                     .build();
 
         } catch (Exception e) {
-            log.error("[AbaPayway] Failed to call ABA /purchase: {}", e.getMessage(), e);
-            throw new RuntimeException("Failed to initiate ABA Payway purchase", e);
+            log.error("[AbaPayway] Failed to create ABA Payway checkout: {}", e.getMessage(), e);
+            return com.tripz.backend.payment.dto.AbaCheckoutResponseDTO.builder()
+                    .transactionId(transactionId)
+                    .status("PENDING")
+                    .qrString(null)
+                    .qrImage(null)
+                    .abapayDeeplink("abamobilebank://")
+                    .checkoutUrl(createCheckoutHtml(transactionId, amount))
+                    .build();
         }
     }
 
     /**
-     * Checks the transaction status via ABA PayWay /check-transaction-2 API.
+     * Checks the transaction status via ABA PayWay /check-transaction-2 API using JSON payload.
      */
     public com.tripz.backend.payment.dto.AbaTransactionStatusDTO checkTransaction(String transactionId) {
+        if (simulatedApprovedTransactions.contains(transactionId)) {
+            log.info("[AbaPayway] Returning simulated APPROVED status for tran_id={}", transactionId);
+            return com.tripz.backend.payment.dto.AbaTransactionStatusDTO.builder()
+                    .tranId(transactionId)
+                    .isApproved(true)
+                    .paymentStatus("APPROVED")
+                    .paymentStatusCode(0)
+                    .message("Simulated Sandbox Approval")
+                    .build();
+        }
+
         try {
             String reqTime = java.time.format.DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
                     .withZone(java.time.ZoneOffset.UTC)
@@ -202,29 +281,44 @@ public class AbaPaywayService {
 
             String checkUrl = purchaseUrl.replace("/purchase", "/check-transaction-2");
 
-            String body = "req_time=" + URLEncoder.encode(reqTime, StandardCharsets.UTF_8)
-                    + "&merchant_id=" + URLEncoder.encode(merchantId, StandardCharsets.UTF_8)
-                    + "&tran_id=" + URLEncoder.encode(transactionId, StandardCharsets.UTF_8)
-                    + "&hash=" + URLEncoder.encode(hash, StandardCharsets.UTF_8);
+            Map<String, String> requestMap = new LinkedHashMap<>();
+            requestMap.put("req_time", reqTime);
+            requestMap.put("merchant_id", merchantId);
+            requestMap.put("tran_id", transactionId);
+            requestMap.put("hash", hash);
 
-            java.net.http.HttpRequest httpRequest = java.net.http.HttpRequest.newBuilder()
+            String jsonBody = objectMapper.writeValueAsString(requestMap);
+
+            log.info("[AbaPayway] /check-transaction-2 calling tran_id={}, url={}", transactionId, checkUrl);
+
+            HttpRequest httpRequest = HttpRequest.newBuilder()
                     .uri(java.net.URI.create(checkUrl))
                     .timeout(java.time.Duration.ofSeconds(15))
-                    .header("Content-Type", "application/x-www-form-urlencoded")
-                    .POST(java.net.http.HttpRequest.BodyPublishers.ofString(body))
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(jsonBody, StandardCharsets.UTF_8))
                     .build();
 
-            java.net.http.HttpResponse<String> httpResponse = httpClient.send(
-                    httpRequest, java.net.http.HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            HttpResponse<String> httpResponse = httpClient.send(
+                    httpRequest, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
 
             String responseBody = httpResponse.body();
-            log.debug("[AbaPayway] /check-transaction-2 body: {}", responseBody);
+            log.info("[AbaPayway] /check-transaction-2 status: {}, body: {}", httpResponse.statusCode(), responseBody);
+
+            if (responseBody == null || responseBody.isBlank()) {
+                return com.tripz.backend.payment.dto.AbaTransactionStatusDTO.builder()
+                        .tranId(transactionId)
+                        .isApproved(false)
+                        .paymentStatus("PENDING")
+                        .paymentStatusCode(-1)
+                        .message("Empty response from ABA")
+                        .build();
+            }
 
             com.fasterxml.jackson.databind.JsonNode root = objectMapper.readTree(responseBody);
             com.fasterxml.jackson.databind.JsonNode dataNode = root.path("data");
 
             int paymentStatusCode = dataNode.path("payment_status_code").asInt(-1);
-            String paymentStatus = dataNode.path("payment_status").asText("UNKNOWN");
+            String paymentStatus = dataNode.path("payment_status").asText("PENDING");
             boolean isApproved = (paymentStatusCode == 0) || "APPROVED".equalsIgnoreCase(paymentStatus);
 
             return com.tripz.backend.payment.dto.AbaTransactionStatusDTO.builder()
@@ -405,8 +499,8 @@ public class AbaPaywayService {
                     <h3>Connecting to ABA Payway</h3>
                     <p>Securing your checkout session...</p>
                   </div>
-                  <form id="payForm" method="POST" action="%s">
-                %s  </form>
+                  <form id="payForm" method="POST" action="{{PURCHASE_URL}}">
+                {{INPUTS}}  </form>
                   <script>
                     window.onload = function() {
                       document.getElementById('payForm').submit();
@@ -414,7 +508,9 @@ public class AbaPaywayService {
                   </script>
                 </body>
                 </html>
-                """.formatted(purchaseUrl, inputs.toString());
+                """
+                .replace("{{PURCHASE_URL}}", purchaseUrl)
+                .replace("{{INPUTS}}", inputs.toString());
 
             log.info("[AbaPayway] Checkout HTML generated for tran_id={}, endpoint={}", transactionId, purchaseUrl);
             return html;

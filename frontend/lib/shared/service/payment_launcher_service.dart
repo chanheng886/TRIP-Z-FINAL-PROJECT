@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show debugPrint, kIsWeb;
 import 'package:flutter/services.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:khqr_sdk/khqr_sdk.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -10,14 +11,34 @@ class PaymentLauncherService {
   static const MethodChannel _nativeChannel = MethodChannel('com.tripz.payment/launcher');
 
   // ─── Bakong Account & Merchant Credentials ──────────────────────────────
-  static const String bakongAccountId = 'chanheng_chun1@bkrt';
-  static const String _merchantName   = 'TRIP-Z';
-  static const String _acquiringBank  = 'Bakong';
-  static const String _merchantCity  = 'Phnom Penh';
+  static String get bakongAccountId =>
+      dotenv.env['BAKONG_ACCOUNT_ID']?.trim().isNotEmpty == true
+          ? dotenv.env['BAKONG_ACCOUNT_ID']!.trim()
+          : 'chanheng_chun1@bkrt';
+
+  static String get bakongToken =>
+      dotenv.env['BAKONG_TOKEN']?.trim() ?? '';
+
+  static String get merchantName =>
+      dotenv.env['BAKONG_MERCHANT_NAME']?.trim().isNotEmpty == true
+          ? dotenv.env['BAKONG_MERCHANT_NAME']!.trim()
+          : 'TRIP-Z';
+
+  static const String _acquiringBank = 'Bakong';
+  static const String _merchantCity = 'Phnom Penh';
+
+  /// Returns true if currently using a Bakong retail testnet account
+  static bool get isTestnetAccount => bakongAccountId.endsWith('@bkrt');
 
   // ABA Mobile identifiers
-  static const String abaAndroidPackage = 'com.ababank.aba.mobile';
+  static const String abaAndroidPackage = 'com.app.aba';
   static const String abaiOSAppId       = 'id859663424';
+  static const List<String> abaPackages = [
+    'com.app.aba',
+    'com.ababank.aba.mobile',
+    'com.aba.mobile',
+    'com.ababank.mobile',
+  ];
 
   // ─── ACLEDA / Bakong via KHQR Deep Link (amount pre-filled) ──────────────
   /// Opens ACLEDA Super App (or Bakong) directly on the payment/QR confirmation
@@ -40,10 +61,14 @@ class PaymentLauncherService {
     // ── Step 2: Request real deep link from NBC Bakong Open API ─────────────
     try {
       debugPrint('🌐 [PaymentLauncher] Requesting deep link from NBC Bakong API...');
+      final headers = <String, String>{'Content-Type': 'application/json'};
+      if (bakongToken.isNotEmpty) {
+        headers['Authorization'] = 'Bearer $bakongToken';
+      }
       final response = await http
           .post(
             Uri.parse('https://api-bakong.nbc.gov.kh/v1/generate_deeplink_by_qr'),
-            headers: {'Content-Type': 'application/json'},
+            headers: headers,
             body: json.encode({'qr': khqrString}),
           )
           .timeout(const Duration(seconds: 15));
@@ -175,7 +200,7 @@ class PaymentLauncherService {
     try {
       final info = IndividualInfo(
         bakongAccountId: bakongAccountId,
-        merchantName: _merchantName,
+        merchantName: merchantName,
         currency: KhqrCurrency.usd,
         amount: amount > 0 ? amount : null,
         billNumber: bookingCode ?? 'TRIPZ001',
@@ -198,7 +223,7 @@ class PaymentLauncherService {
         bakongAccountId: bakongAccountId,
         acquiringBank: _acquiringBank,
         merchantId: bookingCode ?? 'TRIPZ001',
-        merchantName: _merchantName,
+        merchantName: merchantName,
         merchantCity: _merchantCity,
         currency: KhqrCurrency.usd,
         amount: amount > 0 ? amount : null,
@@ -225,7 +250,23 @@ class PaymentLauncherService {
   static Future<bool> launchAbaMobileApp({String? deeplink, bool openStoreIfNotFound = false}) async {
     debugPrint('🚀 [PaymentLauncher] Launching ABA Mobile App...');
 
-    // Priority 1: If a specific ABA Payway deeplink was provided, try it first
+    // Priority 1: Native channel with deeplink & openStore flag
+    if (!kIsWeb && Platform.isAndroid) {
+      try {
+        final result = await _nativeChannel.invokeMethod<bool>('launchAba', {
+          'url': deeplink,
+          'openStore': openStoreIfNotFound,
+        });
+        if (result == true) {
+          debugPrint('✅ [PaymentLauncher] Launched ABA Mobile via Native Intent');
+          return true;
+        }
+      } catch (e) {
+        debugPrint('⚠️ [PaymentLauncher] Native launchAba error: $e');
+      }
+    }
+
+    // Priority 2: If a specific ABA Payway deeplink was provided, try it via url_launcher
     if (deeplink != null && deeplink.isNotEmpty) {
       try {
         final uri = Uri.parse(deeplink);
@@ -238,16 +279,20 @@ class PaymentLauncherService {
       }
     }
 
-    // Priority 2: Native channel
+    // Priority 3: Try launching by known package names
     if (!kIsWeb && Platform.isAndroid) {
-      try {
-        final result = await _nativeChannel.invokeMethod<bool>('launchAba');
-        if (result == true) return true;
-      } catch (_) {}
+      for (final pkg in abaPackages) {
+        try {
+          final launched = await _nativeChannel.invokeMethod<bool>('launchAppByPackage', {
+            'package': pkg,
+          });
+          if (launched == true) return true;
+        } catch (_) {}
+      }
     }
 
-    // Priority 3: Known schemes
-    final schemes = ['abamobilebank://', 'aba://', 'bakong://'];
+    // Priority 4: Known schemes
+    final schemes = ['abamobilebank://', 'abapay://', 'aba://', 'bakong://'];
     for (final scheme in schemes) {
       try {
         final uri = Uri.parse(scheme);
@@ -258,7 +303,7 @@ class PaymentLauncherService {
       } catch (_) {}
     }
 
-    // Priority 4: Fallback to store only if explicitly requested
+    // Priority 5: Fallback to store only if explicitly requested
     if (openStoreIfNotFound) {
       final fallbackUrl = (!kIsWeb && Platform.isIOS)
           ? 'https://apps.apple.com/kh/app/aba-mobile-bank/$abaiOSAppId'

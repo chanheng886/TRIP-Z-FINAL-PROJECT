@@ -66,7 +66,14 @@ public ResponseEntity<List<BookingResponseDTO>> getBookingsByDate(@PathVariable 
 
     @PatchMapping("/{id}/status")
     public BookingResponseDTO updateBookingStatus(@PathVariable Long id, @RequestBody Map<String, String> body){
-        BookingStatus status = BookingStatus.valueOf(body.get("status"));
+        String rawStatus = body.get("status");
+        if (rawStatus == null || rawStatus.isBlank()) {
+            throw new IllegalArgumentException("Status is required");
+        }
+        BookingStatus status = java.util.Arrays.stream(BookingStatus.values())
+                .filter(s -> s.name().equalsIgnoreCase(rawStatus.trim()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Invalid status: " + rawStatus));
         return bookingService.updateBookingStatus(id, status);
     }
 

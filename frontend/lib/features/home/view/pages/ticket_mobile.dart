@@ -1,23 +1,112 @@
 import 'dart:convert';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:frontend/core/localization/db_translator.dart';
+import 'package:frontend/app/main_app.dart';
+import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_fonts.dart';
+import 'package:frontend/core/utils/image_saver/image_saver.dart';
+import 'package:frontend/features/home/view/widgets/ticket/ticket_card.dart';
+import 'package:frontend/features/home/view/widgets/ticket/ticket_info_row.dart';
+import 'package:frontend/features/home/view/widgets/ticket/ticket_pending_notice.dart';
 import 'package:frontend/shared/model/booking_response.dart';
-import 'package:frontend/shared/service/payment_launcher_service.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 
-class TicketMobile extends StatelessWidget {
+class TicketMobile extends StatefulWidget {
   final BookingResponse booking;
   const TicketMobile({super.key, required this.booking});
+
+  @override
+  State<TicketMobile> createState() => _TicketMobileState();
+}
+
+class _TicketMobileState extends State<TicketMobile> {
+  final GlobalKey _ticketKey = GlobalKey();
+  bool _isSaving = false;
+
+  Future<void> _saveTicketToGallery() async {
+    if (_isSaving) return;
+    setState(() => _isSaving = true);
+
+    try {
+      final boundary =
+          _ticketKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+      if (boundary == null) {
+        throw Exception("Could not find ticket render boundary");
+      }
+
+      final image = await boundary.toImage(pixelRatio: 3.0);
+      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      if (byteData == null) {
+        throw Exception("Failed to convert ticket to image bytes");
+      }
+
+      final pngBytes = byteData.buffer.asUint8List();
+
+      await ImageSaver.saveImage(
+        bytes: pngBytes,
+        name: 'TRIPZ_Ticket_${widget.booking.id}',
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: AppColors.green,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'ticket_saved_success'.tr,
+                    style: AppFonts.dmSans(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: const Color(0xFFEF4444),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            content: Text(
+              '${'ticket_saved_failed'.tr} (${e.toString().replaceFirst("Exception: ", "")})',
+              style: AppFonts.dmSans(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
+    final booking = widget.booking;
 
     final qrData = jsonEncode({
       'bookingId': booking.id,
@@ -32,6 +121,8 @@ class TicketMobile extends StatelessWidget {
       'amount': booking.totalAmount,
       'status': booking.bookingStatus.name,
     });
+
+    final isPending = booking.bookingStatus == BookingStatus.Pending;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -60,440 +151,105 @@ class TicketMobile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         child: Column(
           children: [
-            _buildTicket(context, isDark, colorScheme, qrData),
-            const SizedBox(height: 24),
-            _buildInfoRow(
-              context,
-              isDark,
-              colorScheme,
-              FontAwesomeIcons.clock,
-              'Arrive at least 15 minutes before departure',
+            // E-Ticket wrapped in RepaintBoundary for high-res image capture
+            RepaintBoundary(
+              key: _ticketKey,
+              child: TicketCard(
+                booking: booking,
+                qrData: qrData,
+                isDark: isDark,
+                colorScheme: colorScheme,
+              ),
+            ),
+            const SizedBox(height: 18),
+
+            // Pay at Station Notice Banner if Pending
+            if (isPending) ...[
+              TicketPendingNotice(isDark: isDark, colorScheme: colorScheme),
+              const SizedBox(height: 14),
+            ],
+
+            TicketInfoRow(
+              icon: FontAwesomeIcons.clock,
+              text: 'Arrive at least 15 minutes before departure',
+              colorScheme: colorScheme,
             ),
             const SizedBox(height: 10),
-            _buildInfoRow(
-              context,
-              isDark,
-              colorScheme,
-              FontAwesomeIcons.idCard,
-              'qr_code_instruction'.tr,
+            TicketInfoRow(
+              icon: FontAwesomeIcons.qrcode,
+              text: 'qr_code_instruction'.tr,
+              colorScheme: colorScheme,
             ),
-            if (booking.paymentMethod.toLowerCase().contains('acleda')) ...[
-              const SizedBox(height: 18),
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton.icon(
-                  icon: const FaIcon(
-                    FontAwesomeIcons.buildingColumns,
-                    size: 15,
-                    color: Color(0xFFFFDF79),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0F3B66),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      side: const BorderSide(
-                        color: Color(0xFFD4AF37),
-                        width: 1.2,
-                      ),
-                    ),
-                  ),
-                  onPressed: () {
-                    PaymentLauncherService.launchAcledaSuperApp(
-                      amount: booking.totalAmount,
-                      bookingCode: '${booking.id}',
-                    );
-                  },
-                  label: Text(
-                    'open_acleda_app'.tr,
-                    style: AppFonts.dmSans(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
-              ),
-            ] else if (booking.paymentMethod.toLowerCase().contains('aba')) ...[
-              const SizedBox(height: 18),
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton.icon(
-                  icon: const FaIcon(
-                    FontAwesomeIcons.buildingColumns,
-                    size: 15,
-                    color: Colors.white,
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF005A9C),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  onPressed: () {
-                    PaymentLauncherService.launchAbaMobileApp();
-                  },
-                  label: Text(
-                    'open_aba_app'.tr,
-                    style: AppFonts.dmSans(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-            const SizedBox(height: 30),
-          ],
-        ),
-      ),
-    );
-  }
+            const SizedBox(height: 24),
 
-  Widget _buildTicket(
-    BuildContext context,
-    bool isDark,
-    ColorScheme colorScheme,
-    String qrData,
-  ) {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E2126) : Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: isDark
-                ? Colors.black.withOpacity(0.4)
-                : Colors.black.withOpacity(0.08),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          // Top colored header
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-            decoration: const BoxDecoration(
-              color: Color(0xff4FD18B),
-              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-            ),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const FaIcon(
-                      FontAwesomeIcons.busSimple,
-                      color: Colors.white,
-                      size: 18,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'TRIP-Z Bus',
-                      style: AppFonts.dmSans(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
+            // 1. SAVE TO GALLERY BUTTON
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton.icon(
+                icon: _isSaving
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2.5,
+                        ),
+                      )
+                    : const FaIcon(
+                        FontAwesomeIcons.floppyDisk,
+                        size: 16,
                         color: Colors.white,
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  booking.fromLocation.trDb,
-                  style: AppFonts.dmSans(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                FaIcon(
-                  FontAwesomeIcons.arrowDown,
-                  color: Colors.white.withOpacity(0.8),
-                  size: 14,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  booking.toLocation.trDb,
-                  style: AppFonts.dmSans(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Dashed divider (scalloped edge effect)
-          _buildScallopedDivider(isDark),
-
-          // Details section
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            child: Column(
-              children: [
-                _buildDetailRow(
-                  context,
-                  isDark,
-                  colorScheme,
-                  FontAwesomeIcons.calendarDay,
-                  'date'.tr,
-                  '${booking.travelDate.day.toString().padLeft(2, '0')}/${booking.travelDate.month.toString().padLeft(2, '0')}/${booking.travelDate.year}',
-                ),
-                const SizedBox(height: 14),
-                _buildDetailRow(
-                  context,
-                  isDark,
-                  colorScheme,
-                  FontAwesomeIcons.clock,
-                  'departure'.tr,
-                  booking.departureTime,
-                ),
-                const SizedBox(height: 14),
-                _buildDetailRow(
-                  context,
-                  isDark,
-                  colorScheme,
-                  FontAwesomeIcons.clock,
-                  'arrival'.tr,
-                  booking.arrivalTime,
-                ),
-                const SizedBox(height: 14),
-                _buildDetailRow(
-                  context,
-                  isDark,
-                  colorScheme,
-                  FontAwesomeIcons.user,
-                  'passenger'.tr,
-                  booking.username,
-                ),
-                const SizedBox(height: 14),
-                _buildDetailRow(
-                  context,
-                  isDark,
-                  colorScheme,
-                  FontAwesomeIcons.couch,
-                  'seats'.tr,
-                  booking.seatNumbers.join(', '),
-                ),
-                const SizedBox(height: 14),
-                _buildDetailRow(
-                  context,
-                  isDark,
-                  colorScheme,
-                  _getPaymentIcon(booking.paymentMethod),
-                  'payment_method'.tr,
-                  booking.paymentMethod.trDb,
-                ),
-              ],
-            ),
-          ),
-
-          // Dashed divider (scalloped edge effect)
-          _buildScallopedDivider(isDark),
-
-          // QR Code section
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-            child: Column(
-              children: [
-                Text(
-                  'qr_code_instruction'.tr,
-                  textAlign: TextAlign.center,
-                  style: AppFonts.dmSans(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: colorScheme.onSurface.withOpacity(0.6),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.green,
+                  foregroundColor: Colors.white,
+                  elevation: 2,
+                  shadowColor: AppColors.green.withValues(alpha: 0.4),
+                  shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.06),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: QrImageView(
-                    data: qrData,
-                    version: QrVersions.auto,
-                    size: 160.0,
                   ),
                 ),
-                const SizedBox(height: 14),
-                Text(
-                  '#${booking.id}',
-                  style: GoogleFonts.dmMono(
-                    fontSize: 14,
+                onPressed: _isSaving ? null : _saveTicketToGallery,
+                label: Text(
+                  _isSaving ? 'saving_ticket'.tr : 'save_to_gallery'.tr,
+                  style: AppFonts.dmSans(
+                    color: Colors.white,
                     fontWeight: FontWeight.bold,
-                    color: colorScheme.onSurface.withOpacity(0.5),
+                    fontSize: 15,
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 12),
+
+            // 2. BACK TO HOME BUTTON
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: OutlinedButton.icon(
+                icon: const FaIcon(FontAwesomeIcons.house, size: 15),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: colorScheme.primary,
+                  side: BorderSide(color: colorScheme.primary, width: 1.5),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                onPressed: () => Get.offAll(() => const MainApp()),
+                label: Text(
+                  'nav_home'.tr,
+                  style: AppFonts.dmSans(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+          ],
+        ),
       ),
     );
-  }
-
-  Widget _buildScallopedDivider(bool isDark) {
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        LayoutBuilder(
-          builder: (context, constraints) {
-            return Row(
-              children: List.generate(
-                (constraints.constrainWidth() / 10).floor(),
-                (index) => Expanded(
-                  child: Container(
-                    height: 1.5,
-                    color: index % 2 == 0
-                        ? (isDark
-                            ? const Color(0xFF2C313C)
-                            : const Color(0xffE2E8F0))
-                        : Colors.transparent,
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Container(
-              width: 16,
-              height: 32,
-              decoration: BoxDecoration(
-                color: isDark
-                    ? const Color(0xFF12161E)
-                    : const Color(0xffF7F8FC),
-                borderRadius: const BorderRadius.horizontal(
-                  right: Radius.circular(16),
-                ),
-              ),
-            ),
-            Container(
-              width: 16,
-              height: 32,
-              decoration: BoxDecoration(
-                color: isDark
-                    ? const Color(0xFF12161E)
-                    : const Color(0xffF7F8FC),
-                borderRadius: const BorderRadius.horizontal(
-                  left: Radius.circular(16),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDetailRow(
-    BuildContext context,
-    bool isDark,
-    ColorScheme colorScheme,
-    FaIconData icon,
-    String label,
-    String value,
-  ) {
-    return Row(
-      children: [
-        Container(
-          width: 32,
-          height: 32,
-          decoration: BoxDecoration(
-            color: colorScheme.primary.withOpacity(0.08),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Center(
-            child: FaIcon(
-              icon,
-              size: 14,
-              color: colorScheme.primary,
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: AppFonts.dmSans(
-                fontSize: 11,
-                color: colorScheme.onSurface.withOpacity(0.5),
-              ),
-            ),
-            Text(
-              value,
-              style: AppFonts.dmSans(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: colorScheme.onSurface,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildInfoRow(
-    BuildContext context,
-    bool isDark,
-    ColorScheme colorScheme,
-    FaIconData icon,
-    String text,
-  ) {
-    return Row(
-      children: [
-        FaIcon(
-          icon,
-          size: 14,
-          color: colorScheme.onSurface.withOpacity(0.4),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            text,
-            style: AppFonts.dmSans(
-              fontSize: 12,
-              color: colorScheme.onSurface.withOpacity(0.6),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  FaIconData _getPaymentIcon(String method) {
-    final lower = method.toLowerCase();
-    if (lower.contains('paypal')) return FontAwesomeIcons.paypal;
-    if (lower.contains('master')) return FontAwesomeIcons.ccMastercard;
-    if (lower.contains('acleda') || lower.contains('aba') || lower.contains('bank')) {
-      return FontAwesomeIcons.buildingColumns;
-    }
-    return FontAwesomeIcons.creditCard;
   }
 }

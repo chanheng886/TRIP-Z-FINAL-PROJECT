@@ -58,7 +58,9 @@ class _AbaPaywayWebviewScreenState extends State<AbaPaywayWebviewScreen> {
             setState(() => _isLoading = true);
             // Block app-intent schemes that can slip through onPageStarted
             if (_isAppIntentUrl(url)) {
-              debugPrint('[AbaWebview] Blocked app-intent in onPageStarted: $url');
+              debugPrint(
+                '[AbaWebview] Blocked app-intent in onPageStarted: $url',
+              );
               return;
             }
             _handleUrlNavigation(url);
@@ -93,8 +95,12 @@ class _AbaPaywayWebviewScreenState extends State<AbaPaywayWebviewScreen> {
       );
 
     final raw = widget.checkoutUrl.trim();
-    if (raw.startsWith('<!DOCTYPE') || raw.startsWith('<html') || raw.startsWith('<form')) {
-      debugPrint('[AbaWebview] Loading self-submitting HTML form for ABA Payway');
+    if (raw.startsWith('<!DOCTYPE') ||
+        raw.startsWith('<html') ||
+        raw.startsWith('<form')) {
+      debugPrint(
+        '[AbaWebview] Loading self-submitting HTML form for ABA Payway',
+      );
       _controller.loadHtmlString(
         raw,
         baseUrl: 'https://checkout-sandbox.payway.com.kh',
@@ -155,10 +161,7 @@ class _AbaPaywayWebviewScreenState extends State<AbaPaywayWebviewScreen> {
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: Icon(
-            Icons.close_rounded,
-            color: theme.colorScheme.onSurface,
-          ),
+          icon: Icon(Icons.close_rounded, color: theme.colorScheme.onSurface),
           onPressed: () {
             if (!_hasNavigated) {
               _hasNavigated = true;
@@ -204,8 +207,11 @@ class _AbaPaywayWebviewScreenState extends State<AbaPaywayWebviewScreen> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.lock_outline_rounded,
-                    size: 12, color: Color(0xFF10B981)),
+                const Icon(
+                  Icons.lock_outline_rounded,
+                  size: 12,
+                  color: Color(0xFF10B981),
+                ),
                 const SizedBox(width: 4),
                 Text(
                   'Secure',
@@ -223,9 +229,7 @@ class _AbaPaywayWebviewScreenState extends State<AbaPaywayWebviewScreen> {
           preferredSize: const Size.fromHeight(1),
           child: Container(
             height: 1,
-            color: isDark
-                ? const Color(0xFF2C3242)
-                : const Color(0xFFE2E8F0),
+            color: isDark ? const Color(0xFF2C3242) : const Color(0xFFE2E8F0),
           ),
         ),
       ),
@@ -253,7 +257,9 @@ class _AbaPaywayWebviewScreenState extends State<AbaPaywayWebviewScreen> {
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFF005A9C).withValues(alpha: 0.3),
+                            color: const Color(
+                              0xFF005A9C,
+                            ).withValues(alpha: 0.3),
                             blurRadius: 20,
                             offset: const Offset(0, 8),
                           ),

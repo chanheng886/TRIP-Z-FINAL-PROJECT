@@ -46,7 +46,7 @@ class _AiChatBottomSheetState extends State<AiChatBottomSheet> {
         _scrollController.animateTo(
           _scrollController.position.maxScrollExtent,
           duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
+          curve: Curves.easeOutCubic,
         );
       }
     });
@@ -80,59 +80,109 @@ class _AiChatBottomSheetState extends State<AiChatBottomSheet> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final sheetBg = isDark ? const Color(0xFF14171E) : Colors.white;
+    final borderColor =
+        isDark ? const Color(0xFF262C38) : const Color(0xFFE2E8F0);
 
     return DraggableScrollableSheet(
-      initialChildSize: 0.7,
-      minChildSize: 0.4,
-      maxChildSize: 0.92,
+      initialChildSize: 0.78,
+      minChildSize: 0.45,
+      maxChildSize: 0.95,
       builder: (context, scrollController) {
-        return Container(
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1A1D24) : Colors.white,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.2),
-                blurRadius: 20,
-                offset: const Offset(0, -4),
+        return Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 580),
+            child: Container(
+              decoration: BoxDecoration(
+                color: sheetBg,
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(28)),
+                border: Border(
+                  top: BorderSide(color: borderColor, width: 1.2),
+                  left: BorderSide(color: borderColor, width: 1),
+                  right: BorderSide(color: borderColor, width: 1),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.12),
+                    blurRadius: 32,
+                    spreadRadius: 2,
+                    offset: const Offset(0, -6),
+                  ),
+                ],
               ),
-            ],
-          ),
-          child: Column(
-            children: [
-              AiChatHeader(isDark: isDark, onClearChat: _viewmodel.clearChat),
-              Expanded(
-                child: Obx(() {
-                  if (_viewmodel.messages.isEmpty) {
-                    return AiChatWelcomeView(
+              child: ClipRRect(
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(28)),
+                child: Column(
+                  children: [
+                    // Top Drag Indicator Pill
+                    Center(
+                      child: Container(
+                        width: 44,
+                        height: 4.5,
+                        margin: const EdgeInsets.only(top: 10, bottom: 4),
+                        decoration: BoxDecoration(
+                          color: isDark ? Colors.white24 : Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                      ),
+                    ),
+
+                    // Top Header
+                    AiChatHeader(
                       isDark: isDark,
-                      onSelectSuggestion: (s) => _send(s),
-                    );
-                  }
-                  return ListView.builder(
-                    controller: _scrollController,
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    itemCount:
-                        _viewmodel.messages.length +
-                        (_viewmodel.isLoading.value ? 1 : 0),
-                    itemBuilder: (context, index) {
-                      if (index == _viewmodel.messages.length) {
-                        return AiChatTypingIndicator(isDark: isDark);
-                      }
-                      return ChatBubble(
-                        message: _viewmodel.messages[index],
-                        onBookNow: _navigateToBooking,
-                      );
-                    },
-                  );
-                }),
+                      onClearChat: _viewmodel.clearChat,
+                      onClose: () => Navigator.of(context).pop(),
+                    ),
+
+                    // Chat Body (Welcome or Messages)
+                    Expanded(
+                      child: Obx(() {
+                        if (_viewmodel.messages.isEmpty) {
+                          return AiChatWelcomeView(
+                            isDark: isDark,
+                            onSelectSuggestion: (s) => _send(s),
+                          );
+                        }
+
+                        // Auto-scroll when messages update
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          _scrollToBottom();
+                        });
+
+                        return ListView.builder(
+                          controller: _scrollController,
+                          physics: const BouncingScrollPhysics(),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
+                          ),
+                          itemCount: _viewmodel.messages.length +
+                              (_viewmodel.isLoading.value ? 1 : 0),
+                          itemBuilder: (context, index) {
+                            if (index == _viewmodel.messages.length) {
+                              return AiChatTypingIndicator(isDark: isDark);
+                            }
+                            return ChatBubble(
+                              message: _viewmodel.messages[index],
+                              onBookNow: _navigateToBooking,
+                            );
+                          },
+                        );
+                      }),
+                    ),
+
+                    // Floating Dock Input Bar
+                    AiChatInputField(
+                      controller: _controller,
+                      isDark: isDark,
+                      onSend: () => _send(),
+                    ),
+                  ],
+                ),
               ),
-              AiChatInputField(
-                controller: _controller,
-                isDark: isDark,
-                onSend: () => _send(),
-              ),
-            ],
+            ),
           ),
         );
       },

@@ -30,6 +30,11 @@ class BookingHistoryViewmodel extends GetxController {
     return authVM.currentUser?.role == UserRole.Admin;
   }
 
+  bool get isGuest {
+    final authVM = Get.find<AuthViewmodel>();
+    return !authVM.isLoggedIn || authVM.currentUser?.id == null;
+  }
+
   Future<void> loadData() async {
     try {
       isLoading.value = true;
@@ -38,7 +43,7 @@ class BookingHistoryViewmodel extends GetxController {
       final authVM = Get.find<AuthViewmodel>();
       final userId = authVM.currentUser?.id;
       if (userId == null) {
-        error.value = 'Please login first';
+        bookings.clear();
         return;
       }
 

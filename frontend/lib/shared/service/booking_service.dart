@@ -29,8 +29,17 @@ class BookingService {
 
       if (response.statusCode == 200) {
         return json.decode(response.body);
+      } else if (response.statusCode == 401) {
+        throw Exception("Session expired. Please log in again to complete your booking.");
       } else {
-        throw Exception("Failed to create booking!");
+        String msg = "Failed to create booking!";
+        try {
+          final decoded = json.decode(response.body);
+          if (decoded is Map && decoded['message'] != null) {
+            msg = decoded['message'].toString();
+          }
+        } catch (_) {}
+        throw Exception(msg);
       }
     } catch (e) {
       print('Exception: $e');

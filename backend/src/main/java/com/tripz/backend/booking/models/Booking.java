@@ -6,6 +6,8 @@ import com.tripz.backend.booking.enums.PaymentStatus;
 import com.tripz.backend.user.models.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -44,13 +46,14 @@ public class Booking {
 
     @Builder.Default
     @Column(name = "status", nullable = false)
-    private BookingStatus bookingStatus = BookingStatus.Confirmed;
+    private BookingStatus bookingStatus = BookingStatus.Pending;
 
     /**
      * Tracks whether payment was confirmed by the payment gateway.
      * Default is PENDING — set to PAID when the ABA/Bakong callback succeeds.
      */
     @Builder.Default
+    @Enumerated(EnumType.STRING)
     @Column(name = "payment_status", nullable = false)
     private PaymentStatus paymentStatus = PaymentStatus.PENDING;
 }

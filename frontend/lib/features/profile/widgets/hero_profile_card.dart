@@ -4,6 +4,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_fonts.dart';
 import 'package:frontend/features/auth/model/user.dart';
+import 'package:frontend/features/auth/view/login_screen.dart';
 import 'package:frontend/features/profile/view/edit_profile_screen.dart';
 import 'package:frontend/shared/widgets/user_avatar.dart';
 import 'package:get/get.dart';
@@ -22,13 +23,14 @@ class HeroProfileCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final username = user?.username.isNotEmpty == true
-        ? user!.username
-        : 'User';
-    final email = user?.email.isNotEmpty == true
-        ? user!.email
-        : 'user@tripz.kh';
-    final memberId = 'TRIPZ-USR-${user?.id ?? 1024}';
+    final isGuest = user == null;
+    final username = isGuest
+        ? 'guest_user'.tr
+        : (user!.username.isNotEmpty ? user!.username : 'User');
+    final email = isGuest
+        ? 'guest_user_desc'.tr
+        : (user!.email.isNotEmpty ? user!.email : 'user@tripz.kh');
+    final memberId = isGuest ? 'TRIPZ-GUEST' : 'TRIPZ-USR-${user?.id ?? 1024}';
 
     return Container(
       width: double.infinity,
@@ -65,11 +67,13 @@ class HeroProfileCard extends StatelessWidget {
                 username: username,
                 size: 66,
                 fontSize: 26,
-                showOnlineIndicator: true,
+                showOnlineIndicator: !isGuest,
                 isDark: isDark,
                 borderColor: AppColors.green.withValues(alpha: 0.5),
                 borderWidth: 2,
-                onTap: () => Get.to(() => const EditProfileScreen()),
+                onTap: isGuest
+                    ? () => Get.to(() => const LoginScreen())
+                    : () => Get.to(() => const EditProfileScreen()),
               ),
               const SizedBox(width: 16),
               // Name, Role & Email
@@ -92,12 +96,14 @@ class HeroProfileCard extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        const SizedBox(width: 6),
-                        const Icon(
-                          Icons.verified_rounded,
-                          size: 16,
-                          color: AppColors.green,
-                        ),
+                        if (!isGuest) ...[
+                          const SizedBox(width: 6),
+                          const Icon(
+                            Icons.verified_rounded,
+                            size: 16,
+                            color: AppColors.green,
+                          ),
+                        ],
                       ],
                     ),
                     const SizedBox(height: 3),
@@ -118,14 +124,18 @@ class HeroProfileCard extends StatelessWidget {
                         vertical: 3,
                       ),
                       decoration: BoxDecoration(
-                        color: isAdmin
-                            ? const Color(0xFFF59E0B).withValues(alpha: 0.18)
-                            : AppColors.green.withValues(alpha: 0.18),
+                        color: isGuest
+                            ? Colors.white.withValues(alpha: 0.1)
+                            : (isAdmin
+                                ? const Color(0xFFF59E0B).withValues(alpha: 0.18)
+                                : AppColors.green.withValues(alpha: 0.18)),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                          color: isAdmin
-                              ? const Color(0xFFF59E0B).withValues(alpha: 0.5)
-                              : AppColors.green.withValues(alpha: 0.5),
+                          color: isGuest
+                              ? Colors.white.withValues(alpha: 0.25)
+                              : (isAdmin
+                                  ? const Color(0xFFF59E0B).withValues(alpha: 0.5)
+                                  : AppColors.green.withValues(alpha: 0.5)),
                           width: 1,
                         ),
                       ),
@@ -133,25 +143,33 @@ class HeroProfileCard extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
-                            isAdmin
-                                ? Icons.admin_panel_settings_rounded
-                                : Icons.star_rounded,
+                            isGuest
+                                ? Icons.person_rounded
+                                : (isAdmin
+                                    ? Icons.admin_panel_settings_rounded
+                                    : Icons.star_rounded),
                             size: 12,
-                            color: isAdmin
-                                ? const Color(0xFFFBBF24)
-                                : AppColors.greenBright,
+                            color: isGuest
+                                ? Colors.white70
+                                : (isAdmin
+                                    ? const Color(0xFFFBBF24)
+                                    : AppColors.greenBright),
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            isAdmin
-                                ? 'administrator'.tr.toUpperCase()
-                                : 'tier_gold'.tr.toUpperCase(),
+                            isGuest
+                                ? 'guest_user'.tr.toUpperCase()
+                                : (isAdmin
+                                    ? 'administrator'.tr.toUpperCase()
+                                    : 'tier_gold'.tr.toUpperCase()),
                             style: AppFonts.dmSans(
                               fontSize: 10,
                               fontWeight: FontWeight.w800,
-                              color: isAdmin
-                                  ? const Color(0xFFFBBF24)
-                                  : AppColors.greenBright,
+                              color: isGuest
+                                  ? Colors.white70
+                                  : (isAdmin
+                                      ? const Color(0xFFFBBF24)
+                                      : AppColors.greenBright),
                               letterSpacing: 0.4,
                             ),
                           ),
@@ -162,10 +180,12 @@ class HeroProfileCard extends StatelessWidget {
                 ),
               ),
 
-              // Edit Profile Icon Button
+              // Edit Profile / Sign In Icon Button
               InkWell(
                 borderRadius: BorderRadius.circular(12),
-                onTap: () => Get.to(() => const EditProfileScreen()),
+                onTap: isGuest
+                    ? () => Get.to(() => const LoginScreen())
+                    : () => Get.to(() => const EditProfileScreen()),
                 child: Container(
                   width: 38,
                   height: 38,
@@ -177,9 +197,11 @@ class HeroProfileCard extends StatelessWidget {
                       width: 1,
                     ),
                   ),
-                  child: const Center(
+                  child: Center(
                     child: FaIcon(
-                      FontAwesomeIcons.penToSquare,
+                      isGuest
+                          ? FontAwesomeIcons.arrowRightToBracket
+                          : FontAwesomeIcons.penToSquare,
                       size: 14,
                       color: Colors.white,
                     ),

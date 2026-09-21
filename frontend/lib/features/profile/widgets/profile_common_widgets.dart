@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_fonts.dart';
+import 'package:frontend/features/auth/view/login_screen.dart';
 import 'package:frontend/features/profile/viewmodel/profile_viewmodel.dart';
 import 'package:frontend/features/profile/widgets/logout_dialog.dart';
 import 'package:get/get.dart';
@@ -327,6 +328,36 @@ class ProfileLogoutButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (viewModel.currentUser == null) {
+      return SizedBox(
+        height: 48,
+        child: ElevatedButton.icon(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.green,
+            foregroundColor: Colors.white,
+            elevation: 1,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+          ),
+          onPressed: () => Get.to(() => const LoginScreen()),
+          icon: const FaIcon(
+            FontAwesomeIcons.arrowRightToBracket,
+            size: 14,
+            color: Colors.white,
+          ),
+          label: Text(
+            'sign_in_or_register'.tr,
+            style: AppFonts.dmSans(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+        ),
+      );
+    }
+
     return SizedBox(
       height: 48,
       child: OutlinedButton.icon(
