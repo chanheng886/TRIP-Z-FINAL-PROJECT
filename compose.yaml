@@ -11,8 +11,12 @@ services:
     environment:
       # Overrides localhost in .env so backend talks to the docker container
       DB_URL: jdbc:postgresql://postgres-db:5432/bus_booking
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
     depends_on:
       postgres-db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     restart: unless-stopped
 
@@ -34,5 +38,20 @@ services:
       retries: 5
     restart: unless-stopped
 
+  redis:
+    image: redis:7-alpine
+    container_name: tripz-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
 volumes:
   pgdata:
+  redisdata:

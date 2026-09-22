@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:frontend/core/localization/db_translator.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_fonts.dart';
 import 'package:frontend/features/admin/viewmodel/admin_dashboard_viewmodel.dart';
 import 'package:frontend/features/admin/widgets/admin_list_tiles.dart';
+import 'package:frontend/features/admin/widgets/admin_schedule_filter_chip.dart';
 import 'package:frontend/shared/model/bus_schedule.dart';
 import 'package:get/get.dart';
 
@@ -199,38 +199,46 @@ class _AdminAllSchedulesScreenState extends State<AdminAllSchedulesScreen> {
                     scrollDirection: Axis.horizontal,
                     child: Row(
                       children: [
-                        _buildFilterChip(
+                        AdminScheduleFilterChip(
                           label: 'all'.tr,
                           count: allSchedules.length,
                           filterValue: 'All',
+                          isSelected: _selectedFilter == 'All',
                           activeColor: AppColors.green,
                           isDark: isDark,
+                          onSelected: (val) => setState(() => _selectedFilter = val),
                         ),
                         const SizedBox(width: 8),
-                        _buildFilterChip(
+                        AdminScheduleFilterChip(
                           label: 'available'.tr,
                           count: availableCount,
                           filterValue: 'Available',
+                          isSelected: _selectedFilter == 'Available',
                           activeColor: AppColors.green,
                           isDark: isDark,
+                          onSelected: (val) => setState(() => _selectedFilter = val),
                         ),
                         const SizedBox(width: 8),
-                        _buildFilterChip(
+                        AdminScheduleFilterChip(
                           label: 'expired'.tr,
                           count: expiredCount,
                           filterValue: 'Expired',
+                          isSelected: _selectedFilter == 'Expired',
                           activeColor: const Color(0xFFEF4444),
                           isDark: isDark,
+                          onSelected: (val) => setState(() => _selectedFilter = val),
                         ),
                         const SizedBox(width: 8),
-                        _buildFilterChip(
+                        AdminScheduleFilterChip(
                           label: 'booked'.tr,
                           count: bookedCount,
                           filterValue: 'Booked',
+                          isSelected: _selectedFilter == 'Booked',
                           activeColor: isDark
                               ? const Color(0xFF8A8A8E)
                               : const Color(0xFF64748B),
                           isDark: isDark,
+                          onSelected: (val) => setState(() => _selectedFilter = val),
                         ),
                       ],
                     ),
@@ -295,70 +303,6 @@ class _AdminAllSchedulesScreenState extends State<AdminAllSchedulesScreen> {
           ],
         );
       }),
-    );
-  }
-
-  Widget _buildFilterChip({
-    required String label,
-    required int count,
-    required String filterValue,
-    required Color activeColor,
-    required bool isDark,
-  }) {
-    final isSelected = _selectedFilter == filterValue;
-    return GestureDetector(
-      onTap: () => setState(() => _selectedFilter = filterValue),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? activeColor.withValues(alpha: isDark ? 0.22 : 0.12)
-              : (isDark ? const Color(0xFF181B22) : const Color(0xFFF1F5F9)),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected
-                ? activeColor
-                : (isDark ? const Color(0xFF2C313C) : const Color(0xFFE2E8F0)),
-            width: isSelected ? 1.5 : 1.0,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              label,
-              style: AppFonts.dmSans(
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                color: isSelected
-                    ? activeColor
-                    : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
-              ),
-            ),
-            const SizedBox(width: 6),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? activeColor
-                    : (isDark ? const Color(0xFF2C313C) : const Color(0xFFCBD5E1)),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                '$count',
-                style: AppFonts.dmSans(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: isSelected
-                      ? Colors.white
-                      : (isDark ? Colors.white70 : Colors.black87),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

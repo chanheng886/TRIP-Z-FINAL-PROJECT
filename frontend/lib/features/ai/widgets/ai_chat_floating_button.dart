@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/features/ai/view/ai_chat_bottom_sheet.dart';
+import 'package:frontend/features/ai/widgets/chatbot_avatar.dart';
 
 /// Standalone circular AI Assistant Button with pulse animation & glow effect.
 /// Can be embedded in rows, app bars, or navigation bars.
@@ -53,6 +54,8 @@ class _AiChatButtonState extends State<AiChatButton>
   Widget build(BuildContext context) {
     final s = widget.size;
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return AnimatedBuilder(
       animation: _pulseAnimation,
       builder: (context, child) {
@@ -82,17 +85,10 @@ class _AiChatButtonState extends State<AiChatButton>
                       height: s,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        gradient: LinearGradient(
-                          colors: [
-                            AppColors.green.withValues(alpha: 0.90),
-                            AppColors.greenBright.withValues(alpha: 0.85),
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
+                        color: isDark ? const Color(0xFF1E222B) : Colors.white,
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.green.withValues(alpha: 0.40),
+                            color: AppColors.green.withValues(alpha: 0.35),
                             blurRadius: 14,
                             spreadRadius: 1,
                             offset: const Offset(0, 4),
@@ -105,15 +101,13 @@ class _AiChatButtonState extends State<AiChatButton>
                           ),
                         ],
                         border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.40),
+                          color: AppColors.green.withValues(alpha: 0.45),
                           width: 1.5,
                         ),
                       ),
                       child: Center(
-                        child: FaIcon(
-                          FontAwesomeIcons.robot,
-                          color: Colors.white,
-                          size: s * 0.41,
+                        child: ChatbotAvatar(
+                          size: s * 0.70,
                         ),
                       ),
                     ),

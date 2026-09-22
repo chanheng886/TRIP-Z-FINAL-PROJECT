@@ -3,6 +3,8 @@ package com.tripz.backend.bus.services;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import com.tripz.backend.bus.dtos.RequestDTO.LocationRequestDTO;
@@ -10,6 +12,7 @@ import com.tripz.backend.bus.dtos.ResponseDTO.LocationResponseDTO;
 import com.tripz.backend.bus.mappers.LocationMapper;
 import com.tripz.backend.bus.models.Location;
 import com.tripz.backend.bus.repositories.LocationRepository;
+import com.tripz.backend.config.RedisConfig;
 
 import lombok.RequiredArgsConstructor;
 
@@ -20,6 +23,7 @@ public class LocationService {
     private final LocationMapper locationMapper;
 
     //✅ Get All Location
+    @Cacheable(value = RedisConfig.CACHE_LOCATIONS, key = "'all'")
     public List<LocationResponseDTO> getAllLocations(){
         return locationRepository.findAll()
             .stream()
@@ -28,6 +32,7 @@ public class LocationService {
     }
 
     //✅ Get Location By Id
+    @Cacheable(value = RedisConfig.CACHE_LOCATIONS, key = "#id")
     public LocationResponseDTO getLocationById(Long id){
         Location location = locationRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Location with id:" + id + "Not Found"));
@@ -42,6 +47,7 @@ public class LocationService {
     }
 
     //✅ Create Location
+    @CacheEvict(value = RedisConfig.CACHE_LOCATIONS, allEntries = true)
     public LocationResponseDTO createLocation(LocationRequestDTO dto){
         Location location = locationMapper.toCreateEntity(dto);
         Location saved = locationRepository.save(location);
@@ -50,6 +56,7 @@ public class LocationService {
     }
 
     //✅ Update Location
+    @CacheEvict(value = RedisConfig.CACHE_LOCATIONS, allEntries = true)
     public LocationResponseDTO updateLocation(Long id, LocationRequestDTO dto){
         Location location = locationRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Location with id: " +id+"Not Found"));
@@ -60,6 +67,7 @@ public class LocationService {
     }
 
     //✅ Delete Location
+    @CacheEvict(value = RedisConfig.CACHE_LOCATIONS, allEntries = true)
     public LocationResponseDTO deleteLocationById(Long id){
         Location location = locationRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Location with id:" + id + "Not Found"));

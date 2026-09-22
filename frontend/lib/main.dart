@@ -14,6 +14,7 @@ import 'package:get/get.dart';
 import 'package:frontend/features/home/repository/bus_location_repository.dart';
 import 'package:frontend/features/home/viewmodel/bus_location_viewmodel.dart';
 import 'package:frontend/shared/service/bus_location_service.dart';
+import 'package:frontend/shared/service/ticket_notification_service.dart';
 import 'package:frontend/shared/service/user_location_service.dart';
 
 Future<void> main() async {
@@ -25,6 +26,7 @@ Future<void> main() async {
   Get.put(AuthViewmodel(AuthRepository(AuthService())));
   Get.put(BusLocationViewmodel(BusLocationRepository(BusLocationService())));
   Get.put(UserLocationService());
+  Get.put(TicketNotificationService());
   runApp(MyApp());
 }
 

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_fonts.dart';
+import 'package:frontend/features/ai/widgets/chatbot_avatar.dart';
 
 class AiChatTypingIndicator extends StatefulWidget {
   final bool isDark;
@@ -48,31 +48,8 @@ class _AiChatTypingIndicatorState extends State<AiChatTypingIndicator>
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             // Mini Robot Avatar
-            Container(
-              width: 30,
-              height: 30,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [AppColors.green, AppColors.greenBright],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(10),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.green.withValues(alpha: 0.25),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: const Center(
-                child: FaIcon(
-                  FontAwesomeIcons.robot,
-                  color: Colors.white,
-                  size: 13,
-                ),
-              ),
+            const ChatbotAvatar(
+              size: 30,
             ),
 
             const SizedBox(width: 10),

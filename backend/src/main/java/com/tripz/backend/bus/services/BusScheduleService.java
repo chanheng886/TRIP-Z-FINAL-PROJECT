@@ -1,6 +1,8 @@
 package com.tripz.backend.bus.services;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import com.tripz.backend.bus.dtos.RequestDTO.BusScheduleRequestDTO;
 import com.tripz.backend.bus.dtos.RequestDTO.BusScheduleSearchRequestDTO;
@@ -13,6 +15,7 @@ import com.tripz.backend.bus.repositories.BusBookingRepository;
 import com.tripz.backend.bus.repositories.BusScheduleRepository;
 import com.tripz.backend.bus.enums.BusScheduleStatus;
 import com.tripz.backend.bus.utils.SeatLabelGenerator;
+import com.tripz.backend.config.RedisConfig;
 
 import lombok.RequiredArgsConstructor;
 
@@ -25,6 +28,7 @@ public class BusScheduleService {
     private final BusBookingRepository busBookingRepository;
 
     //✅✅ Get All Bus Schedule
+    @Cacheable(value = RedisConfig.CACHE_SCHEDULES, key = "'all'")
     public List<BusScheduleResponseDTO> getAllBusSchedule(){
         return busScheduleRepository.findAll()
             .stream()
@@ -33,6 +37,7 @@ public class BusScheduleService {
     }
 
     // Get Bus Schedule by id
+    @Cacheable(value = RedisConfig.CACHE_SCHEDULES, key = "#id")
     public BusScheduleResponseDTO getBusScheduleById(Long id){
         BusSchedule busSchedule = busScheduleRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Bus schedule with id: " + id + "Not Found!!"));        
@@ -41,6 +46,7 @@ public class BusScheduleService {
 
 
     //✅ (For customer)
+    @Cacheable(value = RedisConfig.CACHE_SCHEDULES, key = "'search:' + #dto.fromLocation + '-' + #dto.toLocation + '-' + #dto.travelDate")
     public List<BusScheduleResponseDTO> searchBusSchedules(BusScheduleSearchRequestDTO dto){
         List<BusSchedule> schedules = busScheduleRepository
             .findByRoute_FromLocation_IdAndRoute_ToLocation_IdAndTravelDateAndAvailableSeatGreaterThan(
@@ -53,6 +59,7 @@ public class BusScheduleService {
     }
 
     //✅✅ Create Bus Schedule
+    @CacheEvict(value = RedisConfig.CACHE_SCHEDULES, allEntries = true)
     public BusScheduleResponseDTO createBusSchedule(BusScheduleRequestDTO dto){
         if (dto.getDepartureTime() != null && dto.getArrivalTime() != null) {
             if (!dto.getDepartureTime().isBefore(dto.getArrivalTime())) {
@@ -81,6 +88,7 @@ public class BusScheduleService {
     }
 
     //✅✅ Update Bus Schedule
+    @CacheEvict(value = RedisConfig.CACHE_SCHEDULES, allEntries = true)
     public BusScheduleResponseDTO updateBusSchedule(Long id, BusScheduleRequestDTO dto){
         BusSchedule schedule = busScheduleRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Schedule with id: " + id + " Not Found!"));
@@ -113,6 +121,7 @@ public class BusScheduleService {
     }
 
     //✅✅ Delete Bus Schedule
+    @CacheEvict(value = RedisConfig.CACHE_SCHEDULES, allEntries = true)
     public BusScheduleResponseDTO deleteBusSchedule(Long id){
         BusSchedule busSchedule = busScheduleRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Bus Schedule with id: " + id + "Not Found!"));

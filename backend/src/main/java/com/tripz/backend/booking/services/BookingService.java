@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +22,7 @@ import com.tripz.backend.bus.models.BusBooking;
 import com.tripz.backend.bus.models.BusSchedule;
 import com.tripz.backend.bus.repositories.BusBookingRepository;
 import com.tripz.backend.bus.repositories.BusScheduleRepository;
+import com.tripz.backend.config.RedisConfig;
 import com.tripz.backend.user.repositories.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -72,6 +74,7 @@ public class BookingService {
 
     // ✅ Update booking
     @Transactional
+    @CacheEvict(value = RedisConfig.CACHE_SCHEDULES, allEntries = true)
     public BookingResponseDTO updateBooking(Long id, BookingRequestDTO dto) {
         Booking booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Booking with id: " + id + " Not Found!"));
@@ -83,6 +86,7 @@ public class BookingService {
 
     // ✅ Update booking status only
     @Transactional
+    @CacheEvict(value = RedisConfig.CACHE_SCHEDULES, allEntries = true)
     public BookingResponseDTO updateBookingStatus(Long id, BookingStatus status) {
         Booking booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Booking with id: " + id + " Not Found!"));
@@ -101,6 +105,7 @@ public class BookingService {
 
     // ✅ Delete Booking
     @Transactional
+    @CacheEvict(value = RedisConfig.CACHE_SCHEDULES, allEntries = true)
     public BookingResponseDTO deleteBooking(Long id) {
         Booking booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Booking with id: " + id + " Not Found!"));
@@ -111,6 +116,7 @@ public class BookingService {
 
     // ✅ Create Booking with BusBooking entries
     @Transactional
+    @CacheEvict(value = RedisConfig.CACHE_SCHEDULES, allEntries = true)
     public BookingResponseDTO createBooking(CreateBusBookingRequestDTO dto) {
         // 1. Convert DTO → Booking entity
         String method = dto.getPaymentMethod();

@@ -1,11 +1,14 @@
 package com.tripz.backend.bus.services;
 import java.util.List;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import com.tripz.backend.bus.dtos.RequestDTO.CompanyRequestDTO;
 import com.tripz.backend.bus.dtos.ResponseDTO.CompanyResponseDTO;
 import com.tripz.backend.bus.mappers.CompanyMapper;
 import com.tripz.backend.bus.models.Company;
 import com.tripz.backend.bus.repositories.CompanyRepository;
+import com.tripz.backend.config.RedisConfig;
 
 import lombok.RequiredArgsConstructor;
 
@@ -16,6 +19,7 @@ public class CompanyService {
     private final CompanyRepository companyRepository;
 
     //✅✅ Get All Bus Company
+    @Cacheable(value = RedisConfig.CACHE_COMPANIES, key = "'all'")
     public List<CompanyResponseDTO> getAllCompany(){
         return companyRepository.findAll()
             .stream()
@@ -24,6 +28,7 @@ public class CompanyService {
     }
 
     //✅✅ Get Bus Company By Id
+    @Cacheable(value = RedisConfig.CACHE_COMPANIES, key = "#id")
     public CompanyResponseDTO getCompanyByID(Long id){
         return companyRepository.findById(id)
                 .map(companyMapper::toResponse).orElseThrow(() -> new RuntimeException("Company with id: " + id + "Not Found!"));
@@ -37,6 +42,7 @@ public class CompanyService {
     }
 
     //✅✅ Create Bus Compnay
+    @CacheEvict(value = RedisConfig.CACHE_COMPANIES, allEntries = true)
     public CompanyResponseDTO createBusCompany(CompanyRequestDTO dto){
         Company company = companyMapper.toEntity(dto);
         Company saved = companyRepository.save(company);
@@ -45,6 +51,7 @@ public class CompanyService {
     }
 
     //✅✅ Update Bus Company
+    @CacheEvict(value = RedisConfig.CACHE_COMPANIES, allEntries = true)
     public CompanyResponseDTO updateCompany(Long id, CompanyRequestDTO dto){
         Company company = companyRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Company with id: " + id + "Not Found!"));
@@ -54,6 +61,7 @@ public class CompanyService {
     }
 
     //✅✅ Delete Company By ID
+    @CacheEvict(value = RedisConfig.CACHE_COMPANIES, allEntries = true)
     public CompanyResponseDTO deleteCompanyById(Long id){
         Company company = companyRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Company with id: " + id + "not found!!"));

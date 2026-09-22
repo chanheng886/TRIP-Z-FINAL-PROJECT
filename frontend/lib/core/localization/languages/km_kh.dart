@@ -257,6 +257,20 @@ final Map<String, String> kmKH = {
   'office_address': 'អាសយដ្ឋានការិយាល័យ',
   'office_hours': 'ម៉ោងធ្វើការ',
   'office_hours_val': 'ច័ន្ទ - អាទិត្យ: ៦:០០ ព្រឹក - ១០:០០ យប់',
+  'select_phone_number': 'ជ្រើសរើសលេខទូរស័ព្ទ',
+  'select_phone_subtitle': 'ជ្រើសរើសលេខដើម្បីហៅចេញដោយផ្ទាល់',
+  'hotline_line1': 'ខ្សែទី១',
+  'hotline_line2': 'ខ្សែទី២',
+  'call_now': 'ហៅចេញ',
+
+  // Upcoming Departure Alerts
+  'departure_alert_title': 'សូមរួសរាន់ទៅកាន់ចំណតរថយន្ត!',
+  'departure_alert_msg':
+      'រថយន្តរបស់អ្នកទៅកាន់ @to នឹងចេញដំណើរក្នុងរយៈពេល @mins នាទីទៀត (@time)! សូមប្រញាប់ទៅកាន់ចំណតឥឡូវនេះ។',
+  'departure_alert_hurry': 'សូមប្រញាប់ទៅកាន់ចំណតរថយន្តឥឡូវនេះ!',
+  'view_ticket': 'មើលសំបុត្រ',
+  'departs_in': 'ចេញដំណើរបន្ទាប់ពី',
+  'mins_remaining': 'នាទីទៀត',
 
   // AI Assistant
   'ai_assistant': 'ជំនួយការឆ្លាតវៃ AI',

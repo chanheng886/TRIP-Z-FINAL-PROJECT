@@ -18,6 +18,7 @@ import 'package:frontend/shared/model/bus_location.dart';
 import 'package:frontend/shared/model/bus_station.dart';
 import 'package:frontend/shared/service/bus_location_service.dart';
 import 'package:frontend/shared/service/user_location_service.dart';
+import 'package:frontend/shared/widgets/imminent_departure_banner.dart';
 import 'package:frontend/shared/widgets/user_avatar.dart';
 import 'package:get/get.dart';
 
@@ -343,7 +344,10 @@ class _HomeScreenMobileState extends State<HomeScreenMobile> {
                       textPrimary: textPrimary,
                       textSecondary: textSecondary,
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 20),
+
+                    // Urgent Imminent Departure Alert Banner (15-30 mins remaining)
+                    const ImminentDepartureBanner(),
 
                     // Main Search Bus Card
                     HomeSearchCard(

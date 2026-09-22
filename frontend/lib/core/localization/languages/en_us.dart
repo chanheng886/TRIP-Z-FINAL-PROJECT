@@ -258,6 +258,20 @@ final Map<String, String> enUS = {
   'office_address': 'Office Address',
   'office_hours': 'Operating Hours',
   'office_hours_val': 'Monday - Sunday: 6:00 AM - 10:00 PM',
+  'select_phone_number': 'Select Phone Number',
+  'select_phone_subtitle': 'Choose a number to call directly',
+  'hotline_line1': 'Line 1',
+  'hotline_line2': 'Line 2',
+  'call_now': 'Call',
+
+  // Upcoming Departure Alerts
+  'departure_alert_title': 'Hurry to Bus Station!',
+  'departure_alert_msg':
+      'Your bus to @to departs in @mins mins (@time)! Please head to the station now.',
+  'departure_alert_hurry': 'Hurry to the bus station now!',
+  'view_ticket': 'View Ticket',
+  'departs_in': 'Departs in',
+  'mins_remaining': 'mins remaining',
 
   // AI Assistant
   'ai_assistant': 'AI Travel Assistant',

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_fonts.dart';
+import 'package:frontend/features/ai/widgets/chatbot_avatar.dart';
 
 class AiChatWelcomeView extends StatelessWidget {
   final bool isDark;
@@ -79,28 +80,26 @@ class AiChatWelcomeView extends StatelessWidget {
                 ),
               ),
               Container(
-                width: 62,
-                height: 62,
+                width: 68,
+                height: 68,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  gradient: const LinearGradient(
-                    colors: [AppColors.green, AppColors.greenBright],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+                  color: cardBg,
+                  border: Border.all(
+                    color: AppColors.green.withValues(alpha: 0.35),
+                    width: 1.5,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.green.withValues(alpha: 0.4),
+                      color: AppColors.green.withValues(alpha: 0.30),
                       blurRadius: 18,
                       offset: const Offset(0, 4),
                     ),
                   ],
                 ),
                 child: const Center(
-                  child: FaIcon(
-                    FontAwesomeIcons.wandMagicSparkles,
-                    color: Colors.white,
-                    size: 26,
+                  child: ChatbotAvatar(
+                    size: 48,
                   ),
                 ),
               ),

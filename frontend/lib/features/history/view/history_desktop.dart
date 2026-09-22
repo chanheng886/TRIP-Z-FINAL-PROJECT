@@ -12,6 +12,7 @@ import 'package:frontend/features/history/widgets/history_empty_state.dart';
 import 'package:frontend/features/history/widgets/history_guest_view.dart';
 import 'package:frontend/features/home/repository/booking_repository.dart';
 import 'package:frontend/shared/service/booking_service.dart';
+import 'package:frontend/shared/widgets/imminent_departure_banner.dart';
 import 'package:get/get.dart';
 
 class HistoryDesktop extends StatefulWidget {
@@ -158,7 +159,9 @@ class _HistoryDesktopState extends State<HistoryDesktop> {
                   textPrimary: textPrimary,
                   textSecondary: textSecondary,
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
+                const ImminentDepartureBanner(),
+                const SizedBox(height: 16),
                 Expanded(
                   child: Obx(() {
                     if (controller.isLoading.value) {

@@ -14,6 +14,7 @@ import 'package:frontend/features/history/widgets/history_guest_view.dart';
 import 'package:frontend/features/home/repository/booking_repository.dart';
 import 'package:frontend/shared/model/bus_schedule.dart';
 import 'package:frontend/shared/service/booking_service.dart';
+import 'package:frontend/shared/widgets/imminent_departure_banner.dart';
 import 'package:get/get.dart';
 
 class HistoryMobile extends StatefulWidget {
@@ -385,10 +386,13 @@ class _HistoryMobileState extends State<HistoryMobile> {
           onRefresh: () => controller.loadData(),
           child: ListView.builder(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
-            itemCount: controller.bookings.length,
+            itemCount: controller.bookings.length + 1,
             itemBuilder: (context, index) {
+              if (index == 0) {
+                return const ImminentDepartureBanner();
+              }
               return CustomerBookingCard(
-                booking: controller.bookings[index],
+                booking: controller.bookings[index - 1],
               );
             },
           ),

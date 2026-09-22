@@ -1,6 +1,9 @@
 package com.tripz.backend.bus.services;
+
 import java.util.List;
 import java.util.stream.Collectors;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import com.tripz.backend.bus.dtos.RequestDTO.RouteRequestDTO;
 import com.tripz.backend.bus.dtos.ResponseDTO.RouteResponseDTO;
@@ -9,6 +12,7 @@ import com.tripz.backend.bus.models.Location;
 import com.tripz.backend.bus.models.Route;
 import com.tripz.backend.bus.repositories.LocationRepository;
 import com.tripz.backend.bus.repositories.RouteRepository;
+import com.tripz.backend.config.RedisConfig;
 
 import lombok.RequiredArgsConstructor;
 
@@ -20,6 +24,7 @@ public class RouteService {
     private final LocationRepository locationRepository;
 
     //✅ Get All Routes
+    @Cacheable(value = RedisConfig.CACHE_ROUTES, key = "'all'")
     public List<RouteResponseDTO> getAllRoute(){
         return routeRepository.findAll()
             .stream()
@@ -28,6 +33,7 @@ public class RouteService {
     }
 
     //✅ Get Route By Id
+    @Cacheable(value = RedisConfig.CACHE_ROUTES, key = "#id")
     public RouteResponseDTO getRouteById(Long id){
         return routeRepository.findById(id)
         .map(routeMapper::toResponse)
@@ -47,6 +53,7 @@ public class RouteService {
     }
 
     //✅ Create Route
+    @CacheEvict(value = RedisConfig.CACHE_ROUTES, allEntries = true)
     public RouteResponseDTO createRoute(RouteRequestDTO dto){
         Location fromLocation = locationRepository
             .findByLocationName(dto.getFromLocation())
@@ -69,6 +76,7 @@ public class RouteService {
     }
 
     //✅ Update Route
+    @CacheEvict(value = RedisConfig.CACHE_ROUTES, allEntries = true)
     public RouteResponseDTO updateRoute(Long id, RouteRequestDTO dto){
         Route route = routeRepository.findById(id).orElseThrow(() -> new RuntimeException("Route with id: " + id + " Not Found!"));
         Location fromLocation = locationRepository.findByLocationName(dto.getFromLocation())
@@ -92,6 +100,7 @@ public class RouteService {
     }
 
     //✅✅ Delete Route
+    @CacheEvict(value = RedisConfig.CACHE_ROUTES, allEntries = true)
     public RouteResponseDTO deleteRoute(Long id){
         Route route = routeRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Route with id: " + id + "Not Found!"));
