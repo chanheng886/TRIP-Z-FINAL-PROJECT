@@ -101,16 +101,51 @@ public final class EnvLoader {
 
         if (dbUrl != null && !dbUrl.isBlank()) {
             dbUrl = dbUrl.trim();
-            if (dbUrl.startsWith("postgres://")) {
-                dbUrl = "jdbc:postgresql://" + dbUrl.substring("postgres://".length());
-            } else if (dbUrl.startsWith("postgresql://")) {
-                dbUrl = "jdbc:postgresql://" + dbUrl.substring("postgresql://".length());
-            } else if (!dbUrl.startsWith("jdbc:")) {
-                dbUrl = "jdbc:postgresql://" + dbUrl;
+            if (dbUrl.startsWith("jdbc:")) {
+                dbUrl = dbUrl.substring(5);
             }
-            System.setProperty("DB_URL", dbUrl);
-            System.setProperty("spring.datasource.url", dbUrl);
-            log.info("[EnvLoader] Database URL normalized for JDBC: {}", sanitizeJdbcUrl(dbUrl));
+            if (dbUrl.startsWith("postgres://")) {
+                dbUrl = "postgresql://" + dbUrl.substring("postgres://".length());
+            }
+
+            int slashSlashIdx = dbUrl.indexOf("://");
+            int atIdx = dbUrl.indexOf('@');
+            if (slashSlashIdx > 0 && atIdx > slashSlashIdx) {
+                String userPass = dbUrl.substring(slashSlashIdx + 3, atIdx);
+                int colonIdx = userPass.indexOf(':');
+                String user = (colonIdx >= 0) ? userPass.substring(0, colonIdx) : userPass;
+                String pass = (colonIdx >= 0) ? userPass.substring(colonIdx + 1) : "";
+
+                String hostAndPath = dbUrl.substring(atIdx + 1);
+                int slashIdx = hostAndPath.indexOf('/');
+                String host = (slashIdx >= 0) ? hostAndPath.substring(0, slashIdx) : hostAndPath;
+                String path = (slashIdx >= 0) ? hostAndPath.substring(slashIdx) : "";
+                if (!host.contains(":")) {
+                    host = host + ":5432";
+                }
+
+                String cleanJdbcUrl = "jdbc:postgresql://" + host + path;
+                System.setProperty("DB_URL", cleanJdbcUrl);
+                System.setProperty("spring.datasource.url", cleanJdbcUrl);
+
+                if (!user.isEmpty()) {
+                    System.setProperty("DB_USERNAME", user);
+                    System.setProperty("spring.datasource.username", user);
+                }
+                if (!pass.isEmpty()) {
+                    System.setProperty("DB_PASSWORD", pass);
+                    System.setProperty("spring.datasource.password", pass);
+                }
+                log.info("[EnvLoader] Parsed embedded credentials. Clean JDBC URL: {}", cleanJdbcUrl);
+            } else {
+                if (!dbUrl.startsWith("postgresql://")) {
+                    dbUrl = "postgresql://" + dbUrl;
+                }
+                String cleanJdbcUrl = "jdbc:" + dbUrl;
+                System.setProperty("DB_URL", cleanJdbcUrl);
+                System.setProperty("spring.datasource.url", cleanJdbcUrl);
+                log.info("[EnvLoader] Database URL normalized for JDBC: {}", sanitizeJdbcUrl(cleanJdbcUrl));
+            }
         } else {
             log.warn("[EnvLoader] Neither DB_URL nor DATABASE_URL was found! Falling back to localhost:5432");
         }
