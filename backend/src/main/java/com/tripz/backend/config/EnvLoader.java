@@ -44,6 +44,7 @@ public final class EnvLoader {
 
         if (envFile == null) {
             log.info("[EnvLoader] No .env file found in candidate paths. Relying on OS environment variables.");
+            normalizeDatabaseUrl();
             return;
         }
 
@@ -82,5 +83,40 @@ public final class EnvLoader {
         } catch (IOException e) {
             log.warn("[EnvLoader] Failed to read .env file: {}", e.getMessage());
         }
+
+        normalizeDatabaseUrl();
+    }
+
+    private static void normalizeDatabaseUrl() {
+        String dbUrl = System.getProperty("DB_URL");
+        if (dbUrl == null || dbUrl.isBlank()) {
+            dbUrl = System.getenv("DB_URL");
+        }
+        if (dbUrl == null || dbUrl.isBlank()) {
+            dbUrl = System.getenv("DATABASE_URL");
+        }
+        if (dbUrl == null || dbUrl.isBlank()) {
+            dbUrl = System.getProperty("DATABASE_URL");
+        }
+
+        if (dbUrl != null && !dbUrl.isBlank()) {
+            dbUrl = dbUrl.trim();
+            if (dbUrl.startsWith("postgres://")) {
+                dbUrl = "jdbc:postgresql://" + dbUrl.substring("postgres://".length());
+            } else if (dbUrl.startsWith("postgresql://")) {
+                dbUrl = "jdbc:postgresql://" + dbUrl.substring("postgresql://".length());
+            } else if (!dbUrl.startsWith("jdbc:")) {
+                dbUrl = "jdbc:postgresql://" + dbUrl;
+            }
+            System.setProperty("DB_URL", dbUrl);
+            System.setProperty("spring.datasource.url", dbUrl);
+            log.info("[EnvLoader] Database URL normalized for JDBC: {}", sanitizeJdbcUrl(dbUrl));
+        } else {
+            log.warn("[EnvLoader] Neither DB_URL nor DATABASE_URL was found! Falling back to localhost:5432");
+        }
+    }
+
+    private static String sanitizeJdbcUrl(String url) {
+        return url.replaceAll(":[^/@:]+@", ":****@");
     }
 }
