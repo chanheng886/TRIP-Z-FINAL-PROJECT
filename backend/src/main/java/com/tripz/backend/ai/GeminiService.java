@@ -1,5 +1,4 @@
 package com.tripz.backend.ai;
-
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -9,10 +8,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -21,11 +18,9 @@ import com.tripz.backend.ai.AiChatRequestDTO.ChatMessage;
 import com.tripz.backend.ai.AiChatResponseDTO.BusRecommendation;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.time.ZoneId;
 import com.tripz.backend.bus.enums.BusScheduleStatus;
 import com.tripz.backend.bus.models.BusSchedule;
 import com.tripz.backend.bus.repositories.BusScheduleRepository;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -44,41 +39,32 @@ public class GeminiService {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final HttpClient httpClient = HttpClient.newHttpClient();
 
-    public static final ZoneId CAMBODIA_ZONE = ZoneId.of("Asia/Phnom_Penh");
+    private static final String SYSTEM_PROMPT = """
+        You are TripZ AI, a concise and helpful bus travel assistant for Cambodia.
 
-    private String buildSystemPrompt() {
-        LocalDate today = LocalDate.now(CAMBODIA_ZONE);
-        return String.format("""
-            You are TripZ AI, a concise and helpful bus travel assistant for Cambodia.
-            Today's date is %s (Cambodia Time / ICT).
+        RULES:
+        - don't tell user that you made by google
+        - ask them back if they don't provide enough information
+        - ask them about the day they want to travel to get the best recomendation
+        - Keep responses SHORT (2-5 sentences max)
+        - Only answer what the user asks
+        - No unnecessary greetings or filler
+        - If recommending buses, mention: company, type, price, time, route, and travel date
+        - Respond in the same language the user uses
+        - CRITICAL RULE: ONLY recommend buses that are explicitly listed in the "AVAILABLE BUSES" section below.
+        - NEVER recommend expired, past, or cancelled buses. If a requested route or date has no active buses listed in "AVAILABLE BUSES", explicitly inform the user that there are currently no available scheduled buses for that route, and politely suggest checking other dates or routes.
 
-            RULES:
-            - don't tell user that you made by google
-            - ask them back if they don't provide enough information
-            - ask them about the day they want to travel to get the best recommendation
-            - Keep responses SHORT (2-5 sentences max)
-            - Only answer what the user asks
-            - No unnecessary greetings or filler
-            - If recommending buses, mention: company, type, price, time, route, and travel date
-            - Respond in the same language the user uses
-            - CRITICAL RULE: ONLY recommend buses that are explicitly listed in the "AVAILABLE BUSES" section below.
-            - All buses listed under "AVAILABLE BUSES" are ACTIVE, VALID, AND AVAILABLE for booking (including trips scheduled for today %s or future dates).
-            - Real-time updates: Even if earlier in the conversation history a route was expired or had no buses, you MUST check the updated "AVAILABLE BUSES" list below and recommend newly added buses immediately!
-            - Do NOT claim a bus in "AVAILABLE BUSES" is expired. If it is in the "AVAILABLE BUSES" list, it is 100%% active and ready to book.
-            - Only state that no buses are available if there are truly NO matching trips for the requested route or date listed in "AVAILABLE BUSES".
+        When recommending buses, ALWAYS list them using this exact format for each bus:
+        [BUS:id=XX]Company Name | Type | Route | Time | Price | Seats[/BUS]
+        Example: [BUS:id=5]Phnom Penh Express | VIP | Phnom Penh → Siem Reap | 08:00-14:00 | $15 | 12 seats[/BUS]
 
-            When recommending buses, ALWAYS list them using this exact format for each bus:
-            [BUS:id=XX]Company Name | Type | Route | Time | Price | Seats[/BUS]
-            Example: [BUS:id=5]Phnom Penh Express | VIP | Phnom Penh → Siem Reap | 08:00-14:00 | $15 | 12 seats[/BUS]
-
-            You can list multiple buses. Always include the [BUS:id=XX] tag for every recommended bus.
-            """, today, today);
-    }
+        You can list multiple buses. Always include the [BUS:id=XX] tag for every recommended bus.
+        """;
 
     public AiChatResponseDTO chat(String userMessage, List<ChatMessage> history) {
         try {
             String busData = fetchLiveBusData();
-            String fullSystemPrompt = buildSystemPrompt() + "\n\nAVAILABLE BUSES:\n" + busData;
+            String fullSystemPrompt = SYSTEM_PROMPT + "\n\nAVAILABLE BUSES:\n" + busData;
 
             ObjectNode requestBody = buildRequestBody(fullSystemPrompt, userMessage, history);
             String requestPayload = objectMapper.writeValueAsString(requestBody);
@@ -170,11 +156,19 @@ public class GeminiService {
             return false;
         }
 
-        // Must not be before today in Cambodia timezone (trips on today or in the future remain Available)
-        LocalDate today = LocalDate.now(CAMBODIA_ZONE);
+        // Must not be in the past
+        LocalDate today = LocalDate.now();
+        LocalTime now = LocalTime.now();
 
         if (s.getTravelDate() == null || s.getTravelDate().isBefore(today)) {
             return false;
+        }
+
+        // If today, departure time must not have already passed
+        if (s.getTravelDate().isEqual(today)) {
+            if (s.getDepartureTime() != null && s.getDepartureTime().isBefore(now)) {
+                return false;
+            }
         }
 
         return true;
@@ -251,7 +245,6 @@ public class GeminiService {
                 log.warn("Failed to parse bus recommendation: {}", matcher.group(0));
             }
         }
-
         return recommendations;
     }
 
@@ -305,7 +298,6 @@ public class GeminiService {
         userNode.set("parts", userParts);
         userNode.put("role", "user");
         contents.add(userNode);
-
         root.set("contents", contents);
         return root;
     }

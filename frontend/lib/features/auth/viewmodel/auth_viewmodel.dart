@@ -24,8 +24,13 @@ class AuthViewmodel extends GetxController {
 
   Future<void> checkSession() async {
     isCheckingSession.value = true;
+    final stopwatch = Stopwatch()..start();
     final saved = await authRepository.getSavedSession();
     auth.value = saved;
+    final elapsed = stopwatch.elapsedMilliseconds;
+    if (elapsed < 1600) {
+      await Future.delayed(Duration(milliseconds: 1600 - elapsed));
+    }
     isCheckingSession.value = false;
   }
 

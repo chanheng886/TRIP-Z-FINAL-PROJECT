@@ -53,18 +53,42 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class AuthGate extends StatelessWidget {
+class AuthGate extends StatefulWidget {
   const AuthGate({super.key});
+
+  @override
+  State<AuthGate> createState() => _AuthGateState();
+}
+
+class _AuthGateState extends State<AuthGate> {
+  bool _isSplashDone = false;
 
   @override
   Widget build(BuildContext context) {
     final authVM = Get.find<AuthViewmodel>();
     return Obx(() {
-      if (authVM.isCheckingSession.value) {
-        return const SplashScreen();
-      }
-      // Allow users to freely browse trips, routes, stations without being forced to login or register first.
-      return const MainApp();
+      final isChecking = authVM.isCheckingSession.value;
+      return AnimatedSwitcher(
+        duration: const Duration(milliseconds: 400),
+        switchInCurve: Curves.easeIn,
+        switchOutCurve: Curves.easeOut,
+        child: (isChecking || !_isSplashDone)
+            ? SplashScreen(
+                key: const ValueKey('splash_screen'),
+                duration: const Duration(milliseconds: 2000),
+                onFinished: () {
+                  if (mounted) {
+                    setState(() {
+                      _isSplashDone = true;
+                    });
+                  }
+                },
+              )
+            : const KeyedSubtree(
+                key: ValueKey('main_app'),
+                child: MainApp(),
+              ),
+      );
     });
   }
 }
