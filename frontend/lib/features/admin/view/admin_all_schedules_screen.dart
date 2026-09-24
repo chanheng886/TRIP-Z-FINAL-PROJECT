@@ -52,8 +52,8 @@ class _AdminAllSchedulesScreenState extends State<AdminAllSchedulesScreen> {
         leading: IconButton(
           onPressed: () => Get.back(),
           icon: FaIcon(
-            FontAwesomeIcons.arrowLeft,
-            size: 18,
+            FontAwesomeIcons.angleLeft,
+            size: 22,
             color: primaryText,
           ),
         ),

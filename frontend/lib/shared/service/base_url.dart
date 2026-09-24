@@ -1,17 +1,25 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class BaseUrl {
-  // On Chrome / Web, always connect directly to localhost.
-  // On real mobile device, use IP_ADDRESS from .env (matching your machine's Wi-Fi IP).
-  static String get _ip {
-    if (kIsWeb) return 'localhost';
+  /// Default production / deployed backend URL
+  static const String defaultBackendUrl = 'https://tripz-backend-1mm1.onrender.com';
+
+  /// Root URL of the backend (e.g. "https://tripz-backend-1mm1.onrender.com" or "http://localhost:8080")
+  static String get rootUrl {
+    final backendUrl = dotenv.env['BACKEND_URL']?.trim();
+    if (backendUrl != null && backendUrl.isNotEmpty) {
+      return backendUrl.endsWith('/')
+          ? backendUrl.substring(0, backendUrl.length - 1)
+          : backendUrl;
+    }
     final envIp = dotenv.env['IP_ADDRESS']?.trim();
-    if (envIp != null && envIp.isNotEmpty) return envIp;
-    return '172.16.104.29';
+    if (envIp != null && envIp.isNotEmpty && envIp != 'localhost') {
+      return 'http://$envIp:8080';
+    }
+    return defaultBackendUrl;
   }
 
-  static String get baseUrl => "http://$_ip:8080/api/v1";
+  static String get baseUrl => "$rootUrl/api/v1";
 
   static String get auth => "$baseUrl/auth";
   static String get booking => "$baseUrl/booking";

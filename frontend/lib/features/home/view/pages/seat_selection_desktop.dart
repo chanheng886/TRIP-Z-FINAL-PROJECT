@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:frontend/core/theme/app_fonts.dart';
 import 'package:frontend/features/home/repository/booking_repository.dart';
 import 'package:frontend/features/home/repository/bus_schedule_repository.dart';
@@ -63,9 +64,9 @@ class _SeatSelectionDesktopState extends State<SeatSelectionDesktop> {
         backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios_new_rounded,
-            size: 20,
+          icon: FaIcon(
+            FontAwesomeIcons.angleLeft,
+            size: 22,
             color: colorScheme.onSurface,
           ),
           onPressed: () => Get.back(),

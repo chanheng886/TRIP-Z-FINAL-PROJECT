@@ -1,7 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_fonts.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -11,7 +9,7 @@ class SplashScreen extends StatefulWidget {
   const SplashScreen({
     super.key,
     this.onFinished,
-    this.duration = const Duration(milliseconds: 2000),
+    this.duration = const Duration(milliseconds: 2500),
   });
 
   @override
@@ -21,12 +19,11 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen>
     with TickerProviderStateMixin {
   late final AnimationController _entranceController;
-  late final AnimationController _pulseController;
+  late final AnimationController _progressController;
 
   late final Animation<double> _fadeAnimation;
   late final Animation<double> _scaleAnimation;
-  late final Animation<double> _pulseScale;
-  late final Animation<double> _pulseOpacity;
+  late final Animation<double> _progressAnimation;
 
   Timer? _timer;
 
@@ -34,41 +31,43 @@ class _SplashScreenState extends State<SplashScreen>
   void initState() {
     super.initState();
 
-    // 1. Entrance animation (smooth scale up + fade in, locked dead center)
+    // 1. Entrance animation (gentle scale up + fade in)
     _entranceController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1000),
+      duration: const Duration(milliseconds: 800),
     );
 
     _fadeAnimation = CurvedAnimation(
       parent: _entranceController,
-      curve: const Interval(0.0, 0.7, curve: Curves.easeOut),
+      curve: Curves.easeOut,
     );
 
-    _scaleAnimation = Tween<double>(begin: 0.82, end: 1.0).animate(
+    _scaleAnimation = Tween<double>(begin: 0.85, end: 1.0).animate(
       CurvedAnimation(
         parent: _entranceController,
-        curve: const Interval(0.0, 0.85, curve: Curves.easeOutBack),
+        curve: Curves.easeOutBack,
       ),
     );
 
-    // 2. Breathing ambient pulse behind logo
-    _pulseController = AnimationController(
+    // 2. Animated progress bar (fills smoothly across the duration)
+    _progressController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2000),
-    )..repeat(reverse: true);
-
-    _pulseScale = Tween<double>(begin: 0.92, end: 1.18).animate(
-      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+      duration: Duration(
+        milliseconds: (widget.duration.inMilliseconds * 0.85).round(),
+      ),
     );
 
-    _pulseOpacity = Tween<double>(begin: 0.25, end: 0.55).animate(
-      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    _progressAnimation = Tween<double>(begin: 0.05, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _progressController,
+        curve: Curves.easeInOutCubic,
+      ),
     );
 
     _entranceController.forward();
+    _progressController.forward();
 
-    // 3. Guaranteed splash duration (default: 2.0s) before calling onFinished
+    // 3. Trigger onFinished after guaranteed duration
     _timer = Timer(widget.duration, () {
       if (mounted && widget.onFinished != null) {
         widget.onFinished!();
@@ -80,268 +79,150 @@ class _SplashScreenState extends State<SplashScreen>
   void dispose() {
     _timer?.cancel();
     _entranceController.dispose();
-    _pulseController.dispose();
+    _progressController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    final bgColor = isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
-    final primaryTextColor = isDark ? Colors.white : const Color(0xFF0F172A);
-    final secondaryTextColor =
-        isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
-
     return Scaffold(
-      backgroundColor: bgColor,
+      backgroundColor: Colors.white,
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // Background ambient soft gradient aura
+          // Background Illustration (Mint hills and circular accents from design)
           Positioned.fill(
-            child: AnimatedBuilder(
-              animation: _pulseController,
-              builder: (context, child) {
-                return Container(
-                  decoration: BoxDecoration(
-                    gradient: RadialGradient(
-                      center: Alignment.center,
-                      radius: 0.85 * _pulseScale.value,
-                      colors: [
-                        AppColors.green.withValues(
-                          alpha: _pulseOpacity.value * 0.35,
+            child: Center(
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 480),
+                child: Image.asset(
+                  'assets/images/splash_bg.png',
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    // Elegant fallback background if asset loading is delayed
+                    return Container(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Colors.white, Color(0xFFF0FDF4)],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
                         ),
-                        AppColors.limeGradientEnd.withValues(
-                          alpha: _pulseOpacity.value * 0.12,
-                        ),
-                        bgColor.withValues(alpha: 0.0),
-                      ],
-                      stops: const [0.0, 0.45, 1.0],
-                    ),
-                  ),
-                );
-              },
+                      ),
+                    );
+                  },
+                ),
+              ),
             ),
           ),
 
-          // Layout with equal top and bottom Spacers to guarantee DEAD-CENTER alignment
+          // Dead-Center Logo, Branding & Progress Bar
           SafeArea(
-            child: Column(
-              children: [
-                const Spacer(flex: 3),
-
-                // ─── DEAD-CENTER LOGO & BRANDING ────────────────────────────
-                Center(
-                  child: FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: ScaleTransition(
-                      scale: _scaleAnimation,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          // Animated Glowing Logo Badge
-                          Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              // Breathing Neon Halo
-                              AnimatedBuilder(
-                                animation: _pulseController,
-                                builder: (context, child) {
-                                  return Transform.scale(
-                                    scale: _pulseScale.value,
-                                    child: Container(
-                                      width: 150,
-                                      height: 150,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        gradient: RadialGradient(
-                                          colors: [
-                                            AppColors.green.withValues(
-                                              alpha: _pulseOpacity.value * 0.7,
-                                            ),
-                                            AppColors.green.withValues(
-                                              alpha: 0.0,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-
-                              // Premium App Logo Card
-                              Container(
-                                width: 120,
-                                height: 120,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(30),
-                                  border: Border.all(
-                                    color: AppColors.green.withValues(
-                                      alpha: 0.4,
-                                    ),
-                                    width: 1.8,
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: AppColors.green.withValues(
-                                        alpha: 0.45,
-                                      ),
-                                      blurRadius: 36,
-                                      spreadRadius: 3,
-                                      offset: const Offset(0, 10),
-                                    ),
-                                    BoxShadow(
-                                      color: AppColors.limeGradientEnd
-                                          .withValues(alpha: 0.25),
-                                      blurRadius: 16,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ],
-                                ),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(28),
-                                  child: Image.asset(
-                                    'assets/images/tripz_logo.png',
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      // Elegant fallback if asset loading is delayed
-                                      return Container(
-                                        decoration: const BoxDecoration(
-                                          gradient: LinearGradient(
-                                            colors: [
-                                              AppColors.green,
-                                              AppColors.limeGradientEnd,
-                                            ],
-                                            begin: Alignment.topLeft,
-                                            end: Alignment.bottomRight,
-                                          ),
-                                        ),
-                                        child: const Center(
-                                          child: FaIcon(
-                                            FontAwesomeIcons.busSimple,
-                                            size: 52,
-                                            color: Colors.white,
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-
-                          const SizedBox(height: 24),
-
-                          // Brand Title: TRIP-Z
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Text(
-                                'TRIP',
-                                style: AppFonts.dmSans(
-                                  fontSize: 36,
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: 3.0,
-                                  color: primaryTextColor,
-                                ),
-                              ),
-                              Text(
-                                '-',
-                                style: AppFonts.dmSans(
-                                  fontSize: 36,
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: 1.0,
-                                  color: AppColors.green,
-                                ),
-                              ),
-                              ShaderMask(
-                                shaderCallback: (bounds) =>
-                                    const LinearGradient(
-                                      colors: [
-                                        AppColors.greenBright,
-                                        AppColors.limeGradientEnd,
-                                      ],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                    ).createShader(bounds),
-                                child: Text(
-                                  'Z',
-                                  style: AppFonts.dmSans(
-                                    fontSize: 38,
-                                    fontWeight: FontWeight.w900,
-                                    letterSpacing: 2.0,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-
-                          const SizedBox(height: 10),
-
-                          // Tagline
-                          Text(
-                            'Your Journey, Effortlessly Booked',
-                            style: AppFonts.dmSans(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              letterSpacing: 1.1,
-                              color: secondaryTextColor,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-
-                const Spacer(flex: 3),
-
-                // ─── BOTTOM LOADING PROGRESS & FOOTER ───────────────────────
-                FadeTransition(
-                  opacity: _fadeAnimation,
+            child: Center(
+              child: FadeTransition(
+                opacity: _fadeAnimation,
+                child: ScaleTransition(
+                  scale: _scaleAnimation,
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      // Smooth Minimalist Progress Bar
-                      SizedBox(
-                        width: 120,
-                        height: 3.5,
+                      // Green Rounded App Logo
+                      Container(
+                        width: 92,
+                        height: 92,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(26),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF00B14F).withValues(alpha: 0.35),
+                              blurRadius: 24,
+                              spreadRadius: 2,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
+                        ),
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
-                          child: LinearProgressIndicator(
-                            backgroundColor: isDark
-                                ? Colors.white.withValues(alpha: 0.08)
-                                : Colors.black.withValues(alpha: 0.06),
-                            valueColor: const AlwaysStoppedAnimation<Color>(
-                              AppColors.green,
+                          borderRadius: BorderRadius.circular(26),
+                          child: Image.asset(
+                            'assets/images/tripz_icon.png',
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => Container(
+                              color: const Color(0xFF00B14F),
+                              child: const Icon(
+                                Icons.directions_bus_rounded,
+                                size: 52,
+                                color: Colors.white,
+                              ),
                             ),
                           ),
                         ),
                       ),
 
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 20),
 
+                      // App Name: Trip Z
+                      RichText(
+                        text: TextSpan(
+                          style: AppFonts.dmSans(
+                            fontSize: 34,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.5,
+                          ),
+                          children: const [
+                            TextSpan(
+                              text: 'Trip ',
+                              style: TextStyle(color: Color(0xFF1E293B)),
+                            ),
+                            TextSpan(
+                              text: 'Z',
+                              style: TextStyle(color: Color(0xFF00B14F)),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 6),
+
+                      // Tagline
                       Text(
-                        'TRIP-Z • Travel Across Cambodia',
+                        'Your ride. A smarter way.',
                         style: AppFonts.dmSans(
-                          fontSize: 11,
+                          fontSize: 14,
                           fontWeight: FontWeight.w500,
-                          letterSpacing: 1.0,
-                          color: secondaryTextColor.withValues(alpha: 0.6),
+                          color: const Color(0xFF64748B),
+                        ),
+                      ),
+
+                      const SizedBox(height: 36),
+
+                      // Modern Pill Progress Bar
+                      Container(
+                        width: 76,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE2F7EB),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: AnimatedBuilder(
+                          animation: _progressAnimation,
+                          builder: (context, child) {
+                            return FractionallySizedBox(
+                              alignment: Alignment.centerLeft,
+                              widthFactor: _progressAnimation.value.clamp(0.0, 1.0),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF00B14F),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                            );
+                          },
                         ),
                       ),
                     ],
                   ),
                 ),
-
-                const SizedBox(height: 28),
-              ],
+              ),
             ),
           ),
         ],

@@ -20,7 +20,7 @@ class AiChatResponse {
 }
 
 class AiService {
-  final String baseUrl = BaseUrl.ai;
+  String get baseUrl => BaseUrl.ai;
 
   Future<AiChatResponse> chat({
     required String message,

@@ -4,7 +4,7 @@ import 'package:frontend/shared/service/base_url.dart';
 import 'package:http/http.dart' as http;
 
 class BusLocationService {
-  final String baseUrl = BaseUrl.busLocations;
+  String get baseUrl => BaseUrl.busLocations;
 
   Future<Map<String, String>> _headers() async {
     final token = await AuthService().getToken();

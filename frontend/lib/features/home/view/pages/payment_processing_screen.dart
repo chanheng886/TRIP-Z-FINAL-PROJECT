@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_fonts.dart';
 import 'package:frontend/features/home/view/pages/aba_payway_webview_screen.dart';
@@ -328,9 +329,9 @@ class _PaymentProcessingScreenState extends State<PaymentProcessingScreen> {
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios_new_rounded,
-            size: 19,
+          icon: FaIcon(
+            FontAwesomeIcons.angleLeft,
+            size: 22,
             color: colorScheme.onSurface,
           ),
           onPressed: () => Get.back(),

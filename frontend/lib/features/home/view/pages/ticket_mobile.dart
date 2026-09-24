@@ -131,9 +131,9 @@ class _TicketMobileState extends State<TicketMobile> {
         elevation: 0,
         leading: IconButton(
           icon: FaIcon(
-            FontAwesomeIcons.arrowLeft,
+            FontAwesomeIcons.angleLeft,
             color: colorScheme.onSurface,
-            size: 18,
+            size: 22,
           ),
           onPressed: () => Navigator.of(context).pop(),
         ),

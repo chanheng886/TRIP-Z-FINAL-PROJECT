@@ -7,12 +7,14 @@ class AiChatInputField extends StatefulWidget {
   final TextEditingController controller;
   final bool isDark;
   final VoidCallback onSend;
+  final VoidCallback? onFocused;
 
   const AiChatInputField({
     super.key,
     required this.controller,
     required this.isDark,
     required this.onSend,
+    this.onFocused,
   });
 
   @override
@@ -20,11 +22,18 @@ class AiChatInputField extends StatefulWidget {
 }
 
 class _AiChatInputFieldState extends State<AiChatInputField> {
+  late final FocusNode _focusNode;
   bool _hasText = false;
 
   @override
   void initState() {
     super.initState();
+    _focusNode = FocusNode();
+    _focusNode.addListener(() {
+      if (_focusNode.hasFocus) {
+        widget.onFocused?.call();
+      }
+    });
     _hasText = widget.controller.text.trim().isNotEmpty;
     widget.controller.addListener(_handleTextChange);
   }
@@ -38,6 +47,7 @@ class _AiChatInputFieldState extends State<AiChatInputField> {
 
   @override
   void dispose() {
+    _focusNode.dispose();
     widget.controller.removeListener(_handleTextChange);
     super.dispose();
   }
@@ -55,12 +65,17 @@ class _AiChatInputFieldState extends State<AiChatInputField> {
     final textSecondary =
         widget.isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
 
+    final hasKeyboard = MediaQuery.of(context).viewInsets.bottom > 0;
+    final bottomPadding = hasKeyboard
+        ? 10.0
+        : (MediaQuery.of(context).padding.bottom + 10.0);
+
     return Container(
       padding: EdgeInsets.only(
         left: 14,
         right: 14,
         top: 10,
-        bottom: MediaQuery.of(context).padding.bottom + 10,
+        bottom: bottomPadding,
       ),
       decoration: BoxDecoration(
         color: dockBg,
@@ -95,6 +110,7 @@ class _AiChatInputFieldState extends State<AiChatInputField> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: TextField(
+                      focusNode: _focusNode,
                       controller: widget.controller,
                       maxLines: 3,
                       minLines: 1,

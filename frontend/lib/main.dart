@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:frontend/app/main_app.dart';
+import 'package:frontend/app/onboarding_screen.dart';
 import 'package:frontend/app/splash_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:frontend/core/localization/app_translations.dart';
 import 'package:frontend/core/localization/language_controller.dart';
 import 'package:frontend/core/theme/app_theme.dart';
@@ -40,6 +42,7 @@ class MyApp extends StatelessWidget {
     return Obx(() {
       final isKhmer = languageController.isKhmer;
       return GetMaterialApp(
+        title: 'tripz',
         home: const AuthGate(),
         debugShowCheckedModeBanner: false,
         translations: AppTranslations(),
@@ -62,32 +65,72 @@ class AuthGate extends StatefulWidget {
 
 class _AuthGateState extends State<AuthGate> {
   bool _isSplashDone = false;
+  bool _hasSeenOnboarding = false;
+  bool _isLoadingPrefs = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkOnboardingStatus();
+  }
+
+  Future<void> _checkOnboardingStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    final seen = prefs.getBool('has_seen_onboarding') ?? false;
+    if (mounted) {
+      setState(() {
+        _hasSeenOnboarding = seen;
+        _isLoadingPrefs = false;
+      });
+    }
+  }
+
+  Future<void> _completeOnboarding() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('has_seen_onboarding', true);
+    if (mounted) {
+      setState(() {
+        _hasSeenOnboarding = true;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final authVM = Get.find<AuthViewmodel>();
     return Obx(() {
       final isChecking = authVM.isCheckingSession.value;
+
+      Widget activeScreen;
+      if (isChecking || !_isSplashDone || _isLoadingPrefs) {
+        activeScreen = SplashScreen(
+          key: const ValueKey('splash_screen'),
+          duration: const Duration(milliseconds: 2500),
+          onFinished: () {
+            if (mounted) {
+              setState(() {
+                _isSplashDone = true;
+              });
+            }
+          },
+        );
+      } else if (!_hasSeenOnboarding) {
+        activeScreen = OnboardingScreen(
+          key: const ValueKey('onboarding_screen'),
+          onGetStarted: _completeOnboarding,
+        );
+      } else {
+        activeScreen = const KeyedSubtree(
+          key: ValueKey('main_app'),
+          child: MainApp(),
+        );
+      }
+
       return AnimatedSwitcher(
         duration: const Duration(milliseconds: 400),
         switchInCurve: Curves.easeIn,
         switchOutCurve: Curves.easeOut,
-        child: (isChecking || !_isSplashDone)
-            ? SplashScreen(
-                key: const ValueKey('splash_screen'),
-                duration: const Duration(milliseconds: 2000),
-                onFinished: () {
-                  if (mounted) {
-                    setState(() {
-                      _isSplashDone = true;
-                    });
-                  }
-                },
-              )
-            : const KeyedSubtree(
-                key: ValueKey('main_app'),
-                child: MainApp(),
-              ),
+        child: activeScreen,
       );
     });
   }

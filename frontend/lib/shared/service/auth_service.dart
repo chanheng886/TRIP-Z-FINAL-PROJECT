@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
-  final String baseUrl = BaseUrl.auth;
+  String get baseUrl => BaseUrl.auth;
 
   static const _tokenKey = 'auth_token';
   static const _userKey = 'auth_user';

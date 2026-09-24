@@ -1,6 +1,6 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart' show debugPrint, kIsWeb;
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter/foundation.dart' show debugPrint;
+import 'package:frontend/shared/service/base_url.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -9,12 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// Communicates with the Spring Boot backend to generate a signed
 /// ABA Payway checkout HTML form that the Flutter WebView will load.
 class AbaPaywayService {
-  static String get _baseUrl {
-    if (kIsWeb) return 'http://localhost:8080';
-    final ip = dotenv.env['IP_ADDRESS']?.trim();
-    if (ip != null && ip.isNotEmpty) return 'http://$ip:8080';
-    return 'http://172.16.104.29:8080';
-  }
+  static String get _baseUrl => BaseUrl.rootUrl;
 
   /// Reads the JWT token from SharedPreferences (same key used by AuthService).
   static Future<String?> _getToken() async {
@@ -129,16 +124,10 @@ class AbaPaywayService {
 
   /// Return URL that ABA Payway redirects the WebView to after successful payment.
   /// The WebView intercepts this URL to close and trigger booking confirmation.
-  static String get successReturnUrl {
-    final ip = dotenv.env['IP_ADDRESS'] ?? 'localhost';
-    return 'http://$ip:8080/payment/aba/return';
-  }
+  static String get successReturnUrl => '$_baseUrl/payment/aba/return';
 
   /// Cancel URL that ABA Payway redirects the WebView to when user cancels.
-  static String get cancelReturnUrl {
-    final ip = dotenv.env['IP_ADDRESS'] ?? 'localhost';
-    return 'http://$ip:8080/payment/aba/cancel';
-  }
+  static String get cancelReturnUrl => '$_baseUrl/payment/aba/cancel';
 }
 
 /// Result returned from [AbaPaywayService.createCheckoutUrl].

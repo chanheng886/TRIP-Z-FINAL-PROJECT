@@ -47,9 +47,9 @@ class AdminHeader extends StatelessWidget {
                 border: Border.all(color: borderColor, width: 1),
               ),
               child: Center(
-                child: Icon(
-                  Icons.arrow_back_ios_new_rounded,
-                  size: 15,
+                child: FaIcon(
+                  FontAwesomeIcons.angleLeft,
+                  size: 16,
                   color: primaryText,
                 ),
               ),

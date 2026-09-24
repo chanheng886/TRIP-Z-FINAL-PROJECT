@@ -486,39 +486,47 @@ class _HomeScreenDesktopState extends State<HomeScreenDesktop> {
           // Logo & Brand
           Row(
             children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [AppColors.green, AppColors.greenBright],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(14),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.green.withValues(alpha: 0.35),
-                      blurRadius: 10,
-                      offset: const Offset(0, 3),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(14),
+                child: Image.asset(
+                  'assets/images/tripz_icon.png',
+                  width: 44,
+                  height: 44,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: AppColors.green,
+                      borderRadius: BorderRadius.circular(14),
                     ),
-                  ],
-                ),
-                child: const Center(
-                  child: FaIcon(FontAwesomeIcons.busSimple, color: Colors.white, size: 20),
+                    child: const Center(
+                      child: FaIcon(FontAwesomeIcons.busSimple, color: Colors.white, size: 20),
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(width: 14),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'TRIP-Z',
-                    style: AppFonts.dmSans(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w900,
-                      color: textPrimary,
-                      letterSpacing: 0.5,
+                  RichText(
+                    text: TextSpan(
+                      style: AppFonts.dmSans(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -0.2,
+                      ),
+                      children: [
+                        TextSpan(
+                          text: 'Trip ',
+                          style: TextStyle(color: textPrimary),
+                        ),
+                        const TextSpan(
+                          text: 'Z',
+                          style: TextStyle(color: AppColors.green),
+                        ),
+                      ],
                     ),
                   ),
                   Text(

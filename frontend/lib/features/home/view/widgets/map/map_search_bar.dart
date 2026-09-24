@@ -1,4 +1,5 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:frontend/core/theme/app_fonts.dart';
 import 'package:get/get.dart';
 
@@ -45,9 +46,9 @@ class MapSearchBar extends StatelessWidget {
               ],
             ),
             child: Center(
-              child: Icon(
-                Icons.arrow_back_ios_new_rounded,
-                size: 18,
+              child: FaIcon(
+                FontAwesomeIcons.angleLeft,
+                size: 20,
                 color: textPrimary,
               ),
             ),

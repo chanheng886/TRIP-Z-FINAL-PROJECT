@@ -5,7 +5,7 @@ import 'package:frontend/shared/service/base_url.dart';
 import 'package:http/http.dart' as http;
 
 class AdminDashboardService {
-  final String baseUrl = BaseUrl.baseUrl;
+  String get baseUrl => BaseUrl.baseUrl;
 
   Future<Map<String, String>> _headers() async {
     final token = await AuthService().getToken();

@@ -4,7 +4,7 @@ import 'package:frontend/shared/service/base_url.dart';
 import 'package:http/http.dart' as http;
 
 class BookingService {
-  final String baseUrl = BaseUrl.booking;
+  String get baseUrl => BaseUrl.booking;
 
   Future<Map<String, String>> _headers() async {
     final token = await AuthService().getToken();

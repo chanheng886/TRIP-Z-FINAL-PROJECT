@@ -79,65 +79,91 @@ class _AiChatBottomSheetState extends State<AiChatBottomSheet> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final mediaQuery = MediaQuery.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final sheetBg = isDark ? const Color(0xFF14171E) : Colors.white;
     final borderColor =
         isDark ? const Color(0xFF262C38) : const Color(0xFFE2E8F0);
+    final bottomInset = mediaQuery.viewInsets.bottom;
+    final screenHeight = mediaQuery.size.height;
+    final topSafeArea = mediaQuery.padding.top;
 
-    return DraggableScrollableSheet(
-      initialChildSize: 0.78,
-      minChildSize: 0.45,
-      maxChildSize: 0.95,
-      builder: (context, scrollController) {
-        return Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 580),
-            child: Container(
-              decoration: BoxDecoration(
-                color: sheetBg,
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(28)),
-                border: Border(
-                  top: BorderSide(color: borderColor, width: 1.2),
-                  left: BorderSide(color: borderColor, width: 1),
-                  right: BorderSide(color: borderColor, width: 1),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.12),
-                    blurRadius: 32,
-                    spreadRadius: 2,
-                    offset: const Offset(0, -6),
-                  ),
-                ],
+    // Available space from below top notch to top of keyboard
+    final maxAvailableHeight = screenHeight - topSafeArea - bottomInset - 16;
+    final sheetHeight = (screenHeight * 0.85).clamp(320.0, maxAvailableHeight);
+
+    return AnimatedPadding(
+      padding: EdgeInsets.only(bottom: bottomInset),
+      duration: const Duration(milliseconds: 180),
+      curve: Curves.easeOutCubic,
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 580),
+          child: Container(
+            height: sheetHeight,
+            decoration: BoxDecoration(
+              color: sheetBg,
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(28)),
+              border: Border(
+                top: BorderSide(color: borderColor, width: 1.2),
+                left: BorderSide(color: borderColor, width: 1),
+                right: BorderSide(color: borderColor, width: 1),
               ),
-              child: ClipRRect(
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(28)),
-                child: Column(
-                  children: [
-                    // Top Drag Indicator Pill
-                    Center(
-                      child: Container(
-                        width: 44,
-                        height: 4.5,
-                        margin: const EdgeInsets.only(top: 10, bottom: 4),
-                        decoration: BoxDecoration(
-                          color: isDark ? Colors.white24 : Colors.grey.shade300,
-                          borderRadius: BorderRadius.circular(3),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.12),
+                  blurRadius: 32,
+                  spreadRadius: 2,
+                  offset: const Offset(0, -6),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(28)),
+              child: Column(
+                children: [
+                  // Top Drag Indicator Pill & handle
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onVerticalDragUpdate: (details) {
+                      if (details.primaryDelta != null &&
+                          details.primaryDelta! > 8) {
+                        Navigator.of(context).pop();
+                      }
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.only(top: 10, bottom: 4),
+                      color: Colors.transparent,
+                      child: Center(
+                        child: Container(
+                          width: 44,
+                          height: 4.5,
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? Colors.white24
+                                : Colors.grey.shade300,
+                            borderRadius: BorderRadius.circular(3),
+                          ),
                         ),
                       ),
                     ),
+                  ),
 
-                    // Top Header
-                    AiChatHeader(
-                      isDark: isDark,
-                      onClearChat: _viewmodel.clearChat,
-                      onClose: () => Navigator.of(context).pop(),
-                    ),
+                  // Top Header
+                  AiChatHeader(
+                    isDark: isDark,
+                    onClearChat: _viewmodel.clearChat,
+                    onClose: () => Navigator.of(context).pop(),
+                  ),
 
-                    // Chat Body (Welcome or Messages)
-                    Expanded(
+                  // Chat Body (Welcome or Messages)
+                  Expanded(
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => FocusScope.of(context).unfocus(),
                       child: Obx(() {
                         if (_viewmodel.messages.isEmpty) {
                           return AiChatWelcomeView(
@@ -172,20 +198,21 @@ class _AiChatBottomSheetState extends State<AiChatBottomSheet> {
                         );
                       }),
                     ),
+                  ),
 
-                    // Floating Dock Input Bar
-                    AiChatInputField(
-                      controller: _controller,
-                      isDark: isDark,
-                      onSend: () => _send(),
-                    ),
-                  ],
-                ),
+                  // Floating Dock Input Bar
+                  AiChatInputField(
+                    controller: _controller,
+                    isDark: isDark,
+                    onSend: () => _send(),
+                    onFocused: _scrollToBottom,
+                  ),
+                ],
               ),
             ),
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 }

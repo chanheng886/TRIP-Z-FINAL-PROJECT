@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:frontend/core/localization/language_controller.dart';
 import 'package:frontend/core/theme/app_fonts.dart';
 import 'package:frontend/app/main_app.dart';
@@ -37,8 +38,8 @@ class AuthTopNavBar extends StatelessWidget {
                       Get.offAll(() => const MainApp());
                     }
                   },
-              icon: const Icon(
-                Icons.arrow_back_rounded,
+              icon: const FaIcon(
+                FontAwesomeIcons.angleLeft,
                 color: Colors.white,
                 size: 24,
               ),
