@@ -1,0 +1,194 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradients -->
+    <linearGradient id="loginBgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f5132" />
+      <stop offset="45%" stop-color="#00B14F" />
+      <stop offset="100%" stop-color="#10B981" />
+    </linearGradient>
+
+    <linearGradient id="hillFill1" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.08" />
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.02" />
+    </linearGradient>
+
+    <linearGradient id="hillFill2" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.06" />
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.01" />
+    </linearGradient>
+
+    <!-- Bus Gradients -->
+    <linearGradient id="busUpperBody" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="100%" stop-color="#E2E8F0" />
+    </linearGradient>
+
+    <linearGradient id="busLowerBody" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#34D399" />
+      <stop offset="40%" stop-color="#00B14F" />
+      <stop offset="100%" stop-color="#047857" />
+    </linearGradient>
+
+    <linearGradient id="windshieldGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0B132B" />
+      <stop offset="100%" stop-color="#1C2541" />
+    </linearGradient>
+
+    <linearGradient id="lightBeamLeft" x1="30%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.35" />
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.0" />
+    </linearGradient>
+
+    <linearGradient id="lightBeamRight" x1="70%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.35" />
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.0" />
+    </linearGradient>
+
+    <radialGradient id="groundShadow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#000000" stop-opacity="0.5" />
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.0" />
+    </radialGradient>
+
+    <!-- Filters -->
+    <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+
+    <filter id="pinGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- 1. Sky & Canvas Background -->
+  <rect width="800" height="500" fill="url(#loginBgGrad)" />
+
+  <!-- 2. Scenic Rolling Hills & Journey Contours -->
+  <path d="M0,340 C180,240 320,290 480,360 L0,360 Z" fill="url(#hillFill1)" />
+  <path d="M0,340 C180,240 320,290 480,360" fill="none" stroke="#FFFFFF" stroke-opacity="0.2" stroke-width="1.8" />
+
+  <path d="M380,370 C540,230 680,270 800,340 L800,370 Z" fill="url(#hillFill2)" />
+  <path d="M380,370 C540,230 680,270 800,340" fill="none" stroke="#FFFFFF" stroke-opacity="0.2" stroke-width="1.8" />
+
+  <!-- Curved Highway Route Arc -->
+  <path d="M0,160 C240,90 320,260 560,140 C680,80 750,110 800,90" fill="none" stroke="#FFFFFF" stroke-opacity="0.25" stroke-dasharray="8 6" stroke-width="2.2" />
+
+  <!-- Twinkling Sparkles / Stars -->
+  <g fill="#FFFFFF" opacity="0.6">
+    <!-- Sparkle 1 -->
+    <path d="M120,95 Q120,105 130,105 Q120,105 120,115 Q120,105 110,105 Q120,105 120,95 Z" />
+    <!-- Sparkle 2 -->
+    <path d="M690,190 Q690,198 698,198 Q690,198 690,206 Q690,198 682,198 Q690,198 690,190 Z" />
+    <!-- Sparkle 3 -->
+    <circle cx="280" cy="80" r="2.5" />
+    <circle cx="520" cy="70" r="2" />
+    <circle cx="730" cy="140" r="2.5" />
+  </g>
+
+  <!-- Glowing Golden GPS Waypoint Pin -->
+  <g transform="translate(640, 100)" filter="url(#pinGlow)">
+    <circle cx="0" cy="0" r="18" fill="#FBBF24" fill-opacity="0.25" />
+    <circle cx="0" cy="0" r="10" fill="#F59E0B" stroke="#FFFFFF" stroke-width="2" />
+    <circle cx="0" cy="0" r="3.5" fill="#FFFFFF" />
+    <path d="M-7,6 L7,6 L0,20 Z" fill="#F59E0B" stroke="#FFFFFF" stroke-width="1.5" />
+  </g>
+
+  <!-- 3. Asphalt Ground & Perspective Highway Road -->
+  <g transform="translate(400, 440)">
+    <!-- Asphalt Strip -->
+    <ellipse cx="0" cy="15" rx="340" ry="32" fill="#0F172A" opacity="0.85" />
+    <!-- Ground Shadow Under Bus -->
+    <ellipse cx="0" cy="12" rx="200" ry="24" fill="url(#groundShadow)" />
+    <!-- Road Center Dashed Line -->
+    <line x1="0" y1="0" x2="0" y2="40" stroke="#FFFFFF" stroke-width="4.5" stroke-dasharray="12 8" stroke-linecap="round" opacity="0.6" />
+  </g>
+
+  <!-- 4. Headlight Light Cones (Casting forward) -->
+  <g opacity="0.8">
+    <!-- Left Light Cone -->
+    <polygon points="340,360 210,465 375,465" fill="url(#lightBeamLeft)" />
+    <!-- Right Light Cone -->
+    <polygon points="460,360 425,465 590,465" fill="url(#lightBeamRight)" />
+  </g>
+
+  <!-- 5. Front-View Modern Luxury Express Coach Bus (Center: X=400, Y=280) -->
+  <g id="loginFrontBus" transform="translate(400, 290)">
+    <!-- Tires -->
+    <rect x="-96" y="80" width="26" height="52" rx="8" fill="#0F172A" stroke="#334155" stroke-width="3" />
+    <rect x="70" y="80" width="26" height="52" rx="8" fill="#0F172A" stroke="#334155" stroke-width="3" />
+
+    <!-- Aerodynamic Side Mirrors -->
+    <!-- Left Mirror -->
+    <path d="M-85,15 L-115,8" stroke="#1E293B" stroke-width="4.5" stroke-linecap="round" fill="none" />
+    <rect x="-124" y="0" width="15" height="38" rx="7" fill="#0F172A" />
+    <rect x="-121" y="4" width="9" height="30" rx="4" fill="#94A3B8" />
+    <!-- Right Mirror -->
+    <path d="M85,15 L115,8" stroke="#1E293B" stroke-width="4.5" stroke-linecap="round" fill="none" />
+    <rect x="109" y="0" width="15" height="38" rx="7" fill="#0F172A" />
+    <rect x="112" y="4" width="9" height="30" rx="4" fill="#94A3B8" />
+
+    <!-- Main Chassis Silhouette -->
+    <!-- Lower Body (Emerald Green) -->
+    <rect x="-90" y="-45" width="180" height="170" rx="30" fill="url(#busLowerBody)" filter="drop-shadow(0 15px 25px rgba(0,0,0,0.3))" />
+
+    <!-- Upper Body (Pearl White - Top Half) -->
+    <path d="M-90,-15 L-90,-15 C-90,-35 -75,-45 -45,-45 L45,-45 C75,-45 90,-35 90,-15 L90,38 L-90,38 Z" fill="url(#busUpperBody)" />
+
+    <!-- Gold Accent Separator Beltline -->
+    <line x1="-88" y1="38" x2="88" y2="38" stroke="#FBBF24" stroke-width="4" stroke-linecap="round" />
+
+    <!-- Roof Aerodynamic AC Pod -->
+    <rect x="-45" y="-58" width="90" height="15" rx="7.5" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="2" />
+    <!-- Amber Clearance Marker Lights -->
+    <circle cx="-65" cy="-38" r="4" fill="#F59E0B" filter="url(#softGlow)" />
+    <circle cx="65" cy="-38" r="4" fill="#F59E0B" filter="url(#softGlow)" />
+
+    <!-- Destination LED Board -->
+    <rect x="-65" y="-34" width="130" height="24" rx="6" fill="#090D16" stroke="#1E293B" stroke-width="2" />
+    <text x="0" y="-18" fill="#FCD34D" font-family="'DM Sans', sans-serif" font-weight="900" font-size="12" letter-spacing="2" text-anchor="middle" dominant-baseline="middle">TRIP-Z • EXPRESS</text>
+
+    <!-- Panoramic Tinted Windshield -->
+    <rect x="-76" y="-3" width="152" height="60" rx="14" fill="url(#windshieldGrad)" stroke="#334155" stroke-width="1.5" />
+
+    <!-- Driver Silhouette & Steering Wheel -->
+    <circle cx="-40" cy="24" r="9" fill="#090D16" />
+    <path d="M-50,42 Q-40,30 -30,42" fill="none" stroke="#475569" stroke-width="3" stroke-linecap="round" />
+
+    <!-- Windshield Glossy Glare Reflection -->
+    <polygon points="-60,-1 -35,-1 -52,55 -72,55" fill="#FFFFFF" opacity="0.16" />
+
+    <!-- Wipers -->
+    <line x1="-50" y1="56" x2="-22" y2="48" stroke="#475569" stroke-width="2.5" stroke-linecap="round" />
+    <line x1="8" y1="56" x2="36" y2="48" stroke="#475569" stroke-width="2.5" stroke-linecap="round" />
+
+    <!-- Front Chrome Slatted Grille -->
+    <rect x="-48" y="66" width="96" height="28" rx="6" fill="#0F172A" stroke="#1E293B" stroke-width="1.5" />
+    <line x1="-40" y1="74" x2="40" y2="74" stroke="#94A3B8" stroke-width="1.8" opacity="0.7" />
+    <line x1="-40" y1="80" x2="40" y2="80" stroke="#94A3B8" stroke-width="1.8" opacity="0.7" />
+    <line x1="-40" y1="86" x2="40" y2="86" stroke="#94A3B8" stroke-width="1.8" opacity="0.7" />
+
+    <!-- Center Gold Shield & "Z" Emblem -->
+    <circle cx="0" cy="79" r="9" fill="#FBBF24" filter="url(#softGlow)" />
+    <text x="0" y="80" fill="#0F172A" font-family="'DM Sans', sans-serif" font-weight="900" font-size="11" text-anchor="middle" dominant-baseline="middle">Z</text>
+
+    <!-- LED Projector Headlights (Angled Housings) -->
+    <!-- Left Headlight -->
+    <path d="M-82,66 L-56,66 L-54,86 L-80,86 Z" fill="#090D16" rx="4" />
+    <circle cx="-68" cy="76" r="6" fill="#FFFFFF" filter="url(#softGlow)" />
+    <line x1="-80" y1="68" x2="-57" y2="68" stroke="#38BDF8" stroke-width="2.5" stroke-linecap="round" filter="url(#softGlow)" />
+
+    <!-- Right Headlight -->
+    <path d="M56,66 L82,66 L80,86 L54,86 Z" fill="#090D16" rx="4" />
+    <circle cx="68" cy="76" r="6" fill="#FFFFFF" filter="url(#softGlow)" />
+    <line x1="57" y1="68" x2="80" y2="68" stroke="#38BDF8" stroke-width="2.5" stroke-linecap="round" filter="url(#softGlow)" />
+
+    <!-- Fog Lights -->
+    <circle cx="-64" cy="106" r="4.5" fill="#FFFFFF" opacity="0.9" filter="url(#softGlow)" />
+    <circle cx="64" cy="106" r="4.5" fill="#FFFFFF" opacity="0.9" filter="url(#softGlow)" />
+
+    <!-- Front Bumper License Plate -->
+    <rect x="-30" y="100" width="60" height="17" rx="3" fill="#FFFFFF" stroke="#0F172A" stroke-width="1.5" />
+    <text x="0" y="110" fill="#0F172A" font-family="'DM Sans', sans-serif" font-weight="bold" font-size="10" letter-spacing="1.5" text-anchor="middle" dominant-baseline="middle">TRIP-Z</text>
+  </g>
+</svg>

@@ -1,0 +1,221 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradients -->
+    <linearGradient id="regBgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#064E3B" />
+      <stop offset="45%" stop-color="#00B14F" />
+      <stop offset="100%" stop-color="#059669" />
+    </linearGradient>
+
+    <linearGradient id="regHillFill1" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.08" />
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.01" />
+    </linearGradient>
+
+    <linearGradient id="regHillFill2" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.05" />
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.01" />
+    </linearGradient>
+
+    <!-- Side Bus Gradients -->
+    <linearGradient id="coachUpper" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="100%" stop-color="#E2E8F0" />
+    </linearGradient>
+
+    <linearGradient id="coachLower" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#34D399" />
+      <stop offset="35%" stop-color="#00B14F" />
+      <stop offset="100%" stop-color="#065F46" />
+    </linearGradient>
+
+    <linearGradient id="speedRibbon" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FBBF24" />
+      <stop offset="60%" stop-color="#34D399" />
+      <stop offset="100%" stop-color="#00B14F" />
+    </linearGradient>
+
+    <linearGradient id="windowRibbon" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0B132B" />
+      <stop offset="100%" stop-color="#1E293B" />
+    </linearGradient>
+
+    <!-- Wheel Rim Radial Gradient -->
+    <radialGradient id="wheelRim" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#F1F5F9" />
+      <stop offset="60%" stop-color="#94A3B8" />
+      <stop offset="100%" stop-color="#475569" />
+    </radialGradient>
+
+    <!-- Filters -->
+    <filter id="softGlowReg" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="5" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+
+    <filter id="pinGlowReg" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- 1. Sky & Canvas Background -->
+  <rect width="800" height="500" fill="url(#regBgGrad)" />
+
+  <!-- 2. Scenic Rolling Hills & Journey Contours -->
+  <path d="M0,350 C160,260 280,310 440,370 L0,370 Z" fill="url(#regHillFill1)" />
+  <path d="M0,350 C160,260 280,310 440,370" fill="none" stroke="#FFFFFF" stroke-opacity="0.18" stroke-width="1.8" />
+
+  <path d="M350,380 C500,240 660,280 800,340 L800,380 Z" fill="url(#regHillFill2)" />
+  <path d="M350,380 C500,240 660,280 800,340" fill="none" stroke="#FFFFFF" stroke-opacity="0.18" stroke-width="1.8" />
+
+  <!-- Highway Route Arc Contour -->
+  <path d="M0,180 C200,90 320,270 560,130 C680,60 760,110 800,80" fill="none" stroke="#FFFFFF" stroke-opacity="0.25" stroke-dasharray="8 6" stroke-width="2.2" />
+
+  <!-- Twinkling Sparkles / Stars -->
+  <g fill="#FFFFFF" opacity="0.6">
+    <path d="M100,105 Q100,115 110,115 Q100,115 100,125 Q100,115 90,115 Q100,115 100,105 Z" />
+    <path d="M710,160 Q710,168 718,168 Q710,168 710,176 Q710,168 702,168 Q710,168 710,160 Z" />
+    <circle cx="240" cy="70" r="2.5" />
+    <circle cx="480" cy="85" r="2" />
+    <circle cx="760" cy="110" r="2.5" />
+  </g>
+
+  <!-- Glowing Golden GPS Destination Waypoint Pin -->
+  <g transform="translate(680, 85)" filter="url(#pinGlowReg)">
+    <circle cx="0" cy="0" r="18" fill="#FBBF24" fill-opacity="0.25" />
+    <circle cx="0" cy="0" r="10" fill="#F59E0B" stroke="#FFFFFF" stroke-width="2" />
+    <circle cx="0" cy="0" r="3.5" fill="#FFFFFF" />
+    <path d="M-7,6 L7,6 L0,20 Z" fill="#F59E0B" stroke="#FFFFFF" stroke-width="1.5" />
+  </g>
+
+  <!-- 3. Asphalt Highway Road Base -->
+  <g transform="translate(400, 440)">
+    <rect x="-370" y="-8" width="740" height="28" rx="14" fill="#0F172A" opacity="0.85" />
+    <!-- White Dashed Highway Lane Strip -->
+    <line x1="-340" y1="6" x2="-260" y2="6" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" opacity="0.6" />
+    <line x1="-200" y1="6" x2="-100" y2="6" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" opacity="0.6" />
+    <line x1="-40" y1="6" x2="60" y2="6" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" opacity="0.6" />
+    <line x1="120" y1="6" x2="220" y2="6" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" opacity="0.6" />
+    <line x1="280" y1="6" x2="340" y2="6" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" opacity="0.6" />
+  </g>
+
+  <!-- Speed Wind Streaks Trailing Behind Bus -->
+  <g stroke="#FFFFFF" stroke-linecap="round" opacity="0.4" stroke-width="2.5">
+    <line x1="50" y1="320" x2="110" y2="320" />
+    <line x1="70" y1="350" x2="115" y2="350" />
+    <line x1="60" y1="380" x2="105" y2="380" />
+  </g>
+
+  <!-- 4. Side-View Streamlined Travel Coach Bus (Center: X=400, Y=330) -->
+  <g id="registerSideBus" transform="translate(400, 335)">
+    <!-- Wheel Contact Shadows -->
+    <ellipse cx="-165" cy="98" rx="65" ry="10" fill="#000000" opacity="0.45" />
+    <ellipse cx="150" cy="98" rx="65" ry="10" fill="#000000" opacity="0.45" />
+
+    <!-- Main Coach Body Shell -->
+    <!-- Clip Path for bus body -->
+    <clipPath id="sideBusBodyClip">
+      <path d="M-260,-55 C-260,-75 -245,-80 -215,-80 L185,-80 C215,-80 235,-55 245,-20 L250,30 C250,75 235,80 205,80 L-235,80 C-255,80 -260,70 -260,50 Z" />
+    </clipPath>
+
+    <!-- Base Coach Body (White Top) -->
+    <path d="M-260,-55 C-260,-75 -245,-80 -215,-80 L185,-80 C215,-80 235,-55 245,-20 L250,30 C250,75 235,80 205,80 L-235,80 C-255,80 -260,70 -260,50 Z" fill="url(#coachUpper)" filter="drop-shadow(0 20px 30px rgba(0,0,0,0.35))" />
+
+    <!-- Clipped Internal Body Features -->
+    <g clip-path="url(#sideBusBodyClip)">
+      <!-- Lower Chassis (Trip-Z Emerald Green) -->
+      <path d="M-260,10 L250,10 L250,85 L-260,85 Z" fill="url(#coachLower)" />
+
+      <!-- Dynamic Speed Swoop Ribbon (Gold & Lime Gradient) -->
+      <path d="M245,45 C150,35 40,0 -240,-45 L-250,-30 C30,15 140,55 235,65 Z" fill="url(#speedRibbon)" opacity="0.95" />
+
+      <!-- Chrome Body Trim Accent Line -->
+      <line x1="-255" y1="8" x2="245" y2="8" stroke="#FBBF24" stroke-width="2.5" opacity="0.8" />
+    </g>
+
+    <!-- Body Border Outline Stroke -->
+    <path d="M-260,-55 C-260,-75 -245,-80 -215,-80 L185,-80 C215,-80 235,-55 245,-20 L250,30 C250,75 235,80 205,80 L-235,80 C-255,80 -260,70 -260,50 Z" fill="none" stroke="#000000" stroke-opacity="0.15" stroke-width="2" />
+
+    <!-- Roof Aerodynamic AC Streamline Unit -->
+    <rect x="-140" y="-95" width="160" height="17" rx="8.5" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="2" />
+
+    <!-- Panoramic Tinted Passenger Window Ribbon -->
+    <path d="M-240,-65 L180,-65 C198,-65 212,-48 222,-20 L226,0 L-240,0 Z" fill="url(#windowRibbon)" rx="8" />
+
+    <!-- Window Pane Separator Slats -->
+    <g stroke="#0F172A" stroke-width="3">
+      <line x1="-180" y1="-65" x2="-180" y2="0" />
+      <line x1="-120" y1="-65" x2="-120" y2="0" />
+      <line x1="-60" y1="-65" x2="-60" y2="0" />
+      <line x1="0" y1="-65" x2="0" y2="0" />
+      <line x1="60" y1="-65" x2="60" y2="0" />
+      <line x1="120" y1="-65" x2="120" y2="0" />
+      <line x1="175" y1="-65" x2="175" y2="0" />
+    </g>
+
+    <!-- Window Glossy Glare Highlights -->
+    <polygon points="-220,-63 -170,-63 -190,-2 -240,-2" fill="#FFFFFF" opacity="0.12" />
+    <polygon points="-70,-63 -20,-63 -40,-2 -90,-2" fill="#FFFFFF" opacity="0.12" />
+    <polygon points="80,-63 130,-63 110,-2 60,-2" fill="#FFFFFF" opacity="0.12" />
+
+    <!-- Passenger & Driver Head Silhouettes inside windows -->
+    <g fill="#090D16" opacity="0.7">
+      <circle cx="205" cy="-20" r="10" /> <!-- Driver -->
+      <circle cx="90" cy="-28" r="8.5" />
+      <circle cx="30" cy="-28" r="8.5" />
+      <circle cx="-30" cy="-28" r="8.5" />
+      <circle cx="-90" cy="-28" r="8.5" />
+      <circle cx="-150" cy="-28" r="8.5" />
+      <circle cx="-210" cy="-28" r="8.5" />
+    </g>
+
+    <!-- Side Brand Destination Board -->
+    <rect x="-80" y="24" width="160" height="26" rx="6" fill="#090D16" stroke="#1E293B" stroke-width="1.8" />
+    <text x="0" y="41" fill="#FCD34D" font-family="'DM Sans', sans-serif" font-weight="900" font-size="12" letter-spacing="1.8" text-anchor="middle">TRIP-Z • EXPRESS</text>
+
+    <!-- Aerodynamic Front Driver Mirror -->
+    <path d="M228,-15 L248,-18" stroke="#1E293B" stroke-width="3.5" stroke-linecap="round" />
+    <rect x="246" y="-30" width="10" height="26" rx="4" fill="#0F172A" />
+
+    <!-- Front LED Projector Headlight & Amber Indicator -->
+    <path d="M242,12 L249,15 L247,38 L238,36 Z" fill="#FFFFFF" filter="url(#softGlowReg)" />
+    <rect x="238" y="40" width="9" height="6" rx="2" fill="#F59E0B" />
+
+    <!-- Rear Tail Light Wrap-around Bar -->
+    <rect x="-260" y="15" width="7" height="32" rx="3" fill="#EF4444" filter="url(#softGlowReg)" />
+
+    <!-- 5. Alloy Wheels & Tires -->
+    <!-- Rear Dual Wheel (Left) -->
+    <g transform="translate(-165, 80)">
+      <!-- Outer Rubber Tire -->
+      <circle cx="0" cy="0" r="38" fill="#0F172A" stroke="#1E293B" stroke-width="4" />
+      <!-- Silver Alloy Rim -->
+      <circle cx="0" cy="0" r="24" fill="url(#wheelRim)" />
+      <!-- Dark Hub Center -->
+      <circle cx="0" cy="0" r="10" fill="#0F172A" />
+      <circle cx="0" cy="0" r="4" fill="#FBBF24" />
+      <!-- Wheel Spokes -->
+      <line x1="-20" y1="0" x2="20" y2="0" stroke="#475569" stroke-width="2.5" />
+      <line x1="0" y1="-20" x2="0" y2="20" stroke="#475569" stroke-width="2.5" />
+      <line x1="-14" y1="-14" x2="14" y2="14" stroke="#475569" stroke-width="2.5" />
+      <line x1="-14" y1="14" x2="14" y2="-14" stroke="#475569" stroke-width="2.5" />
+    </g>
+
+    <!-- Front Wheel (Right) -->
+    <g transform="translate(150, 80)">
+      <!-- Outer Rubber Tire -->
+      <circle cx="0" cy="0" r="38" fill="#0F172A" stroke="#1E293B" stroke-width="4" />
+      <!-- Silver Alloy Rim -->
+      <circle cx="0" cy="0" r="24" fill="url(#wheelRim)" />
+      <!-- Dark Hub Center -->
+      <circle cx="0" cy="0" r="10" fill="#0F172A" />
+      <circle cx="0" cy="0" r="4" fill="#FBBF24" />
+      <!-- Wheel Spokes -->
+      <line x1="-20" y1="0" x2="20" y2="0" stroke="#475569" stroke-width="2.5" />
+      <line x1="0" y1="-20" x2="0" y2="20" stroke="#475569" stroke-width="2.5" />
+      <line x1="-14" y1="-14" x2="14" y2="14" stroke="#475569" stroke-width="2.5" />
+      <line x1="-14" y1="14" x2="14" y2="-14" stroke="#475569" stroke-width="2.5" />
+    </g>
+  </g>
+</svg>
