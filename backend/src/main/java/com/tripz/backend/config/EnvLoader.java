@@ -85,6 +85,7 @@ public final class EnvLoader {
         }
 
         normalizeDatabaseUrl();
+        normalizeRedisUrl();
     }
 
     private static void normalizeDatabaseUrl() {
@@ -152,6 +153,38 @@ public final class EnvLoader {
     }
 
     private static String sanitizeJdbcUrl(String url) {
+        return url.replaceAll(":[^/@:]+@", ":****@");
+    }
+
+    private static void normalizeRedisUrl() {
+        String redisUrl = System.getProperty("REDIS_URL");
+        if (redisUrl == null || redisUrl.isBlank()) {
+            redisUrl = System.getenv("REDIS_URL");
+        }
+
+        if (redisUrl != null && !redisUrl.isBlank()) {
+            redisUrl = redisUrl.trim();
+            System.setProperty("spring.data.redis.url", redisUrl);
+            log.info("[EnvLoader] Redis URL configured for Spring Data Redis: {}", sanitizeRedisUrl(redisUrl));
+        } else {
+            String redisHost = System.getProperty("REDIS_HOST");
+            if (redisHost == null || redisHost.isBlank()) {
+                redisHost = System.getenv("REDIS_HOST");
+            }
+            if (redisHost != null && !redisHost.isBlank()) {
+                redisHost = redisHost.trim();
+                if (redisHost.startsWith("https://")) {
+                    redisHost = redisHost.substring("https://".length());
+                } else if (redisHost.startsWith("http://")) {
+                    redisHost = redisHost.substring("http://".length());
+                }
+                System.setProperty("REDIS_HOST", redisHost);
+                System.setProperty("spring.data.redis.host", redisHost);
+            }
+        }
+    }
+
+    private static String sanitizeRedisUrl(String url) {
         return url.replaceAll(":[^/@:]+@", ":****@");
     }
 }
