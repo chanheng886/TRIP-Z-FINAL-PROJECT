@@ -79,6 +79,13 @@ class TicketNotificationService extends GetxService {
       final prefs = await SharedPreferences.getInstance();
       final isPaused = prefs.getBool('pause_notifications') ?? false;
 
+      // If user paused notifications, suppress banners and alerts immediately
+      if (isPaused) {
+        imminentBooking.value = null;
+        minutesRemaining.value = 0;
+        return;
+      }
+
       final bookings = await _bookingRepository.getUserBookings(userId);
       final now = DateTime.now();
 
@@ -103,8 +110,8 @@ class TicketNotificationService extends GetxService {
             closestImminent = booking;
           }
 
-          // Trigger high-priority alert if not paused and not yet notified
-          if (!isPaused && !_alertedBookingIds.contains(booking.id)) {
+          // Trigger high-priority alert if not yet notified
+          if (!_alertedBookingIds.contains(booking.id)) {
             _alertedBookingIds.add(booking.id);
             _dispatchUrgentAlert(booking, mins);
           }
@@ -116,6 +123,18 @@ class TicketNotificationService extends GetxService {
       minutesRemaining.value = closestImminent != null ? closestMins : 0;
     } catch (e) {
       debugPrint('⚠️ [TicketNotificationService] checkUpcomingTickets error: $e');
+    }
+  }
+
+  /// Called immediately when user toggles Pause Notifications in Profile settings
+  void onPauseSettingChanged(bool isPaused) {
+    if (isPaused) {
+      imminentBooking.value = null;
+      minutesRemaining.value = 0;
+      debugPrint('🔕 [TicketNotificationService] Notifications paused: suppressed in-app alerts & banners.');
+    } else {
+      debugPrint('🔔 [TicketNotificationService] Notifications unpaused: re-checking imminent departures.');
+      checkUpcomingTickets();
     }
   }
 

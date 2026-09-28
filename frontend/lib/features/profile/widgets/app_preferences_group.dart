@@ -33,7 +33,6 @@ class AppPreferencesGroup extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final currentLang = viewModel.currentLanguage;
-    final pauseNotifs = viewModel.pauseNotifications.value;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -104,15 +103,26 @@ class AppPreferencesGroup extends StatelessWidget {
             ProfileDivider(color: dividerColor),
 
             // 3. Pause Notifications Switch
-            ProfileSwitchTile(
-              icon: FontAwesomeIcons.solidBell,
-              iconColor: const Color(0xFFEC4899),
-              title: 'pause_notifications'.tr,
-              value: pauseNotifs,
-              onChanged: viewModel.toggleNotificationSetting,
-              primaryText: primaryText,
-              isDark: isDark,
-            ),
+            Obx(() {
+              final isPaused = viewModel.pauseNotifications.value;
+              return ProfileSwitchTile(
+                icon: isPaused
+                    ? FontAwesomeIcons.bellSlash
+                    : FontAwesomeIcons.solidBell,
+                iconColor: isPaused
+                    ? const Color(0xFFEF4444)
+                    : AppColors.green,
+                title: 'pause_notifications'.tr,
+                subtitle: isPaused
+                    ? 'pause_notifications_desc_on'.tr
+                    : 'pause_notifications_desc_off'.tr,
+                value: isPaused,
+                onChanged: (val) => viewModel.toggleNotificationSetting(val),
+                primaryText: primaryText,
+                secondaryText: secondaryText,
+                isDark: isDark,
+              );
+            }),
           ],
         ),
       ],

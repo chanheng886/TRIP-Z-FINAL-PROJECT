@@ -108,6 +108,13 @@ class PushNotificationService extends GetxService {
     final token = fcmToken.value;
     if (token.isEmpty) return;
 
+    final prefs = await SharedPreferences.getInstance();
+    final isPaused = prefs.getBool('pause_notifications') ?? false;
+    if (isPaused) {
+      debugPrint('🔕 [FCM] Registration skipped: user has paused notifications.');
+      return;
+    }
+
     if (!Get.isRegistered<AuthViewmodel>()) return;
     final authVM = Get.find<AuthViewmodel>();
     final userId = authVM.currentUser?.id;
@@ -117,7 +124,6 @@ class PushNotificationService extends GetxService {
     }
 
     try {
-      final prefs = await SharedPreferences.getInstance();
       final lastToken = prefs.getString(_prefLastTokenKey);
 
       // Skip duplicate network call if token already registered for this user
@@ -152,9 +158,58 @@ class PushNotificationService extends GetxService {
     }
   }
 
+  /// Syncs pause status with backend so FCM server-side push notifications are stopped/restored
+  Future<void> syncPauseStatusWithBackend(bool isPaused) async {
+    if (!Get.isRegistered<AuthViewmodel>()) return;
+    final authVM = Get.find<AuthViewmodel>();
+    final userId = authVM.currentUser?.id;
+    if (userId == null) return;
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final authToken = await AuthService().getToken();
+      final headers = <String, String>{
+        'Content-Type': 'application/json',
+      };
+      if (authToken != null && authToken.isNotEmpty) {
+        headers['Authorization'] = 'Bearer $authToken';
+      }
+
+      final url = Uri.parse('${BaseUrl.users}/$userId/fcm-token');
+      // If paused, send empty string to backend to disable FCM pushes for this user
+      // If unpaused, send the current fcmToken to restore FCM pushes
+      final tokenToSend = isPaused ? '' : fcmToken.value;
+      final response = await http.patch(
+        url,
+        headers: headers,
+        body: json.encode({'fcmToken': tokenToSend}),
+      );
+
+      if (response.statusCode == 200) {
+        if (isPaused) {
+          await prefs.remove(_prefLastTokenKey);
+          debugPrint('🔕 [FCM] Successfully paused push notifications on backend for user #$userId');
+        } else {
+          await prefs.setString(_prefLastTokenKey, fcmToken.value);
+          debugPrint('🔔 [FCM] Successfully resumed push notifications on backend for user #$userId');
+        }
+      }
+    } catch (e) {
+      debugPrint('⚠️ [FCM] Failed to sync pause status with backend: $e');
+    }
+  }
+
   /// Displays an in-app heads-up snackbar when a push arrives while app is in foreground
-  void _handleForegroundMessage(RemoteMessage message) {
+  Future<void> _handleForegroundMessage(RemoteMessage message) async {
     debugPrint('🔔 [FCM Foreground] Title: ${message.notification?.title}, Data: ${message.data}');
+
+    // If notifications are paused by the user, suppress foreground alerts
+    final prefs = await SharedPreferences.getInstance();
+    final isPaused = prefs.getBool('pause_notifications') ?? false;
+    if (isPaused) {
+      debugPrint('🔕 [FCM Foreground] Alert suppressed because user enabled Pause Notifications.');
+      return;
+    }
 
     final title = message.notification?.title ?? 'Trip-Z Notification';
     final body = message.notification?.body ?? 'You have a new update regarding your trip.';

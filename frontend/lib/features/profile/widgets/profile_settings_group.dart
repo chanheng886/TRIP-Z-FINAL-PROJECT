@@ -58,9 +58,13 @@ class ProfileSettingsGroup extends StatelessWidget {
             child: Row(
               children: [
                 FaIcon(
-                  FontAwesomeIcons.bellSlash,
+                  pauseNotifications
+                      ? FontAwesomeIcons.bellSlash
+                      : FontAwesomeIcons.solidBell,
                   size: 18,
-                  color: primaryText,
+                  color: pauseNotifications
+                      ? const Color(0xFFEF4444)
+                      : AppColors.green,
                 ),
                 const SizedBox(width: 14),
                 Expanded(

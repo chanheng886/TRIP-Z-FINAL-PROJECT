@@ -3,6 +3,8 @@ import 'package:frontend/core/localization/language_controller.dart';
 import 'package:frontend/core/theme/theme_controller.dart';
 import 'package:frontend/features/auth/model/user.dart';
 import 'package:frontend/features/auth/viewmodel/auth_viewmodel.dart';
+import 'package:frontend/shared/service/push_notification_service.dart';
+import 'package:frontend/shared/service/ticket_notification_service.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -47,6 +49,16 @@ class ProfileViewModel extends GetxController {
     pauseNotifications.value = val;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_notificationsKey, val);
+
+    // Sync in-app departure & ticket notification service
+    if (Get.isRegistered<TicketNotificationService>()) {
+      Get.find<TicketNotificationService>().onPauseSettingChanged(val);
+    }
+
+    // Sync remote Firebase push notification token & backend
+    if (Get.isRegistered<PushNotificationService>()) {
+      await Get.find<PushNotificationService>().syncPauseStatusWithBackend(val);
+    }
   }
 
   void toggleDarkMode() {

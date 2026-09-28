@@ -211,6 +211,8 @@ final Map<String, String> kmKH = {
   'admin_dashboard': 'ផ្ទាំងគ្រប់គ្រងរដ្ឋបាល',
   'Admin dashboard': 'ផ្ទាំងគ្រប់គ្រងរដ្ឋបាល',
   'pause_notifications': 'ផ្អាកការជូនដំណឹង',
+  'pause_notifications_desc_on': 'បានផ្អាកការជូនដំណឹង (បិទសំឡេង និងសារដាស់តឿន)',
+  'pause_notifications_desc_off': 'កំពុងដំណើរការ (បើកទទួលសារដាស់តឿន)',
   'log_out': 'ចាកចេញពីគណនី',
   'settings': 'ការកំណត់',
   'about_us': 'អំពីយើង',

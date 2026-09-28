@@ -240,9 +240,11 @@ class ProfileSwitchTile extends StatelessWidget {
   final FaIconData icon;
   final Color iconColor;
   final String title;
+  final String? subtitle;
   final bool value;
   final ValueChanged<bool> onChanged;
   final Color primaryText;
+  final Color? secondaryText;
   final bool isDark;
 
   const ProfileSwitchTile({
@@ -250,9 +252,11 @@ class ProfileSwitchTile extends StatelessWidget {
     required this.icon,
     required this.iconColor,
     required this.title,
+    this.subtitle,
     required this.value,
     required this.onChanged,
     required this.primaryText,
+    this.secondaryText,
     required this.isDark,
   });
 
@@ -262,7 +266,8 @@ class ProfileSwitchTile extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-          Container(
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
             width: 34,
             height: 34,
             decoration: BoxDecoration(
@@ -273,13 +278,32 @@ class ProfileSwitchTile extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(
-              title,
-              style: AppFonts.dmSans(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: primaryText,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  title,
+                  style: AppFonts.dmSans(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: primaryText,
+                  ),
+                ),
+                if (subtitle != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle!,
+                    style: AppFonts.dmSans(
+                      fontSize: 11,
+                      color: secondaryText ??
+                          (isDark
+                              ? AppColors.darkSecondaryText
+                              : AppColors.lightSecondaryText),
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
           Switch(
