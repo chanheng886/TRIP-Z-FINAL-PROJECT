@@ -13,9 +13,9 @@ import 'package:frontend/features/admin/widgets/admin_overview_tab.dart';
 import 'package:frontend/features/admin/widgets/admin_route_form_tab.dart';
 import 'package:frontend/features/admin/widgets/admin_schedule_form_tab.dart';
 import 'package:frontend/features/admin/widgets/admin_tab_bar.dart';
+import 'package:frontend/app/main_app.dart';
 import 'package:frontend/features/auth/model/user.dart';
 import 'package:frontend/features/auth/viewmodel/auth_viewmodel.dart';
-import 'package:frontend/main.dart';
 import 'package:get/get.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
