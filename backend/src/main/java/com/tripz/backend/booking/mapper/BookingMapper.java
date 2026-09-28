@@ -41,30 +41,53 @@ public class BookingMapper {
     }
 
     public BookingResponseDTO toResponse(Booking booking){
+        if (booking == null) {
+            return null;
+        }
+
         List<BusBooking> busBookings = busBookingRepository.findByBooking_Id(booking.getId());
 
-        List<String> seatNumbers = busBookings.stream()
-            .map(BusBooking::getSeatNumber)
-            .collect(Collectors.toList());
+        List<String> seatNumbers = (busBookings != null)
+            ? busBookings.stream()
+                .map(BusBooking::getSeatNumber)
+                .filter(s -> s != null)
+                .collect(Collectors.toList())
+            : List.of();
+
+        Long userId = (booking.getUser() != null) ? booking.getUser().getId() : null;
+        String username = (booking.getUser() != null && booking.getUser().getUsername() != null)
+                ? booking.getUser().getUsername()
+                : "Guest";
 
         BookingResponseDTO.BookingResponseDTOBuilder builder = BookingResponseDTO.builder()
             .id(booking.getId())
-            .userId(booking.getUser().getId())
-            .username(booking.getUser().getUsername())
+            .userId(userId)
+            .username(username)
             .bookingDate(booking.getBookingDate())
-            .totalAmount(booking.getTotalAmount())
-            .paymentMethod(booking.getPaymentMethod())
+            .totalAmount(booking.getTotalAmount() != null ? booking.getTotalAmount() : java.math.BigDecimal.ZERO)
+            .paymentMethod(booking.getPaymentMethod() != null ? booking.getPaymentMethod() : "Pay at Station")
             .bookingStatus(booking.getBookingStatus())
             .seatNumbers(seatNumbers);
 
-        if (!busBookings.isEmpty()) {
-            var schedule = busBookings.get(0).getBusSchedule();
-            builder
-                .fromLocation(schedule.getRoute().getFromLocation().getLocationName())
-                .toLocation(schedule.getRoute().getToLocation().getLocationName())
-                .travelDate(schedule.getTravelDate())
-                .departureTime(schedule.getDepartureTime())
-                .arrivalTime(schedule.getArrivalTime());
+        if (busBookings != null && !busBookings.isEmpty()) {
+            var busBooking = busBookings.get(0);
+            var schedule = (busBooking != null) ? busBooking.getBusSchedule() : null;
+            if (schedule != null) {
+                var route = schedule.getRoute();
+                String from = (route != null && route.getFromLocation() != null)
+                        ? route.getFromLocation().getLocationName()
+                        : "";
+                String to = (route != null && route.getToLocation() != null)
+                        ? route.getToLocation().getLocationName()
+                        : "";
+
+                builder
+                    .fromLocation(from)
+                    .toLocation(to)
+                    .travelDate(schedule.getTravelDate())
+                    .departureTime(schedule.getDepartureTime())
+                    .arrivalTime(schedule.getArrivalTime());
+            }
         }
 
         return builder.build();

@@ -54,13 +54,13 @@ public class Booking {
      */
     @Builder.Default
     @Enumerated(EnumType.STRING)
-    @Column(name = "payment_status", nullable = false)
+    @Column(name = "payment_status")
     private PaymentStatus paymentStatus = PaymentStatus.PENDING;
 
     /**
      * Tracks whether the 15-30 minute imminent departure alert was sent to the passenger.
      */
     @Builder.Default
-    @Column(name = "departure_notified", nullable = false)
+    @Column(name = "departure_notified")
     private Boolean departureNotified = false;
 }

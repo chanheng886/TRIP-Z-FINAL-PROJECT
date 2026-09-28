@@ -139,10 +139,11 @@ public class BookingService {
                 .paymentMethod(method)
                 .bookingStatus(BookingStatus.Pending)
                 .paymentStatus(PaymentStatus.PENDING)
+                .departureNotified(false)
                 .totalAmount(BigDecimal.ZERO)
                 .build();
 
-        bookingRepository.save(booking);
+        booking = bookingRepository.save(booking);
 
         // 2. Fetch bus schedule
         BusSchedule schedule = busScheduleRepository.findById(dto.getBusScheduleId())
@@ -166,7 +167,7 @@ public class BookingService {
 
         // 4. Update total amount
         booking.setTotalAmount(total);
-        bookingRepository.save(booking);
+        booking = bookingRepository.save(booking);
 
         // 5. Notify all admins of the new booking
         notifyAdminsNewBooking(booking, schedule, dto.getPassengers().size());
