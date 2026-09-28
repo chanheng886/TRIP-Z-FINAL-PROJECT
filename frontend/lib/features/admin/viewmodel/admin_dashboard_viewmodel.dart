@@ -1,3 +1,7 @@
+import 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/features/admin/model/bus.dart';
 import 'package:frontend/features/admin/model/bus_route.dart';
 import 'package:frontend/features/admin/model/bus_type.dart';
@@ -27,10 +31,82 @@ class AdminDashboardViewmodel extends GetxController {
   final RxList<BookingResponse> bookings = <BookingResponse>[].obs;
   final Rxn<DateTime> selectedDate = Rxn<DateTime>();
 
+  Timer? _pollTimer;
+  int _lastKnownMaxBookingId = 0;
+
   @override
   void onInit() {
     super.onInit();
     loadOptions();
+    _startBookingPolling();
+  }
+
+  @override
+  void onClose() {
+    _pollTimer?.cancel();
+    super.onClose();
+  }
+
+  void _startBookingPolling() {
+    _pollTimer?.cancel();
+    // Poll every 12 seconds when viewing all bookings
+    _pollTimer = Timer.periodic(const Duration(seconds: 12), (_) async {
+      if (selectedDate.value == null && !isLoadingOptions.value) {
+        await refreshBookingsSilently();
+      }
+    });
+  }
+
+  Future<void> refreshBookingsSilently() async {
+    try {
+      final freshBookings = await repository.fetchBookings();
+      freshBookings.sort((a, b) => b.id.compareTo(a.id));
+
+      if (_lastKnownMaxBookingId > 0 && freshBookings.isNotEmpty) {
+        final newBookings =
+            freshBookings.where((b) => b.id > _lastKnownMaxBookingId).toList();
+        if (newBookings.isNotEmpty) {
+          final latest = newBookings.first;
+          _triggerNewBookingAlert(latest, count: newBookings.length);
+        }
+      }
+
+      if (freshBookings.isNotEmpty) {
+        _lastKnownMaxBookingId = freshBookings
+            .map((b) => b.id)
+            .reduce((max, id) => id > max ? id : max);
+      }
+
+      bookings.value = freshBookings;
+    } catch (_) {}
+  }
+
+  void _triggerNewBookingAlert(BookingResponse latest, {int count = 1}) {
+    Get.snackbar(
+      'New Booking Alert! 🎟️',
+      count > 1
+          ? '$count new bookings received! Latest from ${latest.username} (\$${latest.totalAmount.toStringAsFixed(2)})'
+          : 'New booking #${latest.id} from ${latest.username}: ${latest.fromLocation} → ${latest.toLocation} (\$${latest.totalAmount.toStringAsFixed(2)})',
+      snackPosition: SnackPosition.TOP,
+      backgroundColor: const Color(0xFF1E293B),
+      colorText: Colors.white,
+      icon: Container(
+        margin: const EdgeInsets.all(8),
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: AppColors.green.withValues(alpha: 0.2),
+          shape: BoxShape.circle,
+        ),
+        child: const FaIcon(
+          FontAwesomeIcons.ticket,
+          color: AppColors.green,
+          size: 18,
+        ),
+      ),
+      duration: const Duration(seconds: 7),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      borderRadius: 16,
+    );
   }
 
   Future<void> loadOptions() async {
@@ -74,6 +150,11 @@ class AdminDashboardViewmodel extends GetxController {
   ) async {
     try {
       final data = await fetch();
+      data.sort((a, b) => b.id.compareTo(a.id));
+      if (data.isNotEmpty) {
+        _lastKnownMaxBookingId =
+            data.map((b) => b.id).reduce((max, id) => id > max ? id : max);
+      }
       assign(data);
     } catch (e) {
       bookingError.value = e.toString().replaceFirst('Exception: ', '');

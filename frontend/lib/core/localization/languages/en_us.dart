@@ -322,6 +322,7 @@ final Map<String, String> enUS = {
   'booked_seats': 'Booked Seats',
   'recent_schedules': 'Recent Schedules',
   'recent_fleet_buses': 'Recent Fleet Buses',
+  'recent_bookings': 'Recent Bookings',
   'manage': 'Manage',
   'seats': 'seats',
   'syncing_fleet_data': 'Syncing fleet data...',

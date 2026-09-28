@@ -320,6 +320,7 @@ final Map<String, String> kmKH = {
   'booked_seats': 'កៅអីបានកក់',
   'recent_schedules': 'កាលវិភាគថ្មីៗ',
   'recent_fleet_buses': 'រថយន្តថ្មីៗ',
+  'recent_bookings': 'ការកក់ថ្មីៗ',
   'manage': 'គ្រប់គ្រង',
   'seats': 'កៅអី',
   'syncing_fleet_data': 'កំពុងទាញយកទិន្នន័យ...',

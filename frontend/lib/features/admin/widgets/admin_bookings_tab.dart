@@ -5,6 +5,7 @@ import 'package:frontend/core/theme/app_fonts.dart';
 import 'package:frontend/features/admin/viewmodel/admin_dashboard_viewmodel.dart';
 import 'package:frontend/features/admin/widgets/admin_form_hero_header.dart';
 import 'package:frontend/features/admin/widgets/admin_list_tiles.dart';
+import 'package:frontend/shared/model/booking_response.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
@@ -35,14 +36,16 @@ class AdminBookingsTab extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          AdminFormHeroHeader(
-            title: 'customer_bookings'.tr,
-            subtitle: 'realtime_reservation_log'.tr,
-            icon: FontAwesomeIcons.ticket,
-            count: viewModel.bookings.length,
-            isDark: isDark,
-            primaryText: primaryText,
-            secondaryText: secondaryText,
+          Obx(
+            () => AdminFormHeroHeader(
+              title: 'customer_bookings'.tr,
+              subtitle: 'realtime_reservation_log'.tr,
+              icon: FontAwesomeIcons.ticket,
+              count: viewModel.bookings.length,
+              isDark: isDark,
+              primaryText: primaryText,
+              secondaryText: secondaryText,
+            ),
           ),
           const SizedBox(height: 16),
           Obx(() {
@@ -168,192 +171,202 @@ class AdminBookingsTab extends StatelessWidget {
             );
           }),
           const SizedBox(height: 18),
-          if (viewModel.bookings.isEmpty && viewModel.bookingError.value.isNotEmpty)
-            Container(
-              padding: const EdgeInsets.all(32),
-              decoration: BoxDecoration(
-                color: cardBackground,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: const Color(0xFFEF4444).withValues(alpha: 0.3),
-                  width: 1,
+          Obx(() {
+            final sortedBookings = List<BookingResponse>.from(viewModel.bookings)
+              ..sort((a, b) => b.id.compareTo(a.id));
+
+            if (sortedBookings.isEmpty && viewModel.bookingError.value.isNotEmpty) {
+              return Container(
+                padding: const EdgeInsets.all(32),
+                decoration: BoxDecoration(
+                  color: cardBackground,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: const Color(0xFFEF4444).withValues(alpha: 0.3),
+                    width: 1,
+                  ),
                 ),
-              ),
-              child: Center(
-                child: Column(
-                  children: [
-                    const FaIcon(
-                      FontAwesomeIcons.triangleExclamation,
-                      size: 30,
-                      color: Color(0xFFEF4444),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      'failed_load_bookings'.tr,
-                      style: AppFonts.dmSans(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFFEF4444),
+                child: Center(
+                  child: Column(
+                    children: [
+                      const FaIcon(
+                        FontAwesomeIcons.triangleExclamation,
+                        size: 30,
+                        color: Color(0xFFEF4444),
                       ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      viewModel.bookingError.value,
-                      textAlign: TextAlign.center,
-                      style: AppFonts.dmSans(
-                        fontSize: 12,
-                        color: secondaryText,
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    ElevatedButton.icon(
-                      onPressed: viewModel.loadOptions,
-                      icon: const FaIcon(
-                        FontAwesomeIcons.rotate,
-                        size: 13,
-                        color: Colors.white,
-                      ),
-                      label: Text('retry_bookings'.tr),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.green,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+                      const SizedBox(height: 10),
+                      Text(
+                        'failed_load_bookings'.tr,
+                        style: AppFonts.dmSans(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFFEF4444),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-            )
-          else if (viewModel.bookings.isEmpty)
-            Container(
-              padding: const EdgeInsets.all(32),
-              decoration: BoxDecoration(
-                color: cardBackground,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: borderColor, width: 1),
-              ),
-              child: Center(
-                child: Column(
-                  children: [
-                    FaIcon(
-                      FontAwesomeIcons.ticket,
-                      size: 34,
-                      color: secondaryText.withValues(alpha: 0.5),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      'no_bookings_recorded'.tr,
-                      style: AppFonts.dmSans(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: primaryText,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'passenger_reservations_appear'.tr,
-                      style: AppFonts.dmSans(
-                        fontSize: 12,
-                        color: secondaryText,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            )
-          else
-            ...viewModel.bookings.map(
-              (booking) => AdminBookingCard(
-                booking: booking,
-                cardBg: cardBackground,
-                primaryText: primaryText,
-                secondaryText: secondaryText,
-                borderColor: borderColor,
-                onMarkPaid: () async {
-                  final confirmed = await showDialog<bool>(
-                    context: context,
-                    builder: (ctx) => AlertDialog(
-                      backgroundColor: cardBackground,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(18),
-                      ),
-                      title: Text(
-                        '${'confirm_booking'.tr}?',
+                      const SizedBox(height: 6),
+                      Text(
+                        viewModel.bookingError.value,
+                        textAlign: TextAlign.center,
                         style: AppFonts.dmSans(
+                          fontSize: 12,
+                          color: secondaryText,
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      ElevatedButton.icon(
+                        onPressed: viewModel.loadOptions,
+                        icon: const FaIcon(
+                          FontAwesomeIcons.rotate,
+                          size: 13,
+                          color: Colors.white,
+                        ),
+                        label: Text('retry_bookings'.tr),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.green,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            } else if (sortedBookings.isEmpty) {
+              return Container(
+                padding: const EdgeInsets.all(32),
+                decoration: BoxDecoration(
+                  color: cardBackground,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: borderColor, width: 1),
+                ),
+                child: Center(
+                  child: Column(
+                    children: [
+                      FaIcon(
+                        FontAwesomeIcons.ticket,
+                        size: 34,
+                        color: secondaryText.withValues(alpha: 0.5),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        'no_bookings_recorded'.tr,
+                        style: AppFonts.dmSans(
+                          fontSize: 14,
                           fontWeight: FontWeight.bold,
                           color: primaryText,
                         ),
                       ),
-                      content: Text(
-                        'Confirm that passenger "${booking.username}" has paid \$${booking.totalAmount.toStringAsFixed(2)} at the station counter.',
+                      const SizedBox(height: 4),
+                      Text(
+                        'passenger_reservations_appear'.tr,
                         style: AppFonts.dmSans(
+                          fontSize: 12,
                           color: secondaryText,
-                          fontSize: 13,
                         ),
                       ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.of(ctx).pop(false),
-                          child: Text(
-                            'cancel'.tr,
-                            style: AppFonts.dmSans(color: secondaryText),
-                          ),
-                        ),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.green,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
+                    ],
+                  ),
+                ),
+              );
+            } else {
+              return Column(
+                children: sortedBookings
+                    .map(
+                      (booking) => AdminBookingCard(
+                        booking: booking,
+                        cardBg: cardBackground,
+                        primaryText: primaryText,
+                        secondaryText: secondaryText,
+                        borderColor: borderColor,
+                        onMarkPaid: () async {
+                          final confirmed = await showDialog<bool>(
+                            context: context,
+                            builder: (ctx) => AlertDialog(
+                              backgroundColor: cardBackground,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(18),
+                              ),
+                              title: Text(
+                                '${'confirm_booking'.tr}?',
+                                style: AppFonts.dmSans(
+                                  fontWeight: FontWeight.bold,
+                                  color: primaryText,
+                                ),
+                              ),
+                              content: Text(
+                                'Confirm that passenger "${booking.username}" has paid \$${booking.totalAmount.toStringAsFixed(2)} at the station counter.',
+                                style: AppFonts.dmSans(
+                                  color: secondaryText,
+                                  fontSize: 13,
+                                ),
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.of(ctx).pop(false),
+                                  child: Text(
+                                    'cancel'.tr,
+                                    style: AppFonts.dmSans(color: secondaryText),
+                                  ),
+                                ),
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.green,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                  onPressed: () => Navigator.of(ctx).pop(true),
+                                  child: Text(
+                                    'confirm'.tr,
+                                    style: AppFonts.dmSans(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                          onPressed: () => Navigator.of(ctx).pop(true),
-                          child: Text(
-                            'confirm'.tr,
-                            style: AppFonts.dmSans(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
+                          );
 
-                  if (confirmed == true) {
-                    final ok = await viewModel.updateBookingStatus(
-                      bookingId: booking.id,
-                      status: 'Paid',
-                    );
-                    if (ok) {
-                      onShowSnack(
-                        'Booking #${booking.id} confirmed and marked as Paid!',
-                        isError: false,
-                      );
-                    } else {
-                      onShowSnack(
-                        viewModel.errorMessage.value.isNotEmpty
-                            ? viewModel.errorMessage.value
-                            : 'Failed to update booking status',
-                        isError: true,
-                      );
-                    }
-                  }
-                },
-                onCancel: () async {
-                  final ok = await viewModel.updateBookingStatus(
-                    bookingId: booking.id,
-                    status: 'Cancelled',
-                  );
-                  if (ok) {
-                    onShowSnack(
-                      'Booking #${booking.id} marked as Cancelled',
-                      isError: false,
-                    );
-                  }
-                },
-              ),
-            ),
+                          if (confirmed == true) {
+                            final ok = await viewModel.updateBookingStatus(
+                              bookingId: booking.id,
+                              status: 'Paid',
+                            );
+                            if (ok) {
+                              onShowSnack(
+                                'Booking #${booking.id} confirmed and marked as Paid!',
+                                isError: false,
+                              );
+                            } else {
+                              onShowSnack(
+                                viewModel.errorMessage.value.isNotEmpty
+                                    ? viewModel.errorMessage.value
+                                    : 'Failed to update booking status',
+                                isError: true,
+                              );
+                            }
+                          }
+                        },
+                        onCancel: () async {
+                          final ok = await viewModel.updateBookingStatus(
+                            bookingId: booking.id,
+                            status: 'Cancelled',
+                          );
+                          if (ok) {
+                            onShowSnack(
+                              'Booking #${booking.id} marked as Cancelled',
+                              isError: false,
+                            );
+                          }
+                        },
+                      ),
+                    )
+                    .toList(),
+              );
+            }
+          }),
         ],
       ),
     );

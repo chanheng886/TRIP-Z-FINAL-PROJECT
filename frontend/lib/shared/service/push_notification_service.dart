@@ -5,7 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:frontend/app/main_app.dart';
 import 'package:frontend/core/config/firebase_options.dart';
+import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_fonts.dart';
+import 'package:frontend/features/admin/view/admin_dashboard_screen.dart';
+import 'package:frontend/features/admin/viewmodel/admin_dashboard_viewmodel.dart';
 import 'package:frontend/features/auth/viewmodel/auth_viewmodel.dart';
 import 'package:frontend/shared/service/auth_service.dart';
 import 'package:frontend/shared/service/base_url.dart';
@@ -213,31 +216,46 @@ class PushNotificationService extends GetxService {
 
     final title = message.notification?.title ?? 'Trip-Z Notification';
     final body = message.notification?.body ?? 'You have a new update regarding your trip.';
+
     final isDepartureAlert = message.data['type'] == 'DEPARTURE_ALERT';
+    final isAdminNewBooking = message.data['type'] == 'ADMIN_NEW_BOOKING';
+
+    // Auto-refresh admin dashboard viewmodel if currently active
+    if (isAdminNewBooking && Get.isRegistered<AdminDashboardViewmodel>()) {
+      Get.find<AdminDashboardViewmodel>().loadOptions();
+    }
+
+    final Color snackBg = isDepartureAlert
+        ? const Color(0xFFDC2626)
+        : (isAdminNewBooking ? const Color(0xFF0F172A) : const Color(0xFF00B14F));
 
     Get.snackbar(
       title,
       body,
       snackPosition: SnackPosition.TOP,
-      backgroundColor: isDepartureAlert ? const Color(0xFFDC2626) : const Color(0xFF00B14F),
+      backgroundColor: snackBg,
       colorText: Colors.white,
       icon: Container(
         margin: const EdgeInsets.all(8),
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.2),
+          color: Colors.white.withValues(alpha: 0.15),
           shape: BoxShape.circle,
         ),
         child: FaIcon(
-          isDepartureAlert ? FontAwesomeIcons.bus : FontAwesomeIcons.bell,
-          color: Colors.white,
-          size: 20,
+          isDepartureAlert
+              ? FontAwesomeIcons.bus
+              : (isAdminNewBooking
+                  ? FontAwesomeIcons.ticket
+                  : FontAwesomeIcons.bell),
+          color: isAdminNewBooking ? AppColors.green : Colors.white,
+          size: 18,
         ),
       ),
       shouldIconPulse: true,
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       borderRadius: 16,
-      duration: Duration(seconds: isDepartureAlert ? 10 : 5),
+      duration: Duration(seconds: isDepartureAlert ? 10 : (isAdminNewBooking ? 8 : 5)),
       isDismissible: true,
       mainButton: isDepartureAlert
           ? TextButton(
@@ -261,11 +279,33 @@ class PushNotificationService extends GetxService {
                 ),
               ),
             )
-          : null,
+          : (isAdminNewBooking
+              ? TextButton(
+                  onPressed: () {
+                    Get.back();
+                    _handleNotificationNavigation(message);
+                  },
+                  style: TextButton.styleFrom(
+                    backgroundColor: AppColors.green,
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: Text(
+                    'View Bookings',
+                    style: AppFonts.dmSans(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                )
+              : null),
       boxShadows: [
         BoxShadow(
-          color: (isDepartureAlert ? const Color(0xFFDC2626) : const Color(0xFF00B14F))
-              .withValues(alpha: 0.35),
+          color: snackBg.withValues(alpha: 0.35),
           blurRadius: 16,
           offset: const Offset(0, 6),
         ),
@@ -273,10 +313,14 @@ class PushNotificationService extends GetxService {
     );
   }
 
-  /// Navigates to history / ticket tab when user interacts with a notification
+  /// Navigates to history / ticket tab or admin dashboard when user interacts with a notification
   void _handleNotificationNavigation(RemoteMessage message) {
     try {
-      Get.offAll(() => const MainApp());
+      if (message.data['type'] == 'ADMIN_NEW_BOOKING') {
+        Get.to(() => const AdminDashboardScreen());
+      } else {
+        Get.offAll(() => const MainApp());
+      }
     } catch (e) {
       debugPrint('⚠️ [FCM] Navigation error on notification tap: $e');
     }

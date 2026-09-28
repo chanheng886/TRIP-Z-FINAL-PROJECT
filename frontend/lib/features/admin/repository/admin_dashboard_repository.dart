@@ -53,16 +53,20 @@ class AdminDashboardRepository {
 
   Future<List<BookingResponse>> fetchBookings() async {
     final data = await service.getBookings();
-    return data
+    final list = data
         .map((json) => BookingResponse.fromJson(json as Map<String, dynamic>))
         .toList();
+    list.sort((a, b) => b.id.compareTo(a.id));
+    return list;
   }
 
   Future<List<BookingResponse>> fetchBookingsByDate(String date) async {
     final data = await service.getBookingsByDate(date);
-    return data
+    final list = data
         .map((json) => BookingResponse.fromJson(json as Map<String, dynamic>))
         .toList();
+    list.sort((a, b) => b.id.compareTo(a.id));
+    return list;
   }
 
   Future<String?> uploadImage({

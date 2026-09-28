@@ -589,3 +589,144 @@ class AdminBookingCard extends StatelessWidget {
     );
   }
 }
+
+class AdminRecentBookingTile extends StatelessWidget {
+  final BookingResponse booking;
+  final bool isDark;
+  final Color cardBg;
+  final Color primaryText;
+  final Color secondaryText;
+  final Color borderColor;
+  final VoidCallback? onTap;
+
+  const AdminRecentBookingTile({
+    super.key,
+    required this.booking,
+    required this.isDark,
+    required this.cardBg,
+    required this.primaryText,
+    required this.secondaryText,
+    required this.borderColor,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final statusColor = switch (booking.bookingStatus) {
+      BookingStatus.Pending => const Color(0xFFF59E0B),
+      BookingStatus.Paid => AppColors.green,
+      BookingStatus.Confirmed => AppColors.green,
+      BookingStatus.Cancelled => const Color(0xFFEF4444),
+    };
+
+    final statusLabel = switch (booking.bookingStatus) {
+      BookingStatus.Pending => 'status_pending'.tr,
+      BookingStatus.Paid => 'status_paid'.tr,
+      BookingStatus.Confirmed => 'status_confirmed'.tr,
+      BookingStatus.Cancelled => 'status_cancelled'.tr,
+    };
+
+    final from = booking.fromLocation.trDb;
+    final to = booking.toLocation.trDb;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: cardBg,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: borderColor, width: 1),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: statusColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Center(
+                child: FaIcon(
+                  FontAwesomeIcons.ticket,
+                  size: 14,
+                  color: statusColor,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          booking.username,
+                          style: AppFonts.dmSans(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: primaryText,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Text(
+                        '\$${booking.totalAmount.toStringAsFixed(2)}',
+                        style: AppFonts.dmSans(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.green,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          '$from → $to • ${booking.seatNumbers.length} seat(s)',
+                          style: AppFonts.dmSans(
+                            fontSize: 11,
+                            color: secondaryText,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: statusColor.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          statusLabel,
+                          style: AppFonts.dmSans(
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.bold,
+                            color: statusColor,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+

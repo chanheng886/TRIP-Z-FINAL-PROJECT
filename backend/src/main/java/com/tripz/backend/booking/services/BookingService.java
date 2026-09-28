@@ -2,7 +2,9 @@ package com.tripz.backend.booking.services;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.cache.annotation.CacheEvict;
@@ -23,11 +25,16 @@ import com.tripz.backend.bus.models.BusSchedule;
 import com.tripz.backend.bus.repositories.BusBookingRepository;
 import com.tripz.backend.bus.repositories.BusScheduleRepository;
 import com.tripz.backend.config.RedisConfig;
+import com.tripz.backend.notification.services.FirebaseMessagingService;
+import com.tripz.backend.user.enums.UserRole;
+import com.tripz.backend.user.models.User;
 import com.tripz.backend.user.repositories.UserRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class BookingService {
     private final BookingMapper bookingMapper;
@@ -35,11 +42,12 @@ public class BookingService {
     private final BusBookingRepository busBookingRepository;
     private final UserRepository userRepository;
     private final BusScheduleRepository busScheduleRepository;
+    private final FirebaseMessagingService firebaseMessagingService;
 
-    // ✅ Get All Booking
+    // ✅ Get All Booking (Newest first)
     @Transactional(readOnly = true)
     public List<BookingResponseDTO> getAllBooking() {
-        return bookingRepository.findAll()
+        return bookingRepository.findAllByOrderByIdDesc()
                 .stream()
                 .map(bookingMapper::toResponse)
                 .collect(Collectors.toList());
@@ -62,10 +70,10 @@ public class BookingService {
         return bookingMapper.toResponse(booking);
     }
 
-    // ✅ Get All Booking By Booking Date
+    // ✅ Get All Booking By Booking Date (Newest first)
     @Transactional(readOnly = true)
     public List<BookingResponseDTO> getAllBookingByBookingDate(LocalDate bookingDate) {
-        List<Booking> booking = bookingRepository.findByBookingDate(bookingDate);
+        List<Booking> booking = bookingRepository.findByBookingDateOrderByIdDesc(bookingDate);
         if (booking == null || booking.isEmpty()) {
             throw new RuntimeException("No Booking Found!!");
         }
@@ -160,7 +168,44 @@ public class BookingService {
         booking.setTotalAmount(total);
         bookingRepository.save(booking);
 
-        // 5. Convert entity → Response DTO
+        // 5. Notify all admins of the new booking
+        notifyAdminsNewBooking(booking, schedule, dto.getPassengers().size());
+
+        // 6. Convert entity → Response DTO
         return bookingMapper.toResponse(booking);
+    }
+
+    private void notifyAdminsNewBooking(Booking booking, BusSchedule schedule, int seatCount) {
+        try {
+            List<User> admins = userRepository.findByRole(UserRole.Admin);
+            if (admins == null || admins.isEmpty()) {
+                return;
+            }
+
+            String fromCity = schedule.getRoute().getFromLocation().getLocationName();
+            String toCity = schedule.getRoute().getToLocation().getLocationName();
+            String customerName = booking.getUser() != null ? booking.getUser().getUsername() : "A customer";
+
+            String title = "New Ticket Booking! 🎟️";
+            String body = String.format("%s booked %d seat(s) for %s → %s ($%.2f)",
+                    customerName, seatCount, fromCity, toCity, booking.getTotalAmount());
+
+            Map<String, String> data = new HashMap<>();
+            data.put("type", "ADMIN_NEW_BOOKING");
+            data.put("bookingId", String.valueOf(booking.getId()));
+            data.put("customer", customerName);
+            data.put("route", fromCity + " → " + toCity);
+            data.put("seats", String.valueOf(seatCount));
+            data.put("amount", String.valueOf(booking.getTotalAmount()));
+
+            for (User admin : admins) {
+                if (admin.getFcmToken() != null && !admin.getFcmToken().isBlank()) {
+                    firebaseMessagingService.sendPushNotification(admin.getFcmToken(), title, body, data);
+                    log.info("🔔 [Admin Notification] Notified admin '{}' of new booking #{}", admin.getUsername(), booking.getId());
+                }
+            }
+        } catch (Exception e) {
+            log.warn("⚠️ [Admin Notification] Error dispatching admin push notification: {}", e.getMessage());
+        }
     }
 }
