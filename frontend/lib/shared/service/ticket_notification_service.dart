@@ -5,6 +5,7 @@ import 'package:frontend/app/main_app.dart';
 import 'package:frontend/core/theme/app_fonts.dart';
 import 'package:frontend/features/auth/viewmodel/auth_viewmodel.dart';
 import 'package:frontend/features/home/repository/booking_repository.dart';
+import 'package:frontend/features/notifications/viewmodel/notification_controller.dart';
 import 'package:frontend/shared/model/booking_response.dart';
 import 'package:frontend/shared/service/booking_service.dart';
 import 'package:get/get.dart';
@@ -140,13 +141,25 @@ class TicketNotificationService extends GetxService {
 
   /// Displays an urgent in-app alert banner
   void _dispatchUrgentAlert(BookingResponse booking, int minsLeft) {
+    final title = 'departure_alert_title'.tr;
+    final body = 'departure_alert_msg'.trParams({
+      'to': booking.toLocation,
+      'mins': '$minsLeft',
+      'time': booking.departureTime,
+    });
+
+    if (Get.isRegistered<NotificationController>()) {
+      Get.find<NotificationController>().addNotification(
+        title: title,
+        body: body,
+        type: 'DEPARTURE_ALERT',
+        data: {'bookingId': booking.id},
+      );
+    }
+
     Get.snackbar(
-      'departure_alert_title'.tr,
-      'departure_alert_msg'.trParams({
-        'to': booking.toLocation,
-        'mins': '$minsLeft',
-        'time': booking.departureTime,
-      }),
+      title,
+      body,
       snackPosition: SnackPosition.TOP,
       backgroundColor: const Color(0xFFDC2626),
       colorText: Colors.white,

@@ -7,6 +7,7 @@ import 'package:frontend/features/admin/model/bus_route.dart';
 import 'package:frontend/features/admin/model/bus_type.dart';
 import 'package:frontend/features/admin/model/company.dart';
 import 'package:frontend/features/admin/repository/admin_dashboard_repository.dart';
+import 'package:frontend/features/notifications/viewmodel/notification_controller.dart';
 import 'package:frontend/shared/model/booking_response.dart';
 import 'package:frontend/shared/model/bus_location.dart';
 import 'package:frontend/shared/model/bus_schedule.dart';
@@ -82,11 +83,23 @@ class AdminDashboardViewmodel extends GetxController {
   }
 
   void _triggerNewBookingAlert(BookingResponse latest, {int count = 1}) {
+    final title = 'New Booking Alert! 🎟️';
+    final body = count > 1
+        ? '$count new bookings received! Latest from ${latest.username} (\$${latest.totalAmount.toStringAsFixed(2)})'
+        : 'New booking #${latest.id} from ${latest.username}: ${latest.fromLocation} → ${latest.toLocation} (\$${latest.totalAmount.toStringAsFixed(2)})';
+
+    if (Get.isRegistered<NotificationController>()) {
+      Get.find<NotificationController>().addNotification(
+        title: title,
+        body: body,
+        type: 'ADMIN_NEW_BOOKING',
+        data: {'bookingId': latest.id},
+      );
+    }
+
     Get.snackbar(
-      'New Booking Alert! 🎟️',
-      count > 1
-          ? '$count new bookings received! Latest from ${latest.username} (\$${latest.totalAmount.toStringAsFixed(2)})'
-          : 'New booking #${latest.id} from ${latest.username}: ${latest.fromLocation} → ${latest.toLocation} (\$${latest.totalAmount.toStringAsFixed(2)})',
+      title,
+      body,
       snackPosition: SnackPosition.TOP,
       backgroundColor: const Color(0xFF1E293B),
       colorText: Colors.white,

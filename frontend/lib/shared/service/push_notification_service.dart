@@ -9,6 +9,7 @@ import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_fonts.dart';
 import 'package:frontend/features/admin/view/admin_dashboard_screen.dart';
 import 'package:frontend/features/admin/viewmodel/admin_dashboard_viewmodel.dart';
+import 'package:frontend/features/notifications/viewmodel/notification_controller.dart';
 import 'package:frontend/features/auth/viewmodel/auth_viewmodel.dart';
 import 'package:frontend/shared/service/auth_service.dart';
 import 'package:frontend/shared/service/base_url.dart';
@@ -223,6 +224,19 @@ class PushNotificationService extends GetxService {
     // Auto-refresh admin dashboard viewmodel if currently active
     if (isAdminNewBooking && Get.isRegistered<AdminDashboardViewmodel>()) {
       Get.find<AdminDashboardViewmodel>().loadOptions();
+    }
+
+    // Save notification persistently to NotificationController
+    if (Get.isRegistered<NotificationController>()) {
+      Get.find<NotificationController>().addNotification(
+        title: title,
+        body: body,
+        type: (message.data['type'] as String?) ??
+            (isAdminNewBooking
+                ? 'ADMIN_NEW_BOOKING'
+                : (isDepartureAlert ? 'DEPARTURE_ALERT' : 'SYSTEM')),
+        data: Map<String, dynamic>.from(message.data),
+      );
     }
 
     final Color snackBg = isDepartureAlert

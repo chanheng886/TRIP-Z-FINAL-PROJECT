@@ -15,6 +15,7 @@ import 'package:frontend/features/home/view/widgets/home_map_background_painter.
 import 'package:frontend/features/home/view/widgets/home_search_card.dart';
 import 'package:frontend/features/home/view/widgets/pickup_location_card.dart';
 import 'package:frontend/features/home/viewmodel/bus_location_viewmodel.dart';
+import 'package:frontend/features/notifications/widgets/notification_bell_button.dart';
 import 'package:frontend/features/profile/view/profile_screen.dart';
 import 'package:frontend/shared/model/bus_location.dart';
 import 'package:frontend/shared/model/bus_station.dart';
@@ -576,6 +577,11 @@ class _HomeScreenDesktopState extends State<HomeScreenDesktop> {
                 ],
               ),
               const SizedBox(width: 16),
+              NotificationBellButton(
+                size: 44,
+                isDark: isDarkMode,
+              ),
+              const SizedBox(width: 12),
               UserAvatar(
                 profileImage: currentUser?.profileImage,
                 username: username,

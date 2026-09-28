@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_fonts.dart';
+import 'package:frontend/features/notifications/widgets/notification_bell_button.dart';
 import 'package:get/get.dart';
 
 class AdminHeader extends StatelessWidget {
@@ -150,6 +151,14 @@ class AdminHeader extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+          const SizedBox(width: 8),
+          // Notification Bell Button
+          NotificationBellButton(
+            size: 38,
+            backgroundColor: cardBackground,
+            borderColor: borderColor,
+            iconColor: primaryText,
           ),
           const SizedBox(width: 8),
           // Refresh Button
