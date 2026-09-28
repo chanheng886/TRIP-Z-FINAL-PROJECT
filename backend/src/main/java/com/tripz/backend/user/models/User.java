@@ -47,4 +47,7 @@ public class User {
 
     @Column(name = "profile_image", columnDefinition = "TEXT")
     private String profileImage;
+
+    @Column(name = "fcm_token", columnDefinition = "TEXT")
+    private String fcmToken;
 }

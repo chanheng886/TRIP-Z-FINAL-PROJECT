@@ -52,6 +52,8 @@ dependencies:
   khqr_sdk: ^3.0.0
   webview_flutter: ^4.10.0
   gal: ^2.3.3
+  firebase_core: ^4.15.0
+  firebase_messaging: ^16.7.0
 
 dev_dependencies:
   flutter_test:

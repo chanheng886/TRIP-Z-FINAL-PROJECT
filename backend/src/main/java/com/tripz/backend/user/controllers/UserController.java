@@ -55,4 +55,13 @@ public class UserController {
     public UserResponseDTO deleteUser(@PathVariable Long id){
         return userService.deleteUser(id);
     }
+
+    @org.springframework.web.bind.annotation.PatchMapping("/{id}/fcm-token")
+    public org.springframework.http.ResponseEntity<java.util.Map<String, String>> updateFcmToken(
+            @PathVariable Long id,
+            @RequestBody java.util.Map<String, String> request) {
+        String token = request.get("fcmToken");
+        userService.updateFcmToken(id, token);
+        return org.springframework.http.ResponseEntity.ok(java.util.Map.of("message", "FCM token updated successfully"));
+    }
 }

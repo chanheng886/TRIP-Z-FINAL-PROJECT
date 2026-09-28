@@ -1,6 +1,7 @@
 import 'package:frontend/features/auth/model/auth_response.dart';
 import 'package:frontend/features/auth/model/user.dart';
 import 'package:frontend/features/auth/repository/auth_repository.dart';
+import 'package:frontend/shared/service/push_notification_service.dart';
 import 'package:get/get.dart';
 
 class AuthViewmodel extends GetxController {
@@ -27,6 +28,9 @@ class AuthViewmodel extends GetxController {
     final stopwatch = Stopwatch()..start();
     final saved = await authRepository.getSavedSession();
     auth.value = saved;
+    if (saved != null && Get.isRegistered<PushNotificationService>()) {
+      PushNotificationService.to.registerTokenWithBackend();
+    }
     final elapsed = stopwatch.elapsedMilliseconds;
     if (elapsed < 1600) {
       await Future.delayed(Duration(milliseconds: 1600 - elapsed));
@@ -47,6 +51,9 @@ class AuthViewmodel extends GetxController {
       );
       await authRepository.saveSession(auth: result);
       auth.value = result;
+      if (Get.isRegistered<PushNotificationService>()) {
+        PushNotificationService.to.registerTokenWithBackend();
+      }
       return true;
     } catch (e) {
       errorMessage.value = e.toString().replaceFirst('Exception: ', '');

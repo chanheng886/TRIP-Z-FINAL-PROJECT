@@ -1,0 +1,229 @@
+import 'dart:convert';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:frontend/app/main_app.dart';
+import 'package:frontend/core/config/firebase_options.dart';
+import 'package:frontend/core/theme/app_fonts.dart';
+import 'package:frontend/features/auth/viewmodel/auth_viewmodel.dart';
+import 'package:frontend/shared/service/auth_service.dart';
+import 'package:frontend/shared/service/base_url.dart';
+import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+
+/// Top-level background message handler required by FirebaseMessaging.
+@pragma('vm:entry-point')
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  debugPrint("🔔 [FCM Background] Message received: ${message.messageId} | ${message.data}");
+}
+
+class PushNotificationService extends GetxService {
+  static PushNotificationService get to => Get.find<PushNotificationService>();
+
+  final RxString fcmToken = ''.obs;
+  final RxBool isInitialized = false.obs;
+
+  static const String _prefLastTokenKey = 'last_registered_fcm_token';
+
+  @override
+  void onInit() {
+    super.onInit();
+    init();
+  }
+
+  /// Initializes Firebase and FirebaseMessaging listeners
+  Future<void> init() async {
+    try {
+      // 1. Initialize Firebase App
+      final options = DefaultFirebaseOptions.currentPlatform;
+      if (options != null) {
+        await Firebase.initializeApp(options: options);
+      } else {
+        await Firebase.initializeApp();
+      }
+
+      // 2. Register background messaging handler
+      FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
+      // 3. Request permissions on iOS and Android 13+
+      final settings = await FirebaseMessaging.instance.requestPermission(
+        alert: true,
+        announcement: false,
+        badge: true,
+        carPlay: false,
+        criticalAlert: false,
+        provisional: false,
+        sound: true,
+      );
+
+      debugPrint('🔔 [FCM] Notification authorization status: ${settings.authorizationStatus}');
+
+      // 4. Retrieve initial device token
+      try {
+        final token = await FirebaseMessaging.instance.getToken();
+        if (token != null && token.isNotEmpty) {
+          fcmToken.value = token;
+          debugPrint('✅ [FCM] Device Token: $token');
+          await registerTokenWithBackend();
+        }
+      } catch (tokenError) {
+        debugPrint('⚠️ [FCM] Error fetching device token: $tokenError');
+      }
+
+      // 5. Listen for token refreshes
+      FirebaseMessaging.instance.onTokenRefresh.listen((newToken) {
+        fcmToken.value = newToken;
+        debugPrint('🔄 [FCM] Device token refreshed: $newToken');
+        registerTokenWithBackend();
+      });
+
+      // 6. Listen for incoming foreground messages
+      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+        _handleForegroundMessage(message);
+      });
+
+      // 7. Handle notification click when app is opened from background
+      FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+        _handleNotificationNavigation(message);
+      });
+
+      // 8. Check if app was launched from a terminated state notification tap
+      final initialMessage = await FirebaseMessaging.instance.getInitialMessage();
+      if (initialMessage != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _handleNotificationNavigation(initialMessage);
+        });
+      }
+
+      isInitialized.value = true;
+    } catch (e) {
+      debugPrint('⚠️ [FCM] Firebase push notifications disabled or credentials not yet added: $e');
+    }
+  }
+
+  /// Sends the device FCM token to the backend for the currently authenticated user
+  Future<void> registerTokenWithBackend() async {
+    final token = fcmToken.value;
+    if (token.isEmpty) return;
+
+    if (!Get.isRegistered<AuthViewmodel>()) return;
+    final authVM = Get.find<AuthViewmodel>();
+    final userId = authVM.currentUser?.id;
+    if (userId == null) {
+      debugPrint('ℹ️ [FCM] User not logged in. Will register token upon login.');
+      return;
+    }
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final lastToken = prefs.getString(_prefLastTokenKey);
+
+      // Skip duplicate network call if token already registered for this user
+      if (lastToken == token) {
+        debugPrint('ℹ️ [FCM] Device token already up-to-date on backend.');
+        return;
+      }
+
+      final authToken = await AuthService().getToken();
+      final headers = <String, String>{
+        'Content-Type': 'application/json',
+      };
+      if (authToken != null && authToken.isNotEmpty) {
+        headers['Authorization'] = 'Bearer $authToken';
+      }
+
+      final url = Uri.parse('${BaseUrl.users}/$userId/fcm-token');
+      final response = await http.patch(
+        url,
+        headers: headers,
+        body: json.encode({'fcmToken': token}),
+      );
+
+      if (response.statusCode == 200) {
+        await prefs.setString(_prefLastTokenKey, token);
+        debugPrint('✅ [FCM] Successfully registered device token with backend for user #$userId');
+      } else {
+        debugPrint('⚠️ [FCM] Backend token registration returned code ${response.statusCode}: ${response.body}');
+      }
+    } catch (e) {
+      debugPrint('⚠️ [FCM] Failed to send token to backend: $e');
+    }
+  }
+
+  /// Displays an in-app heads-up snackbar when a push arrives while app is in foreground
+  void _handleForegroundMessage(RemoteMessage message) {
+    debugPrint('🔔 [FCM Foreground] Title: ${message.notification?.title}, Data: ${message.data}');
+
+    final title = message.notification?.title ?? 'Trip-Z Notification';
+    final body = message.notification?.body ?? 'You have a new update regarding your trip.';
+    final isDepartureAlert = message.data['type'] == 'DEPARTURE_ALERT';
+
+    Get.snackbar(
+      title,
+      body,
+      snackPosition: SnackPosition.TOP,
+      backgroundColor: isDepartureAlert ? const Color(0xFFDC2626) : const Color(0xFF00B14F),
+      colorText: Colors.white,
+      icon: Container(
+        margin: const EdgeInsets.all(8),
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.2),
+          shape: BoxShape.circle,
+        ),
+        child: FaIcon(
+          isDepartureAlert ? FontAwesomeIcons.bus : FontAwesomeIcons.bell,
+          color: Colors.white,
+          size: 20,
+        ),
+      ),
+      shouldIconPulse: true,
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      borderRadius: 16,
+      duration: Duration(seconds: isDepartureAlert ? 10 : 5),
+      isDismissible: true,
+      mainButton: isDepartureAlert
+          ? TextButton(
+              onPressed: () {
+                Get.back();
+                _handleNotificationNavigation(message);
+              },
+              style: TextButton.styleFrom(
+                backgroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: Text(
+                'View Ticket',
+                style: AppFonts.dmSans(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFFDC2626),
+                ),
+              ),
+            )
+          : null,
+      boxShadows: [
+        BoxShadow(
+          color: (isDepartureAlert ? const Color(0xFFDC2626) : const Color(0xFF00B14F))
+              .withValues(alpha: 0.35),
+          blurRadius: 16,
+          offset: const Offset(0, 6),
+        ),
+      ],
+    );
+  }
+
+  /// Navigates to history / ticket tab when user interacts with a notification
+  void _handleNotificationNavigation(RemoteMessage message) {
+    try {
+      Get.offAll(() => const MainApp());
+    } catch (e) {
+      debugPrint('⚠️ [FCM] Navigation error on notification tap: $e');
+    }
+  }
+}

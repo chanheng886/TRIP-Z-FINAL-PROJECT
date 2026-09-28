@@ -85,6 +85,16 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    // If loaded on desktop or wide screen, skip splash screen immediately
+    if (MediaQuery.of(context).size.width >= 600) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && widget.onFinished != null) {
+          widget.onFinished!();
+        }
+      });
+      return const SizedBox.shrink();
+    }
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: Stack(

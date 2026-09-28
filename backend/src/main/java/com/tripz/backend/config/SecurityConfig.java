@@ -58,7 +58,9 @@ public class SecurityConfig {
                     "/v3/api-docs/**",
                     "/error",
                     // ABA Payway payment endpoints (checkout, callback, return, cancel, check-transaction)
-                    "/payment/aba/**"
+                    "/payment/aba/**",
+                    // FCM device token registration
+                    "/api/v1/users/*/fcm-token"
                 ).permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET,
                     "/api/v1/bus-locations/**",

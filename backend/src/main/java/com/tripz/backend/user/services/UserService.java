@@ -66,4 +66,12 @@ public class UserService {
         userRepository.delete(user);
         return userMapper.toResponse(user);
     }
+
+    //✅ Update FCM Token for Push Notifications
+    public void updateFcmToken(Long id, String fcmToken) {
+        User user = userRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("User with id: " + id + " Not Found!"));
+        user.setFcmToken(fcmToken);
+        userRepository.save(user);
+    }
 }

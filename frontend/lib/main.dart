@@ -16,6 +16,7 @@ import 'package:get/get.dart';
 import 'package:frontend/features/home/repository/bus_location_repository.dart';
 import 'package:frontend/features/home/viewmodel/bus_location_viewmodel.dart';
 import 'package:frontend/shared/service/bus_location_service.dart';
+import 'package:frontend/shared/service/push_notification_service.dart';
 import 'package:frontend/shared/service/ticket_notification_service.dart';
 import 'package:frontend/shared/service/user_location_service.dart';
 
@@ -29,6 +30,7 @@ Future<void> main() async {
   Get.put(BusLocationViewmodel(BusLocationRepository(BusLocationService())));
   Get.put(UserLocationService());
   Get.put(TicketNotificationService());
+  Get.put(PushNotificationService(), permanent: true);
   runApp(MyApp());
 }
 
@@ -98,11 +100,30 @@ class _AuthGateState extends State<AuthGate> {
   @override
   Widget build(BuildContext context) {
     final authVM = Get.find<AuthViewmodel>();
+    final isDesktop = MediaQuery.of(context).size.width >= 600;
+
+    // Immediately mark splash as completed for desktop environments
+    if (isDesktop && !_isSplashDone) {
+      _isSplashDone = true;
+    }
+
     return Obx(() {
       final isChecking = authVM.isCheckingSession.value;
 
       Widget activeScreen;
-      if (isChecking || !_isSplashDone || _isLoadingPrefs) {
+      if (isDesktop) {
+        // Desktop screen: directly load MainApp, bypassing splash and get started (onboarding) screens
+        activeScreen = const KeyedSubtree(
+          key: ValueKey('main_app'),
+          child: MainApp(),
+        );
+      } else if (_isLoadingPrefs) {
+        activeScreen = Scaffold(
+          key: const ValueKey('loading_prefs'),
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        );
+      } else if (isChecking || !_isSplashDone) {
+        // Phone screen: keep the splash screen with branding and progress animation
         activeScreen = SplashScreen(
           key: const ValueKey('splash_screen'),
           duration: const Duration(milliseconds: 2500),
@@ -115,6 +136,7 @@ class _AuthGateState extends State<AuthGate> {
           },
         );
       } else if (!_hasSeenOnboarding) {
+        // Phone screen: show onboarding / get started screen
         activeScreen = OnboardingScreen(
           key: const ValueKey('onboarding_screen'),
           onGetStarted: _completeOnboarding,

@@ -30,4 +30,5 @@ class BaseUrl {
   static String get busRoutes => "$baseUrl/bus-route";
   static String get busTypes => "$baseUrl/bus-type";
   static String get busCompany => "$baseUrl/bus-company";
+  static String get users => "$baseUrl/users";
 }

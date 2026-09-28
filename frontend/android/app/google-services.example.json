@@ -1,0 +1,23 @@
+{
+  "_comment": "Place your real google-services.json downloaded from Firebase Console -> Project Settings -> Android App here",
+  "project_info": {
+    "project_number": "1234567890",
+    "project_id": "trip-z-web-application",
+    "storage_bucket": "trip-z-web-application.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1234567890:android:abcdef",
+        "android_client_info": {
+          "package_name": "com.example.frontend"
+        }
+      },
+      "api_key": [
+        {
+          "current_key": "AIzaSy..."
+        }
+      ]
+    }
+  ]
+}
