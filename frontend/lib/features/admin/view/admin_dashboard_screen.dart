@@ -13,6 +13,9 @@ import 'package:frontend/features/admin/widgets/admin_overview_tab.dart';
 import 'package:frontend/features/admin/widgets/admin_route_form_tab.dart';
 import 'package:frontend/features/admin/widgets/admin_schedule_form_tab.dart';
 import 'package:frontend/features/admin/widgets/admin_tab_bar.dart';
+import 'package:frontend/features/auth/model/user.dart';
+import 'package:frontend/features/auth/viewmodel/auth_viewmodel.dart';
+import 'package:frontend/main.dart';
 import 'package:get/get.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
@@ -30,6 +33,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
 
   int _currentTabIndex = 0;
 
+  bool get _isAdmin {
+    final authVM =
+        Get.isRegistered<AuthViewmodel>() ? Get.find<AuthViewmodel>() : null;
+    return authVM?.currentUser?.role == UserRole.Admin;
+  }
+
   final List<AdminTabItem> _tabs = const [
     AdminTabItem(title: 'overview', icon: FontAwesomeIcons.chartPie),
     AdminTabItem(title: 'locations', icon: FontAwesomeIcons.locationDot),
@@ -42,12 +51,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   @override
   void initState() {
     super.initState();
-    _vm = Get.put(
-      AdminDashboardViewmodel(
-        AdminDashboardRepository(AdminDashboardService()),
-      ),
-      tag: 'adminDashboard',
-    );
+    if (_isAdmin) {
+      _vm = Get.put(
+        AdminDashboardViewmodel(
+          AdminDashboardRepository(AdminDashboardService()),
+        ),
+        tag: 'adminDashboard',
+      );
+    }
     _tabController = TabController(length: _tabs.length, vsync: this);
     _tabController.addListener(_handleTabSelection);
   }
@@ -131,6 +142,93 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
 
   @override
   Widget build(BuildContext context) {
+    if (!_isAdmin) {
+      return Scaffold(
+        backgroundColor: pageBackground,
+        appBar: AppBar(
+          backgroundColor: pageBackground,
+          elevation: 0,
+          leading: IconButton(
+            icon: FaIcon(FontAwesomeIcons.angleLeft, color: primaryText, size: 18),
+            onPressed: () => Get.offAll(() => const MainApp()),
+          ),
+          title: Text(
+            'access_denied'.tr,
+            style: AppFonts.dmSans(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: primaryText,
+            ),
+          ),
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEF4444).withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Center(
+                    child: FaIcon(
+                      FontAwesomeIcons.shieldHalved,
+                      size: 36,
+                      color: Color(0xFFEF4444),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  'access_denied_title'.tr,
+                  textAlign: TextAlign.center,
+                  style: AppFonts.dmSans(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: primaryText,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'access_denied_desc'.tr,
+                  textAlign: TextAlign.center,
+                  style: AppFonts.dmSans(
+                    fontSize: 14,
+                    color: secondaryText,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 28),
+                ElevatedButton.icon(
+                  onPressed: () => Get.offAll(() => const MainApp()),
+                  icon: const FaIcon(FontAwesomeIcons.house, size: 14),
+                  label: Text(
+                    'back_to_home'.tr,
+                    style: AppFonts.dmSans(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.green,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: pageBackground,
       body: SafeArea(

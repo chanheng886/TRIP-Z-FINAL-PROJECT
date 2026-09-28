@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:frontend/features/admin/view/admin_dashboard_screen.dart';
+import 'package:frontend/features/auth/model/user.dart';
+import 'package:frontend/features/auth/viewmodel/auth_viewmodel.dart';
 import 'package:frontend/features/history/view/history_screen.dart';
 import 'package:frontend/features/notifications/model/app_notification.dart';
 import 'package:get/get.dart';
@@ -14,20 +16,35 @@ class NotificationController extends GetxController {
   final RxList<AppNotification> notifications = <AppNotification>[].obs;
   final RxString selectedFilter = 'all'.obs;
 
-  int get unreadCount => notifications.where((n) => !n.isRead).length;
+  bool get _isAdmin {
+    final authVM =
+        Get.isRegistered<AuthViewmodel>() ? Get.find<AuthViewmodel>() : null;
+    return authVM?.currentUser?.role == UserRole.Admin;
+  }
+
+  int get unreadCount => notifications
+      .where((n) => !n.isRead && (_isAdmin || n.type != 'ADMIN_NEW_BOOKING'))
+      .length;
 
   List<AppNotification> get filteredNotifications {
+    final visibleList = _isAdmin
+        ? notifications
+        : notifications.where((n) => n.type != 'ADMIN_NEW_BOOKING').toList();
+
     final filter = selectedFilter.value;
     if (filter == 'unread') {
-      return notifications.where((n) => !n.isRead).toList();
+      return visibleList.where((n) => !n.isRead).toList();
     } else if (filter == 'bookings') {
-      return notifications
-          .where((n) => n.type == 'ADMIN_NEW_BOOKING' || n.type == 'BOOKING_CONFIRMED')
+      return visibleList
+          .where((n) =>
+              n.type == 'ADMIN_NEW_BOOKING' ||
+              n.type == 'BOOKING_CONFIRMED' ||
+              n.type == 'BOOKING')
           .toList();
     } else if (filter == 'trips') {
-      return notifications.where((n) => n.type == 'DEPARTURE_ALERT').toList();
+      return visibleList.where((n) => n.type == 'DEPARTURE_ALERT').toList();
     }
-    return notifications.toList();
+    return visibleList.toList();
   }
 
   @override
@@ -95,6 +112,12 @@ class NotificationController extends GetxController {
     String type = 'SYSTEM',
     Map<String, dynamic> data = const {},
   }) {
+    // Drop admin-only notifications if current user is not Admin
+    if (type == 'ADMIN_NEW_BOOKING' && !_isAdmin) {
+      debugPrint('🛡️ [NotificationController] Dropped admin notification for non-admin user.');
+      return;
+    }
+
     final item = AppNotification(
       id: '${DateTime.now().millisecondsSinceEpoch}_${notifications.length}',
       title: title,
@@ -141,9 +164,12 @@ class NotificationController extends GetxController {
     markAsRead(notification.id);
 
     if (notification.type == 'ADMIN_NEW_BOOKING') {
-      Get.to(() => const AdminDashboardScreen());
-    } else if (notification.type == 'DEPARTURE_ALERT' ||
-        notification.type == 'BOOKING_CONFIRMED') {
+      if (_isAdmin) {
+        Get.to(() => const AdminDashboardScreen());
+      } else {
+        Get.to(() => const HistoryScreen());
+      }
+    } else {
       Get.to(() => const HistoryScreen());
     }
   }

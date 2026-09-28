@@ -537,4 +537,10 @@ final Map<String, String> kmKH = {
   'thank_you_for_registration': 'អរគុណសម្រាប់ការចុះឈ្មោះរបស់អ្នក!',
   'registration_success_desc': 'យើងរីករាយដែលអ្នកបានចូលរួម! ឥឡូវនេះអ្នកអាចចាប់ផ្តើមរុករក និងកក់សំបុត្របានយ៉ាងងាយស្រួល។',
   'start_exploring': 'ចាប់ផ្តើមរុករក',
+
+  // Access Control & Authorization
+  'access_denied': 'ការចូលប្រើត្រូវបានបដិសេធ',
+  'access_denied_title': 'ទាមទារសិទ្ធិជាអ្នកគ្រប់គ្រង (Admin)',
+  'access_denied_desc': 'អ្នកមិនមានសិទ្ធិចូលមើលផ្ទាំងគ្រប់គ្រង Admin Dashboard ឡើយ។ ផ្នែកនេះត្រូវបានកំណត់សម្រាប់តែអ្នកគ្រប់គ្រងប្រព័ន្ធប៉ុណ្ណោះ។',
+  'back_to_home': 'ត្រឡប់ទៅទំព័រដើម',
 };

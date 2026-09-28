@@ -9,8 +9,10 @@ import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_fonts.dart';
 import 'package:frontend/features/admin/view/admin_dashboard_screen.dart';
 import 'package:frontend/features/admin/viewmodel/admin_dashboard_viewmodel.dart';
-import 'package:frontend/features/notifications/viewmodel/notification_controller.dart';
+import 'package:frontend/features/auth/model/user.dart';
 import 'package:frontend/features/auth/viewmodel/auth_viewmodel.dart';
+import 'package:frontend/features/history/view/history_screen.dart';
+import 'package:frontend/features/notifications/viewmodel/notification_controller.dart';
 import 'package:frontend/shared/service/auth_service.dart';
 import 'package:frontend/shared/service/base_url.dart';
 import 'package:get/get.dart';
@@ -29,7 +31,7 @@ class PushNotificationService extends GetxService {
   final RxString fcmToken = ''.obs;
   final RxBool isInitialized = false.obs;
 
-  static const String _prefLastTokenKey = 'last_registered_fcm_token';
+  static const String _prefLastTokenKey = 'last_registered_fcm_token_user_';
 
   @override
   void onInit() {
@@ -128,11 +130,12 @@ class PushNotificationService extends GetxService {
     }
 
     try {
-      final lastToken = prefs.getString(_prefLastTokenKey);
+      final userTokenPrefKey = '$_prefLastTokenKey$userId';
+      final lastToken = prefs.getString(userTokenPrefKey);
 
       // Skip duplicate network call if token already registered for this user
       if (lastToken == token) {
-        debugPrint('ℹ️ [FCM] Device token already up-to-date on backend.');
+        debugPrint('ℹ️ [FCM] Device token already up-to-date on backend for user #$userId.');
         return;
       }
 
@@ -152,13 +155,40 @@ class PushNotificationService extends GetxService {
       );
 
       if (response.statusCode == 200) {
-        await prefs.setString(_prefLastTokenKey, token);
+        await prefs.setString(userTokenPrefKey, token);
         debugPrint('✅ [FCM] Successfully registered device token with backend for user #$userId');
       } else {
         debugPrint('⚠️ [FCM] Backend token registration returned code ${response.statusCode}: ${response.body}');
       }
     } catch (e) {
       debugPrint('⚠️ [FCM] Failed to send token to backend: $e');
+    }
+  }
+
+  /// Unregisters FCM token on backend when user logs out so this device stops receiving their alerts
+  Future<void> unregisterTokenWithBackend(int userId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userTokenPrefKey = '$_prefLastTokenKey$userId';
+      await prefs.remove(userTokenPrefKey);
+
+      final authToken = await AuthService().getToken();
+      final headers = <String, String>{
+        'Content-Type': 'application/json',
+      };
+      if (authToken != null && authToken.isNotEmpty) {
+        headers['Authorization'] = 'Bearer $authToken';
+      }
+
+      final url = Uri.parse('${BaseUrl.users}/$userId/fcm-token');
+      await http.patch(
+        url,
+        headers: headers,
+        body: json.encode({'fcmToken': ''}),
+      );
+      debugPrint('✅ [FCM] Cleared FCM token on backend for user #$userId on logout.');
+    } catch (e) {
+      debugPrint('⚠️ [FCM] Failed to clear token on backend: $e');
     }
   }
 
@@ -221,8 +251,19 @@ class PushNotificationService extends GetxService {
     final isDepartureAlert = message.data['type'] == 'DEPARTURE_ALERT';
     final isAdminNewBooking = message.data['type'] == 'ADMIN_NEW_BOOKING';
 
-    // Auto-refresh admin dashboard viewmodel if currently active
-    if (isAdminNewBooking && Get.isRegistered<AdminDashboardViewmodel>()) {
+    final authVM =
+        Get.isRegistered<AuthViewmodel>() ? Get.find<AuthViewmodel>() : null;
+    final isAdmin = authVM?.currentUser?.role == UserRole.Admin;
+
+    // If an admin notification arrives on a device where a Customer is logged in,
+    // suppress it completely so the customer never receives admin alerts.
+    if (isAdminNewBooking && !isAdmin) {
+      debugPrint('🛡️ [FCM Foreground] Suppressed admin notification for non-admin user.');
+      return;
+    }
+
+    // Auto-refresh admin dashboard viewmodel if currently active and user is admin
+    if (isAdminNewBooking && isAdmin && Get.isRegistered<AdminDashboardViewmodel>()) {
       Get.find<AdminDashboardViewmodel>().loadOptions();
     }
 
@@ -293,7 +334,7 @@ class PushNotificationService extends GetxService {
                 ),
               ),
             )
-          : (isAdminNewBooking
+          : ((isAdminNewBooking && isAdmin)
               ? TextButton(
                   onPressed: () {
                     Get.back();
@@ -316,7 +357,29 @@ class PushNotificationService extends GetxService {
                     ),
                   ),
                 )
-              : null),
+              : (message.data['type'] == 'BOOKING_CONFIRMED'
+                  ? TextButton(
+                      onPressed: () {
+                        Get.back();
+                        Get.to(() => const HistoryScreen());
+                      },
+                      style: TextButton.styleFrom(
+                        backgroundColor: AppColors.green,
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        'View Ticket',
+                        style: AppFonts.dmSans(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    )
+                  : null)),
       boxShadows: [
         BoxShadow(
           color: snackBg.withValues(alpha: 0.35),
@@ -330,8 +393,20 @@ class PushNotificationService extends GetxService {
   /// Navigates to history / ticket tab or admin dashboard when user interacts with a notification
   void _handleNotificationNavigation(RemoteMessage message) {
     try {
+      final authVM =
+          Get.isRegistered<AuthViewmodel>() ? Get.find<AuthViewmodel>() : null;
+      final isAdmin = authVM?.currentUser?.role == UserRole.Admin;
+
       if (message.data['type'] == 'ADMIN_NEW_BOOKING') {
-        Get.to(() => const AdminDashboardScreen());
+        if (isAdmin) {
+          Get.to(() => const AdminDashboardScreen());
+        } else {
+          Get.to(() => const HistoryScreen());
+        }
+      } else if (message.data['type'] == 'DEPARTURE_ALERT' ||
+          message.data['type'] == 'BOOKING_CONFIRMED' ||
+          message.data['type'] == 'BOOKING') {
+        Get.to(() => const HistoryScreen());
       } else {
         Get.offAll(() => const MainApp());
       }

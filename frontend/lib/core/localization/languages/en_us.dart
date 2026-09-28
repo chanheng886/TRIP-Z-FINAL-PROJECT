@@ -539,4 +539,10 @@ final Map<String, String> enUS = {
   'thank_you_for_registration': 'Thank you for your registration!',
   'registration_success_desc': "We're glad you're here! Before you start exploring, we just sent you the email confirmation.",
   'start_exploring': 'Start Exploring',
+
+  // Access Control & Authorization
+  'access_denied': 'Access Denied',
+  'access_denied_title': 'Administrator Privileges Required',
+  'access_denied_desc': 'You do not have permission to access the Admin Dashboard. This area is reserved for system administrators only.',
+  'back_to_home': 'Back to Home',
 };

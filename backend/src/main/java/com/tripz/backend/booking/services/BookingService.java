@@ -169,11 +169,46 @@ public class BookingService {
         booking.setTotalAmount(total);
         booking = bookingRepository.save(booking);
 
-        // 5. Notify all admins of the new booking
+        // 5. Notify customer of their booking confirmation
+        notifyCustomerBookingConfirmed(booking, schedule, dto.getPassengers().size());
+
+        // 6. Notify all admins of the new booking
         notifyAdminsNewBooking(booking, schedule, dto.getPassengers().size());
 
-        // 6. Convert entity → Response DTO
+        // 7. Convert entity → Response DTO
         return bookingMapper.toResponse(booking);
+    }
+
+    private void notifyCustomerBookingConfirmed(Booking booking, BusSchedule schedule, int seatCount) {
+        try {
+            User customer = booking.getUser();
+            if (customer == null || customer.getFcmToken() == null || customer.getFcmToken().isBlank()) {
+                return;
+            }
+
+            String fromCity = (schedule.getRoute() != null && schedule.getRoute().getFromLocation() != null)
+                    ? schedule.getRoute().getFromLocation().getLocationName()
+                    : "origin";
+            String toCity = (schedule.getRoute() != null && schedule.getRoute().getToLocation() != null)
+                    ? schedule.getRoute().getToLocation().getLocationName()
+                    : "destination";
+
+            String title = "Booking Confirmed! 🎫";
+            String body = String.format("Your booking for %s → %s (%d seat%s) has been placed successfully.",
+                    fromCity, toCity, seatCount, seatCount > 1 ? "s" : "");
+
+            Map<String, String> data = new HashMap<>();
+            data.put("type", "BOOKING_CONFIRMED");
+            data.put("bookingId", String.valueOf(booking.getId()));
+            data.put("route", fromCity + " → " + toCity);
+            data.put("seats", String.valueOf(seatCount));
+            data.put("amount", String.valueOf(booking.getTotalAmount()));
+
+            firebaseMessagingService.sendPushNotification(customer.getFcmToken(), title, body, data);
+            log.info("🔔 [Customer Notification] Sent booking confirmation to '{}' for booking #{}", customer.getUsername(), booking.getId());
+        } catch (Exception e) {
+            log.warn("⚠️ [Customer Notification] Error sending customer booking confirmation: {}", e.getMessage());
+        }
     }
 
     private void notifyAdminsNewBooking(Booking booking, BusSchedule schedule, int seatCount) {
@@ -183,8 +218,12 @@ public class BookingService {
                 return;
             }
 
-            String fromCity = schedule.getRoute().getFromLocation().getLocationName();
-            String toCity = schedule.getRoute().getToLocation().getLocationName();
+            String fromCity = (schedule.getRoute() != null && schedule.getRoute().getFromLocation() != null)
+                    ? schedule.getRoute().getFromLocation().getLocationName()
+                    : "origin";
+            String toCity = (schedule.getRoute() != null && schedule.getRoute().getToLocation() != null)
+                    ? schedule.getRoute().getToLocation().getLocationName()
+                    : "destination";
             String customerName = booking.getUser() != null ? booking.getUser().getUsername() : "A customer";
 
             String title = "New Ticket Booking! 🎟️";

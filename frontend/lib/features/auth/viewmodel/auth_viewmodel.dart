@@ -143,6 +143,14 @@ class AuthViewmodel extends GetxController {
   }
 
   Future<void> logout() async {
+    final userId = currentUser?.id;
+    if (userId != null && Get.isRegistered<PushNotificationService>()) {
+      try {
+        await Get.find<PushNotificationService>().unregisterTokenWithBackend(userId);
+      } catch (e) {
+        // Log and continue logout
+      }
+    }
     await authRepository.clearSession();
     auth.value = null;
   }
