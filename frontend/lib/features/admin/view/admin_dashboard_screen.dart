@@ -19,7 +19,12 @@ import 'package:frontend/features/auth/viewmodel/auth_viewmodel.dart';
 import 'package:get/get.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
-  const AdminDashboardScreen({super.key});
+  final int initialIndex;
+
+  const AdminDashboardScreen({
+    super.key,
+    this.initialIndex = 0,
+  });
 
   @override
   State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
@@ -30,8 +35,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   late final AdminDashboardViewmodel _vm;
   late final TabController _tabController;
   final ScrollController _tabScrollController = ScrollController();
+  Worker? _tabWorker;
 
-  int _currentTabIndex = 0;
+  late int _currentTabIndex;
 
   bool get _isAdmin {
     final authVM =
@@ -51,16 +57,46 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   @override
   void initState() {
     super.initState();
+    _currentTabIndex = widget.initialIndex.clamp(0, _tabs.length - 1);
+
     if (_isAdmin) {
-      _vm = Get.put(
-        AdminDashboardViewmodel(
-          AdminDashboardRepository(AdminDashboardService()),
-        ),
-        tag: 'adminDashboard',
-      );
+      _vm = Get.isRegistered<AdminDashboardViewmodel>(tag: 'adminDashboard')
+          ? Get.find<AdminDashboardViewmodel>(tag: 'adminDashboard')
+          : Get.put(
+              AdminDashboardViewmodel(
+                AdminDashboardRepository(AdminDashboardService()),
+              ),
+              tag: 'adminDashboard',
+            );
+
+      _tabWorker = ever(_vm.requestedTabIndex, (int tabIdx) {
+        if (tabIdx >= 0 && tabIdx < _tabs.length) {
+          _navigateToTab(tabIdx);
+          _vm.requestedTabIndex.value = -1;
+        }
+      });
     }
-    _tabController = TabController(length: _tabs.length, vsync: this);
+
+    _tabController = TabController(
+      length: _tabs.length,
+      vsync: this,
+      initialIndex: _currentTabIndex,
+    );
     _tabController.addListener(_handleTabSelection);
+
+    if (_currentTabIndex > 0) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollToActiveTab(_currentTabIndex);
+      });
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant AdminDashboardScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialIndex != widget.initialIndex) {
+      _navigateToTab(widget.initialIndex);
+    }
   }
 
   void _handleTabSelection() {
@@ -94,6 +130,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
 
   @override
   void dispose() {
+    _tabWorker?.dispose();
     _tabController.removeListener(_handleTabSelection);
     _tabController.dispose();
     _tabScrollController.dispose();

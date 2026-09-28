@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:frontend/core/theme/app_colors.dart';
+import 'package:frontend/core/theme/app_fonts.dart';
 import 'package:frontend/features/admin/model/bus.dart';
 import 'package:frontend/features/admin/model/bus_route.dart';
 import 'package:frontend/features/admin/model/bus_type.dart';
@@ -22,6 +23,11 @@ class AdminDashboardViewmodel extends GetxController {
   final RxString errorMessage = "".obs;
   final RxString successMessage = "".obs;
   final RxString bookingError = "".obs;
+  final RxInt requestedTabIndex = (-1).obs;
+
+  void switchTab(int index) {
+    requestedTabIndex.value = index;
+  }
 
   final RxList<BusLocation> locations = <BusLocation>[].obs;
   final RxList<Company> companies = <Company>[].obs;
@@ -116,9 +122,34 @@ class AdminDashboardViewmodel extends GetxController {
           size: 18,
         ),
       ),
-      duration: const Duration(seconds: 7),
+      duration: const Duration(seconds: 8),
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       borderRadius: 16,
+      mainButton: TextButton(
+        onPressed: () {
+          Get.back();
+          switchTab(5);
+        },
+        style: TextButton.styleFrom(
+          backgroundColor: AppColors.green,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        child: Text(
+          'View Bookings',
+          style: AppFonts.dmSans(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+      ),
+      onTap: (_) {
+        Get.back();
+        switchTab(5);
+      },
     );
   }
 

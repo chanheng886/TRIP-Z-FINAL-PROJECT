@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:frontend/features/admin/view/admin_dashboard_screen.dart';
+import 'package:frontend/features/admin/viewmodel/admin_dashboard_viewmodel.dart';
 import 'package:frontend/features/auth/model/user.dart';
 import 'package:frontend/features/auth/viewmodel/auth_viewmodel.dart';
 import 'package:frontend/features/history/view/history_screen.dart';
@@ -165,7 +166,10 @@ class NotificationController extends GetxController {
 
     if (notification.type == 'ADMIN_NEW_BOOKING') {
       if (_isAdmin) {
-        Get.to(() => const AdminDashboardScreen());
+        if (Get.isRegistered<AdminDashboardViewmodel>(tag: 'adminDashboard')) {
+          Get.find<AdminDashboardViewmodel>(tag: 'adminDashboard').switchTab(5);
+        }
+        Get.to(() => const AdminDashboardScreen(initialIndex: 5));
       } else {
         Get.to(() => const HistoryScreen());
       }

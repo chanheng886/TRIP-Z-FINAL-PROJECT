@@ -387,6 +387,10 @@ class PushNotificationService extends GetxService {
           offset: const Offset(0, 6),
         ),
       ],
+      onTap: (_) {
+        Get.back();
+        _handleNotificationNavigation(message);
+      },
     );
   }
 
@@ -399,7 +403,10 @@ class PushNotificationService extends GetxService {
 
       if (message.data['type'] == 'ADMIN_NEW_BOOKING') {
         if (isAdmin) {
-          Get.to(() => const AdminDashboardScreen());
+          if (Get.isRegistered<AdminDashboardViewmodel>(tag: 'adminDashboard')) {
+            Get.find<AdminDashboardViewmodel>(tag: 'adminDashboard').switchTab(5);
+          }
+          Get.to(() => const AdminDashboardScreen(initialIndex: 5));
         } else {
           Get.to(() => const HistoryScreen());
         }
