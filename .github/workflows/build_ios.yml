@@ -11,7 +11,7 @@ on:
 jobs:
   build-ios:
     name: Build iOS Artifacts
-    runs-on: macos-14 # Fast Apple Silicon (M1/M2) runner
+    runs-on: macos-15 # Xcode 16 & macOS 15 Sequoia Apple Silicon runner
 
     steps:
       - name: 📥 Checkout Repository
@@ -25,6 +25,7 @@ jobs:
 
       - name: 📋 Check Flutter & Xcode Environment
         run: |
+          flutter config --no-enable-swift-package-manager
           flutter doctor -v
           flutter precache --ios
 
@@ -41,7 +42,17 @@ jobs:
               echo "Created blank .env"
             fi
           fi
+          # Ensure build directories exist to avoid rsync mkdir errors
+          mkdir -p build/ios/SourcePackages
           flutter pub get
+
+      - name: 🌐 Build iOS Simulator (for Appetize.io / Browser Testing)
+        run: |
+          cd frontend
+          flutter build ios --simulator
+          cd build/ios/iphonesimulator
+          zip -r TripZ-Simulator.zip Runner.app
+          echo "Simulator build zipped successfully!"
 
       - name: 📱 Build iOS (Release - Unsigned)
         run: |
@@ -57,24 +68,16 @@ jobs:
           zip -r TripZ-unsigned.ipa Payload
           echo "Unsigned IPA packaged successfully!"
 
-      - name: 🌐 Build iOS Simulator (for Appetize.io / Browser Testing)
-        run: |
-          cd frontend
-          flutter build ios --simulator
-          cd build/ios/iphonesimulator
-          zip -r TripZ-Simulator.zip Runner.app
-          echo "Simulator build zipped successfully!"
+      - name: 📤 Upload Simulator App (For Appetize.io In-Browser Testing)
+        uses: actions/upload-artifact@v4
+        with:
+          name: TripZ-iOS-Simulator
+          path: frontend/build/ios/iphonesimulator/TripZ-Simulator.zip
+          retention-days: 14
 
       - name: 📤 Upload Installable IPA (For Real iPhone via Sideloadly)
         uses: actions/upload-artifact@v4
         with:
           name: TripZ-iOS-IPA
           path: frontend/build/ios/ipa/TripZ-unsigned.ipa
-          retention-days: 14
-
-      - name: 📤 Upload Simulator App (For Appetize.io In-Browser Testing)
-        uses: actions/upload-artifact@v4
-        with:
-          name: TripZ-iOS-Simulator
-          path: frontend/build/ios/iphonesimulator/TripZ-Simulator.zip
           retention-days: 14
