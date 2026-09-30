@@ -28,7 +28,13 @@ class BusScheduleScreen extends StatelessWidget {
         toLocationId: toLcoationId,
         travelDate: travelDate,
       ),
-      desktop: BusScheduleDesktop(),
+      desktop: BusScheduleDesktop(
+        fromLocationName: fromLocationName,
+        toLocationName: toLocatioName,
+        fromLocationId: fromLocationId,
+        toLocationId: toLcoationId,
+        travelDate: travelDate,
+      ),
     );
   }
 }

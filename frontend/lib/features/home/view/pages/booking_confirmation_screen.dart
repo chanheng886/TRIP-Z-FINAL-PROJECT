@@ -12,7 +12,7 @@ class BookingConfirmationScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return ResponsiveLayout(
       mobile: BookingConfirmationMobile(booking: booking),
-      desktop: BookingConfirmationDesktop(),
+      desktop: BookingConfirmationDesktop(booking: booking),
     );
   }
 }

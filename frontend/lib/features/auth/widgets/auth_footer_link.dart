@@ -22,8 +22,9 @@ class AuthFooterLink extends StatelessWidget {
     final secondaryTextColor =
         isDarkMode ? AppColors.darkSecondaryText : AppColors.lightSecondaryText;
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+    return Wrap(
+      alignment: WrapAlignment.center,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         Text(
           promptText,
