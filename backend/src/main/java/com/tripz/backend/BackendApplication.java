@@ -1,5 +1,4 @@
 package com.tripz.backend;
-
 import com.tripz.backend.config.EnvLoader;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -8,10 +7,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import lombok.extern.slf4j.Slf4j;
 
-import org.springframework.scheduling.annotation.EnableScheduling;
-
 @SpringBootApplication
-@EnableScheduling
 @Slf4j
 public class BackendApplication {
 

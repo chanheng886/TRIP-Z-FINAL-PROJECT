@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Frontend</string>
+	<string>TripZ</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -15,7 +15,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>frontend</string>
+	<string>tripz</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -79,7 +79,19 @@
 		<string>https</string>
 		<string>http</string>
 	</array>
+	<!-- Permissions for saving tickets and picking profile pictures -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>TripZ requires access to your photo library to select profile pictures and save tickets.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>We need access to your photo library to save your E-Ticket.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>TripZ requires camera access to take profile photos and scan ticket QR codes.</string>
+	<!-- Permissions for bus location & passenger tracking -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>TripZ needs your location to show nearby bus stations and track your bus journey.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>TripZ needs your location to track bus journeys in the background.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>TripZ needs your location to provide accurate live bus tracking.</string>
 </dict>
 </plist>
